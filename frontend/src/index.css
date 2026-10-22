@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-frost: #E6F1FA;
+  --color-frost-border: #D0E4F5;
+  --color-denim: #5798D7;
+  --color-denim-dark: #4282C0;
+  --color-pistachio: #B9C255;
+  --color-ink: #1E293B;
+  --color-ink-soft: #64748B;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-frost);
+    background-image:
+      radial-gradient(at 10% 10%, rgba(87, 152, 215, 0.12) 0px, transparent 50%),
+      radial-gradient(at 90% 15%, rgba(185, 194, 85, 0.14) 0px, transparent 45%),
+      radial-gradient(at 50% 90%, rgba(208, 228, 245, 0.6) 0px, transparent 55%);
+    background-attachment: fixed;
+    color: var(--color-ink);
+    min-height: 100vh;
+  }
+}
+
+/* Animasi memantul halus untuk MoodBlob */
+@keyframes blob-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  35% {
+    transform: translateY(-5px) scale(1.04, 0.96);
+  }
+  65% {
+    transform: translateY(1px) scale(0.97, 1.03);
+  }
+}
+
+@keyframes blob-pop {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.3;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes blob-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+.mood-blob-interactive:hover,
+.mood-blob-selected {
+  animation: blob-bounce 0.75s ease-in-out;
+}
+
+.mood-blob-pop {
+  animation: blob-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mood-blob-float {
+  animation: blob-float 4.5s ease-in-out infinite;
+}
+
+/* Hormati prefers-reduced-motion: matikan seluruh animasi bagi pengguna sensitif gerak */
+@media (prefers-reduced-motion: reduce) {
+  .mood-blob-interactive:hover,
+  .mood-blob-selected,
+  .mood-blob-pop,
+  .mood-blob-float {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Gaya kertas buku harian untuk textarea catatan */
+.diary-paper {
+  background-color: #FFFFFF;
+  background-image: linear-gradient(transparent 31px, #E6F1FA 32px);
+  background-size: 100% 32px;
+  line-height: 32px;
+}
+
+/* Fokus aksesibilitas yang terlihat jelas dengan warna Iced Denim */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-denim);
+  outline-offset: 2px;
+}
