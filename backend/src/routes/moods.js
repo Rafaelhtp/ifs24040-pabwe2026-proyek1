@@ -62,7 +62,7 @@ router.post(
 
       const newMood = db
         .prepare('SELECT id, name, emoji, color, created_at FROM moods WHERE id = ?')
-        .get(info.lastInsertRowid);
+        .get(Number(info.lastInsertRowid));
 
       return res.status(201).json({
         success: true,

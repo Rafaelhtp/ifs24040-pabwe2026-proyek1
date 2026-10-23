@@ -51,7 +51,7 @@ router.post(
 
       const user = db
         .prepare('SELECT id, name, email, created_at FROM users WHERE id = ?')
-        .get(info.lastInsertRowid);
+        .get(Number(info.lastInsertRowid));
 
       const token = generateToken(user);
 

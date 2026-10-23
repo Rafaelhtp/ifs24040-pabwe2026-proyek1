@@ -1,5 +1,6 @@
-// Konfigurasi aplikasi Express (tanpa app.listen agar mudah diuji dengan Supertest)
-require('dotenv').config();
+// Konfigurasi aplikasi Express (tanpa app.listen agar dapat diuji langsung)
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { getUploadDir, errorHandler } = require('./middleware');
@@ -23,7 +24,6 @@ const allowedOrigins = rawClientUrls
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Izinkan request tanpa origin (seperti curl, Postman, atau pengujian Supertest)
       if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -50,14 +50,36 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// Registrasi seluruh route utama
+// Registrasi seluruh route API utama
 app.use('/api/auth', authRoutes);
 app.use('/api/moods', moodRoutes);
 app.use('/api/entries', entryRoutes);
 app.use('/api/songs', songRoutes);
 app.use('/api/stats', statsRoutes);
 
-// Handler untuk endpoint yang tidak ditemukan (404)
+// Handler 404 khusus rute /api/* yang tidak dikenal
+app.use('/api', (_req, res) => {
+  return res.status(404).json({
+    success: false,
+    data: null,
+    message: 'Endpoint tidak ditemukan',
+    errors: []
+  });
+});
+
+// Jika hasil build frontend (frontend/dist) tersedia, sajikan lewat express.static dengan fallback SPA
+const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    return res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+}
+
+// Handler 404 default jika bukan rute SPA
 app.use((_req, res) => {
   return res.status(404).json({
     success: false,

@@ -1,19 +1,31 @@
-// Middleware untuk autentikasi JWT, upload file (multer), validasi, dan error handler
+// Middleware autentikasi JWT, upload file (multer), validasi, dan error handler global
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 
-// Pastikan direktori upload tersedia
+// Pastikan direktori upload dapat ditulis oleh user 1000:1000 di container Alpine
 function getUploadDir() {
-  const rawDir = process.env.UPLOAD_DIR || './uploads';
-  const resolved = path.resolve(process.cwd(), rawDir);
-  if (!fs.existsSync(resolved)) {
-    fs.mkdirSync(resolved, { recursive: true });
+  const defaultDir = path.join(__dirname, '..', 'uploads');
+  const rawDir = process.env.UPLOAD_DIR || defaultDir;
+  let resolved = path.resolve(process.cwd(), rawDir);
+
+  try {
+    if (!fs.existsSync(resolved)) {
+      fs.mkdirSync(resolved, { recursive: true });
+    }
+    fs.accessSync(resolved, fs.constants.W_OK);
+    return resolved;
+  } catch (_err) {
+    const fallback = path.join(os.tmpdir(), 'moodify-uploads');
+    if (!fs.existsSync(fallback)) {
+      fs.mkdirSync(fallback, { recursive: true });
+    }
+    return fallback;
   }
-  return resolved;
 }
 
 // Hapus file dari folder upload dengan aman jika ada
@@ -30,7 +42,6 @@ function removeUploadedFile(filename) {
   }
 }
 
-// Konfigurasi penyimpanan Multer
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, getUploadDir());
@@ -63,7 +74,6 @@ const multerInstance = multer({
   }
 });
 
-// Pembungkus upload single field agar error multer langsung ditangani dengan status HTTP tepat
 function uploadSingle(fieldName) {
   return (req, res, next) => {
     const uploader = multerInstance.single(fieldName);
@@ -97,7 +107,6 @@ function uploadSingle(fieldName) {
   };
 }
 
-// Middleware autentikasi JWT
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -128,14 +137,12 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// Middleware pengecekan hasil express-validator
 function validate(req, res, next) {
   const result = validationResult(req);
   if (result.isEmpty()) {
     return next();
   }
 
-  // Jika request sudah terlanjur mengunggah file baru namun gagal validasi, hapus file tersebut
   if (req.file && req.file.filename) {
     removeUploadedFile(req.file.filename);
   }
@@ -153,7 +160,6 @@ function validate(req, res, next) {
   });
 }
 
-// Global error handler (tidak membocorkan stack trace di production)
 function errorHandler(err, req, res, _next) {
   if (req.file && req.file.filename) {
     removeUploadedFile(req.file.filename);

@@ -219,7 +219,7 @@ router.post(
         `)
         .run(title, artist, moodId, link, coverPath, req.user.id);
 
-      const createdSong = selectSongByIdStmt.get(info.lastInsertRowid);
+      const createdSong = selectSongByIdStmt.get(Number(info.lastInsertRowid));
 
       return res.status(201).json({
         success: true,

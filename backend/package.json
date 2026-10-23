@@ -1,28 +1,20 @@
 {
   "name": "moodify-backend",
   "version": "1.0.0",
-  "description": "Backend REST API untuk aplikasi Moodify - Jurnal Mood Harian & Rekomendasi Playlist",
+  "description": "Backend REST API untuk aplikasi Moodify (kompatibel penuh dengan Bun & bun:sqlite)",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "cross-env NODE_ENV=test JWT_SECRET=test-secret jest --coverage --forceExit"
+    "start": "bun src/server.js",
+    "dev": "bun --watch src/server.js",
+    "test": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^13.0.3",
     "cors": "^2.8.5",
-    "cross-env": "^7.0.3",
-    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "uuid": "^9.0.1"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.1.9",
-    "supertest": "^7.0.0"
+    "multer": "^2.0.0",
+    "uuid": "^11.1.0"
   }
 }

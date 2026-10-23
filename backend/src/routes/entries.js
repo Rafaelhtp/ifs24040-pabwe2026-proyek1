@@ -194,7 +194,7 @@ router.post(
         `)
         .run(userId, entryDate, moodId, energyLevel, note, imagePath);
 
-      const createdEntry = selectEntryByIdStmt.get(info.lastInsertRowid, userId);
+      const createdEntry = selectEntryByIdStmt.get(Number(info.lastInsertRowid), userId);
 
       return res.status(201).json({
         success: true,
