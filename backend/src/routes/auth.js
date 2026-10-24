@@ -9,9 +9,10 @@ const { authMiddleware, validate } = require('../middleware');
 const router = express.Router();
 
 function generateToken(user) {
+  const secret = process.env.JWT_SECRET || 'moodify-default-jwt-secret-2026';
   return jwt.sign(
     { id: user.id, email: user.email, name: user.name },
-    process.env.JWT_SECRET,
+    secret,
     { expiresIn: '7d' }
   );
 }

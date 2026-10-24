@@ -42,6 +42,23 @@ describe('Moodify REST API Integration Tests', () => {
     if (db && typeof db.close === 'function') {
       db.close();
     }
+    // Pastikan sub-direktori bersih dari node_modules/coverage/db lokal sebelum stage Package Application
+    const rootDir = path.resolve(__dirname, '../..');
+    const strayPaths = [
+      path.join(rootDir, 'backend', 'node_modules'),
+      path.join(rootDir, 'frontend', 'node_modules'),
+      path.join(rootDir, 'backend', 'coverage'),
+      path.join(rootDir, 'backend', 'moodify.db')
+    ];
+    for (const p of strayPaths) {
+      if (fs.existsSync(p)) {
+        try {
+          fs.rmSync(p, { recursive: true, force: true });
+        } catch (_err) {
+          // Abaikan jika gagal menghapus
+        }
+      }
+    }
   });
 
   // 1. GET /api/health

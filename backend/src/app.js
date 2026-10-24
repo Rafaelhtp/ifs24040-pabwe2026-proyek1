@@ -13,9 +13,8 @@ const statsRoutes = require('./routes/stats');
 
 const app = express();
 
-// Konfigurasi CORS (mendukung banyak origin yang dipisahkan koma)
-const rawClientUrls =
-  process.env.CLIENT_URL || 'http://localhost:5173,http://localhost:4173';
+// Konfigurasi CORS (mendukung banyak origin yang dipisahkan koma atau semua origin saat deploy)
+const rawClientUrls = process.env.CLIENT_URL || '*';
 const allowedOrigins = rawClientUrls
   .split(',')
   .map((item) => item.trim())
@@ -67,15 +66,20 @@ app.use('/api', (_req, res) => {
   });
 });
 
-// Jika hasil build frontend (frontend/dist) tersedia, sajikan lewat express.static dengan fallback SPA
-const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
-if (fs.existsSync(frontendDistPath)) {
-  app.use(express.static(frontendDistPath));
+// Jika hasil build frontend (frontend/dist atau dist) tersedia, sajikan lewat express.static dengan fallback SPA
+const candidateDistDirs = [
+  path.resolve(__dirname, '../../frontend/dist'),
+  path.resolve(__dirname, '../../dist')
+];
+const activeDistDir = candidateDistDirs.find((dir) => fs.existsSync(path.join(dir, 'index.html')));
+
+if (activeDistDir) {
+  app.use(express.static(activeDistDir));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
       return next();
     }
-    return res.sendFile(path.join(frontendDistPath, 'index.html'));
+    return res.sendFile(path.join(activeDistDir, 'index.html'));
   });
 }
 

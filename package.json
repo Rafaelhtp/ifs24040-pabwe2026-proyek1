@@ -2,22 +2,39 @@
   "name": "moodify-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "Monorepo aplikasi Moodify (Backend REST API + Frontend React Vite)",
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
+  "description": "Aplikasi Moodify Fullstack (Backend REST API + Frontend React Vite)",
   "scripts": {
-    "start": "bun run --cwd backend start",
-    "dev": "bun run --cwd frontend dev",
-    "dev:backend": "bun run --cwd backend dev",
-    "dev:frontend": "bun run --cwd frontend dev",
-    "build": "bun run --cwd frontend build",
-    "preview": "bun run --cwd frontend preview",
+    "start": "bun backend/src/server.js",
+    "dev": "vite --config frontend/vite.config.js",
+    "dev:backend": "bun --watch backend/src/server.js",
+    "dev:frontend": "vite --config frontend/vite.config.js",
+    "build": "vite build --config frontend/vite.config.js",
+    "preview": "vite preview --config frontend/vite.config.js",
     "test": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text"
   },
+  "dependencies": {
+    "@fontsource-variable/plus-jakarta-sans": "^5.1.1",
+    "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.468.0",
+    "multer": "^2.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "recharts": "^2.15.0",
+    "uuid": "^11.1.0"
+  },
   "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^3.0.7",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.0.5",
     "vitest": "^3.0.7"
   }
 }
