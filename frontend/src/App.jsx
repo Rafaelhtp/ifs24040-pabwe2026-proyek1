@@ -1,13 +1,16 @@
 // Komponen utama pengatur tata letak (layout) dan konfigurasi rute React Router v6 dengan code-splitting
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
-import Loading from './components/Loading';
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Loading from './components/common/Loading';
 import Login from './pages/Login';
 import Songs from './pages/Songs';
 import Dashboard from './pages/Dashboard';
+import { ROUTES } from './constants/routes';
+import { MESSAGES } from './constants/messages';
 
 const Register = lazy(() => import('./pages/Register'));
 const Journal = lazy(() => import('./pages/Journal'));
@@ -19,9 +22,9 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 function RootRedirect() {
   const { isAuthenticated, loading } = useAuth();
   if (loading) {
-    return <Loading text="Memeriksa sesi pengguna..." fullScreen />;
+    return <Loading text={MESSAGES.SESSION_CHECKING} fullScreen />;
   }
-  return <Navigate to={isAuthenticated ? '/dashboard' : '/auth/login'} replace />;
+  return <Navigate to={isAuthenticated ? ROUTES.DASHBOARD : ROUTES.LOGIN} replace />;
 }
 
 export default function App() {
@@ -31,25 +34,24 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-frost text-ink">
       <Navbar />
       <main id="main-content" className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
-        <Suspense fallback={<Loading text="Memuat halaman..." />}>
+        <Suspense fallback={<Loading text={MESSAGES.PAGE_LOADING} />}>
           <Routes>
-            {/* Redirect "/" ke /dashboard jika sudah login, selain itu ke /auth/login */}
-            <Route path="/" element={<RootRedirect />} />
+            <Route path={ROUTES.HOME} element={<RootRedirect />} />
 
-            {/* Rute Publik Utama */}
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/dashboard/auth/login" element={<Login />} />
-            <Route path="/auth/register" element={<Register />} />
-            <Route path="/dashboard/auth/register" element={<Register />} />
-            <Route path="/songs" element={<Songs />} />
+            <Route path={ROUTES.LOGIN} element={<Login />} />
+            <Route path={ROUTES.DASHBOARD_LOGIN} element={<Login />} />
+            <Route path={ROUTES.REGISTER} element={<Register />} />
+            <Route path={ROUTES.DASHBOARD_REGISTER} element={<Register />} />
+            <Route path={ROUTES.SONGS} element={<Songs />} />
 
-            {/* Redirect kompatibilitas dari /login dan /register ke /auth/* */}
-            <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-            <Route path="/register" element={<Navigate to="/auth/register" replace />} />
-
-            {/* Rute Terlindungi (Protected Routes) */}
+            <Route path={ROUTES.LEGACY_LOGIN} element={<Navigate to={ROUTES.LOGIN} replace />} />
             <Route
-              path="/dashboard"
+              path={ROUTES.LEGACY_REGISTER}
+              element={<Navigate to={ROUTES.REGISTER} replace />}
+            />
+
+            <Route
+              path={ROUTES.DASHBOARD}
               element={
                 <ProtectedRoute>
                   <Dashboard />
@@ -57,7 +59,7 @@ export default function App() {
               }
             />
             <Route
-              path="/journal"
+              path={ROUTES.JOURNAL}
               element={
                 <ProtectedRoute>
                   <Journal />
@@ -65,7 +67,7 @@ export default function App() {
               }
             />
             <Route
-              path="/journal/new"
+              path={ROUTES.JOURNAL_NEW}
               element={
                 <ProtectedRoute>
                   <EntryForm />
@@ -73,7 +75,7 @@ export default function App() {
               }
             />
             <Route
-              path="/journal/:id/edit"
+              path={ROUTES.JOURNAL_EDIT}
               element={
                 <ProtectedRoute>
                   <EntryForm />
@@ -81,7 +83,7 @@ export default function App() {
               }
             />
             <Route
-              path="/stats"
+              path={ROUTES.STATS}
               element={
                 <ProtectedRoute>
                   <Stats />
@@ -89,7 +91,7 @@ export default function App() {
               }
             />
             <Route
-              path="/moods"
+              path={ROUTES.MOODS}
               element={
                 <ProtectedRoute>
                   <Moods />
@@ -97,56 +99,11 @@ export default function App() {
               }
             />
 
-            {/* Rute Tidak Dikenal (404) */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </main>
-
-      <footer className="border-t border-frost-border bg-white/90 py-5 text-center text-xs font-medium text-ink-soft">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div>
-            <strong className="text-ink font-extrabold">Moodify</strong> — Jurnal Mood Harian &
-            Rekomendasi Playlist © {new Date().getFullYear()}
-          </div>
-          <nav aria-label="Navigasi Footer" className="flex flex-wrap items-center justify-center gap-3">
-            {isAuthenticated ? (
-              <>
-                <Link to="/dashboard" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Dashboard
-                </Link>
-                <Link to="/journal" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Jurnal
-                </Link>
-                <Link to="/journal/new" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Tulis Jurnal
-                </Link>
-                <Link to="/stats" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Statistik
-                </Link>
-                <Link to="/songs" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Lagu
-                </Link>
-                <Link to="/moods" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Mood
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/auth/login" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Masuk
-                </Link>
-                <Link to="/auth/register" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Daftar
-                </Link>
-                <Link to="/songs" className="font-bold text-ink hover:text-denim-dark hover:underline py-1 px-1.5">
-                  Koleksi Lagu
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </footer>
+      <Footer isAuthenticated={isAuthenticated} />
     </div>
   );
 }

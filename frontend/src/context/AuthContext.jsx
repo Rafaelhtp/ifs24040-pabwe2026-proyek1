@@ -1,25 +1,25 @@
 // Context autentikasi untuk mengelola state user, token, sesi login/register/logout
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { loginUser, registerUser, getCurrentUser } from '../services/authService';
-import { TOKEN_STORAGE_KEY } from '../services/client';
+import { getToken, setToken, clearToken } from '../services/tokenStorage';
+import { UNAUTHORIZED_EVENT } from '../constants/config';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY));
+  const [token, setTokenState] = useState(() => getToken());
   const [loading, setLoading] = useState(true);
 
-  // Pulihkan sesi saat halaman di-refresh dengan mengecek /api/auth/me
   useEffect(() => {
     let isMounted = true;
 
     async function verifySession() {
-      const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+      const storedToken = getToken();
       if (!storedToken) {
         if (isMounted) {
           setUser(null);
-          setToken(null);
+          setTokenState(null);
           setLoading(false);
         }
         return;
@@ -29,15 +29,14 @@ export function AuthProvider({ children }) {
         const res = await getCurrentUser();
         if (isMounted && res?.data) {
           setUser(res.data);
-          setToken(storedToken);
+          setTokenState(storedToken);
         }
       } catch (err) {
-        // Jika token tidak valid (401/404), bersihkan token dari localStorage
         if (!err.isNetworkError) {
-          localStorage.removeItem(TOKEN_STORAGE_KEY);
+          clearToken();
           if (isMounted) {
             setUser(null);
-            setToken(null);
+            setTokenState(null);
           }
         }
       } finally {
@@ -51,21 +50,21 @@ export function AuthProvider({ children }) {
 
     const handleUnauthorized = () => {
       setUser(null);
-      setToken(null);
+      setTokenState(null);
     };
 
-    window.addEventListener('moodify:unauthorized', handleUnauthorized);
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
     return () => {
       isMounted = false;
-      window.removeEventListener('moodify:unauthorized', handleUnauthorized);
+      window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
     };
   }, []);
 
   const login = useCallback(async (email, password) => {
     const res = await loginUser({ email, password });
     const { user: loggedInUser, token: newToken } = res.data;
-    localStorage.setItem(TOKEN_STORAGE_KEY, newToken);
     setToken(newToken);
+    setTokenState(newToken);
     setUser(loggedInUser);
     return loggedInUser;
   }, []);
@@ -73,15 +72,15 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (name, email, password) => {
     const res = await registerUser({ name, email, password });
     const { user: createdUser, token: newToken } = res.data;
-    localStorage.setItem(TOKEN_STORAGE_KEY, newToken);
     setToken(newToken);
+    setTokenState(newToken);
     setUser(createdUser);
     return createdUser;
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    setToken(null);
+    clearToken();
+    setTokenState(null);
     setUser(null);
   }, []);
 
@@ -98,6 +97,10 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * Mengakses state dan fungsi autentikasi dari AuthContext.
+ * @returns {object} State autentikasi (user, token, loading, isAuthenticated, login, register, logout)
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

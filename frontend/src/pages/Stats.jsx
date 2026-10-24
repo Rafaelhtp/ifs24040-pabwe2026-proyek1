@@ -5,12 +5,12 @@ import { CalendarCheck2, Zap, PenLine } from 'lucide-react';
 import { getWeeklyStats } from '../services/statsService';
 import useFetch from '../hooks/useFetch';
 import usePageTitle from '../hooks/usePageTitle';
-import MoodBlob from '../components/MoodBlob';
-import StatCard from '../components/StatCard';
-import MoodChart from '../components/MoodChart';
-import Loading from '../components/Loading';
-import ErrorMessage from '../components/ErrorMessage';
-import EmptyState from '../components/EmptyState';
+import MoodBlob from '../components/mood/MoodBlob';
+import StatCard from '../components/common/StatCard';
+import MoodChart from '../components/mood/MoodChart';
+import Loading from '../components/common/Loading';
+import ErrorMessage from '../components/common/ErrorMessage';
+import EmptyState from '../components/common/EmptyState';
 
 export default function Stats() {
   usePageTitle('Statistik Mingguan');

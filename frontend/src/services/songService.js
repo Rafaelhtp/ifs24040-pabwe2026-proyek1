@@ -1,58 +1,64 @@
 // Service pemanggilan API untuk Lagu & Rekomendasi Playlist (/api/songs/*)
 import apiClient from './client';
+import { cleanQueryParams } from '../utils/params';
 
+const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
+
+/**
+ * Mengambil daftar lagu rekomendasi berdasarkan filter mood dan kata kunci pencarian.
+ * @param {Record<string, unknown>} [params] - Parameter filter (mood_id, q)
+ * @returns {Promise<object>} Respons JSON berisi daftar lagu
+ */
 export async function getSongs(params = {}) {
-  try {
-    const cleanParams = {};
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        cleanParams[key] = value;
-      }
-    });
-    const response = await apiClient.get('/songs', { params: cleanParams });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.get('/songs', {
+    params: cleanQueryParams(params)
+  });
+  return response.data;
 }
 
+/**
+ * Mengambil satu lagu acak dari koleksi, opsional difilter berdasarkan mood_id.
+ * @param {number|string} [moodId] - ID mood opsional
+ * @returns {Promise<object>} Respons JSON berisi satu objek lagu acak
+ */
 export async function getRandomSong(moodId) {
-  try {
-    const params = moodId ? { mood_id: moodId } : {};
-    const response = await apiClient.get('/songs/random', { params });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.get('/songs/random', {
+    params: cleanQueryParams({ mood_id: moodId })
+  });
+  return response.data;
 }
 
+/**
+ * Menambahkan lagu rekomendasi baru beserta sampul opsional.
+ * @param {FormData} formData - Objek FormData lagu baru
+ * @returns {Promise<object>} Respons JSON lagu yang baru ditambahkan
+ */
 export async function createSong(formData) {
-  try {
-    const response = await apiClient.post('/songs', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.post('/songs', formData, {
+    headers: MULTIPART_HEADERS
+  });
+  return response.data;
 }
 
+/**
+ * Memperbarui data lagu rekomendasi berdasarkan ID.
+ * @param {number|string} id - ID lagu
+ * @param {FormData} formData - Objek FormData perubahan lagu
+ * @returns {Promise<object>} Respons JSON lagu yang telah diperbarui
+ */
 export async function updateSong(id, formData) {
-  try {
-    const response = await apiClient.put(`/songs/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.put(`/songs/${id}`, formData, {
+    headers: MULTIPART_HEADERS
+  });
+  return response.data;
 }
 
+/**
+ * Menghapus lagu rekomendasi berdasarkan ID.
+ * @param {number|string} id - ID lagu yang akan dihapus
+ * @returns {Promise<object>} Respons JSON konfirmasi penghapusan lagu
+ */
 export async function deleteSong(id) {
-  try {
-    const response = await apiClient.delete(`/songs/${id}`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.delete(`/songs/${id}`);
+  return response.data;
 }

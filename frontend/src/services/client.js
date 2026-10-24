@@ -1,18 +1,26 @@
-// Konfigurasi Axios client beserta interceptor token JWT dan penanganan error global
+// Konfigurasi Axios client beserta interceptor token JWT dan penanganan error global tanpa full reload SPA
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/imageUrl';
-
-export const TOKEN_STORAGE_KEY = 'moodify_token';
+import { API_TIMEOUT_MS, UNAUTHORIZED_EVENT } from '../constants/config';
+import { MESSAGES } from '../constants/messages';
+import { getToken, clearToken } from './tokenStorage';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL ? `${API_BASE_URL}/api` : '/api',
-  timeout: 15000
+  timeout: API_TIMEOUT_MS
 });
 
-// Interceptor Request: sisipkan header Authorization Bearer secara otomatis jika ada token
+/**
+ * Membersihkan token dan mengirim event unauthorized agar AuthContext & ProtectedRoute melakukan navigasi SPA.
+ */
+function handleUnauthorized() {
+  clearToken();
+  window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
+}
+
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,14 +29,13 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor Response: tangani kondisi server mati dan token 401 kedaluwarsa
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (!error.response) {
-      const networkError = new Error('Tidak dapat terhubung ke server');
+      const networkError = new Error(MESSAGES.NETWORK_ERROR);
       networkError.isNetworkError = true;
-      networkError.userMessage = 'Tidak dapat terhubung ke server';
+      networkError.userMessage = MESSAGES.NETWORK_ERROR;
       return Promise.reject(networkError);
     }
 
@@ -36,27 +43,14 @@ apiClient.interceptors.response.use(
     const reqUrl = config?.url || '';
     const isAuthEndpoint = reqUrl.includes('/auth/login') || reqUrl.includes('/auth/register');
 
-    // Jika 401 pada rute terlindungi, bersihkan token dan arahkan ke /auth/login
     if (status === 401 && !isAuthEndpoint) {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      window.dispatchEvent(new CustomEvent('moodify:unauthorized'));
-      const currentPath = window.location.pathname;
-      if (
-        currentPath !== '/auth/login' &&
-        currentPath !== '/dashboard/auth/login' &&
-        currentPath !== '/auth/register' &&
-        currentPath !== '/dashboard/auth/register' &&
-        currentPath !== '/login' &&
-        currentPath !== '/register'
-      ) {
-        window.location.href = '/auth/login';
-      }
+      handleUnauthorized();
     }
 
     const apiMessage =
       data?.message ||
       (Array.isArray(data?.errors) && data.errors[0]?.message) ||
-      'Terjadi kesalahan saat memproses permintaan';
+      MESSAGES.GENERIC_API_ERROR;
 
     error.userMessage = apiMessage;
     error.fieldErrors = data?.errors || [];

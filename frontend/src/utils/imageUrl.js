@@ -6,6 +6,11 @@ const rawBaseUrl = import.meta.env.VITE_API_URL
 
 export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, '');
 
+/**
+ * Mengubah nama file gambar dari server menjadi URL relatif /uploads/<filename>.
+ * @param {string|null|undefined} filename - Nama file atau URL gambar
+ * @returns {string|null} URL gambar yang siap ditampilkan pada elemen <img>
+ */
 export function getImageUrl(filename) {
   if (!filename) return null;
   if (

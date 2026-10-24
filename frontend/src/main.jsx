@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import '@fontsource-variable/plus-jakarta-sans';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
-import { ToastProvider } from './components/Toast';
+import { ToastProvider } from './components/common/Toast';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(

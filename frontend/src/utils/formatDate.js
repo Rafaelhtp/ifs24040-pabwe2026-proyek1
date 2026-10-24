@@ -32,7 +32,10 @@ const SHORT_MONTHS_ID = [
 
 const DAYS_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-// Mengembalikan tanggal hari ini dalam format YYYY-MM-DD (waktu lokal)
+/**
+ * Mengembalikan tanggal hari ini dalam format YYYY-MM-DD sesuai waktu lokal.
+ * @returns {string} Tanggal format YYYY-MM-DD
+ */
 export function getTodayDateString() {
   const now = new Date();
   const year = now.getFullYear();
@@ -41,7 +44,11 @@ export function getTodayDateString() {
   return `${year}-${month}-${day}`;
 }
 
-// Mengubah string YYYY-MM-DD menjadi "Kamis, 22 Oktober 2026"
+/**
+ * Mengubah string YYYY-MM-DD menjadi format lengkap Bahasa Indonesia (contoh: "Kamis, 22 Oktober 2026").
+ * @param {string} dateStr - String tanggal YYYY-MM-DD
+ * @returns {string} Tanggal terformat lengkap
+ */
 export function formatDateLong(dateStr) {
   if (!dateStr) return '-';
   const parts = String(dateStr).slice(0, 10).split('-');
@@ -59,7 +66,11 @@ export function formatDateLong(dateStr) {
   return `${dayName}, ${day} ${monthName} ${year}`;
 }
 
-// Mengubah string YYYY-MM-DD menjadi "22 Okt" untuk label grafik
+/**
+ * Mengubah string YYYY-MM-DD menjadi format pendek untuk sumbu grafik (contoh: "22 Okt").
+ * @param {string} dateStr - String tanggal YYYY-MM-DD
+ * @returns {string} Tanggal terformat pendek
+ */
 export function formatDateShort(dateStr) {
   if (!dateStr) return '-';
   const parts = String(dateStr).slice(0, 10).split('-');

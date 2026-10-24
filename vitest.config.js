@@ -16,7 +16,7 @@ const hasRootSrc = fs.existsSync('./src/app.js');
 export default defineConfig({
   test: {
     globals: true,
-    include: ['backend/tests/**/*.test.js'],
+    include: ['backend/tests/**/*.test.js', 'frontend/tests/**/*.test.{js,jsx}'],
     environment: 'node',
     fileParallelism: false,
     coverage: {

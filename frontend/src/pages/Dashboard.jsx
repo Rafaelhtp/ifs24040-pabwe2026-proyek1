@@ -7,13 +7,13 @@ import { getWeeklyStats } from '../services/statsService';
 import { getEntries } from '../services/entryService';
 import useFetch from '../hooks/useFetch';
 import usePageTitle from '../hooks/usePageTitle';
-import MoodBlob from '../components/MoodBlob';
-import StatCard from '../components/StatCard';
-import SoundtrackCard from '../components/SoundtrackCard';
-import EntryCard from '../components/EntryCard';
-import Loading from '../components/Loading';
-import ErrorMessage from '../components/ErrorMessage';
-import EmptyState from '../components/EmptyState';
+import MoodBlob from '../components/mood/MoodBlob';
+import StatCard from '../components/common/StatCard';
+import SoundtrackCard from '../components/entries/SoundtrackCard';
+import EntryCard from '../components/entries/EntryCard';
+import Loading from '../components/common/Loading';
+import ErrorMessage from '../components/common/ErrorMessage';
+import EmptyState from '../components/common/EmptyState';
 
 export default function Dashboard() {
   usePageTitle('Dashboard');
