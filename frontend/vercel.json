@@ -1,7 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "https://URL-BACKEND/api/:path*" },
-    { "source": "/uploads/:path*", "destination": "https://URL-BACKEND/uploads/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
