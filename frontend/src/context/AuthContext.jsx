@@ -2,14 +2,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { loginUser, registerUser, getCurrentUser } from '../services/authService';
-import { getToken, setToken, clearToken } from '../services/tokenStorage';
+import { getToken, setToken as saveStoredToken, clearToken } from '../services/tokenStorage';
 import { UNAUTHORIZED_EVENT } from '../constants/config';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setTokenState] = useState(() => getToken());
+  const [token, setToken] = useState(() => getToken());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
       if (!storedToken) {
         if (isMounted) {
           setUser(null);
-          setTokenState(null);
+          setToken(null);
           setLoading(false);
         }
         return;
@@ -30,14 +30,14 @@ export function AuthProvider({ children }) {
         const res = await getCurrentUser();
         if (isMounted && res?.data) {
           setUser(res.data);
-          setTokenState(storedToken);
+          setToken(storedToken);
         }
       } catch (err) {
         if (!err?.isNetworkError) {
           clearToken();
           if (isMounted) {
             setUser(null);
-            setTokenState(null);
+            setToken(null);
           }
         }
       } finally {
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
 
     const handleUnauthorized = () => {
       setUser(null);
-      setTokenState(null);
+      setToken(null);
     };
 
     globalThis.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
@@ -65,8 +65,8 @@ export function AuthProvider({ children }) {
     const res = await loginUser({ email, password });
     const loggedInUser = res?.data?.user || null;
     const newToken = res?.data?.token || '';
+    saveStoredToken(newToken);
     setToken(newToken);
-    setTokenState(newToken);
     setUser(loggedInUser);
     return loggedInUser;
   }, []);
@@ -75,15 +75,15 @@ export function AuthProvider({ children }) {
     const res = await registerUser({ name, email, password });
     const createdUser = res?.data?.user || null;
     const newToken = res?.data?.token || '';
+    saveStoredToken(newToken);
     setToken(newToken);
-    setTokenState(newToken);
     setUser(createdUser);
     return createdUser;
   }, []);
 
   const logout = useCallback(() => {
     clearToken();
-    setTokenState(null);
+    setToken(null);
     setUser(null);
   }, []);
 

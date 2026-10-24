@@ -62,12 +62,12 @@ const storage = multer.diskStorage({
   }
 });
 
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
 const fileFilter = (_req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  if (ALLOWED_MIME_TYPES.includes(file.mimetype) && ALLOWED_EXTENSIONS.includes(ext)) {
+  if (ALLOWED_MIME_TYPES.has(file.mimetype) && ALLOWED_EXTENSIONS.has(ext)) {
     cb(null, true);
   } else {
     const err = new Error('Tipe file tidak didukung. Gunakan format JPG, PNG, atau WEBP');

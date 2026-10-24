@@ -133,16 +133,7 @@ export default function Dashboard() {
         />
       </section>
 
-      {!hasAnyData ? (
-        <EmptyState
-          moodName="senang"
-          moodColor="#FACC15"
-          title="Jurnal Harianmu Masih Kosong"
-          description="Yuk mulai tulis catatan suasana hati pertamamu hari ini dan dapatkan rekomendasi soundtrack lagu yang pas!"
-          actionLabel="Tulis Jurnal Pertama"
-          onAction={() => navigate('/journal/new')}
-        />
-      ) : (
+      {hasAnyData ? (
         <>
           {/* Widget Soundtrack Mood Kamu */}
           <SoundtrackCard
@@ -186,6 +177,15 @@ export default function Dashboard() {
             </div>
           </section>
         </>
+      ) : (
+        <EmptyState
+          moodName="senang"
+          moodColor="#FACC15"
+          title="Jurnal Harianmu Masih Kosong"
+          description="Yuk mulai tulis catatan suasana hati pertamamu hari ini dan dapatkan rekomendasi soundtrack lagu yang pas!"
+          actionLabel="Tulis Jurnal Pertama"
+          onAction={() => navigate('/journal/new')}
+        />
       )}
     </div>
   );

@@ -9,10 +9,11 @@ import { MESSAGES } from '../constants/messages';
  * @param {{ immediate?: boolean }} [options] - Opsi eksekusi langsung saat komponen dipasang
  * @returns {{ data: any, meta: any, loading: boolean, error: object|null, refetch: function, setData: function }}
  */
-export default function useFetch(fetcher, deps = [], options = { immediate: true }) {
+export default function useFetch(fetcher, deps = [], options = {}) {
+  const fetchOptions = { immediate: true, ...options };
   const [data, setData] = useState(null);
   const [meta, setMeta] = useState(null);
-  const [loading, setLoading] = useState(Boolean(options.immediate));
+  const [loading, setLoading] = useState(Boolean(fetchOptions.immediate));
   const [error, setError] = useState(null);
 
   const execute = useCallback(async (...args) => {
@@ -39,10 +40,10 @@ export default function useFetch(fetcher, deps = [], options = { immediate: true
   }, deps); // NOSONAR
 
   useEffect(() => {
-    if (options?.immediate) {
+    if (fetchOptions.immediate) {
       execute().catch(() => {});
     }
-  }, [execute, options?.immediate]);
+  }, [execute, fetchOptions.immediate]);
 
   return { data, meta, loading, error, refetch: execute, setData };
 }

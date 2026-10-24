@@ -4,7 +4,7 @@ import { MAX_IMAGE_SIZE_BYTES, MIN_PASSWORD_LENGTH } from '../constants/config';
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 /**
  * Memeriksa apakah format alamat email valid.
@@ -65,7 +65,7 @@ export function isValidUrl(url) {
 export function validateImageFile(file) {
   if (!file) return { valid: true, error: null };
 
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     return {
       valid: false,
       error: 'Format gambar tidak didukung. Pilih file JPG, PNG, atau WEBP.'
