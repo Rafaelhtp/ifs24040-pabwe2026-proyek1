@@ -10,13 +10,13 @@ export default function Loading({ text = 'Memuat data...', fullScreen = false })
     : 'py-12 flex flex-col items-center justify-center p-4';
 
   return (
-    <div className={containerClass} role="status" aria-live="polite">
+    <output className={containerClass} aria-live="polite">
       <div className="relative flex items-center justify-center mb-3">
         <div className="w-16 h-16 rounded-full border-4 border-frost-border border-t-denim animate-spin absolute" />
         <MoodBlob moodName="tenang" color={DEFAULT_ACCENT_COLOR} size="sm" />
       </div>
       <p className="text-sm font-bold text-ink-soft mt-2">{text}</p>
-    </div>
+    </output>
   );
 }
 

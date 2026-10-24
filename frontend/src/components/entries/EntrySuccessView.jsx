@@ -28,8 +28,11 @@ export default function EntrySuccessView({ savedEntry, onWriteAnother }) {
           Terima kasih sudah berbagi cerita hari ini!
         </h1>
         <p className="text-sm text-ink-soft mt-1">
-          Catatan untuk tanggal <strong>{formatDateLong(savedEntry?.entry_date)}</strong> dengan mood{' '}
-          <strong>{savedEntry?.mood_name}</strong> berhasil disimpan.
+          <span>Catatan untuk tanggal </span>
+          <strong>{formatDateLong(savedEntry?.entry_date)}</strong>
+          <span> dengan mood </span>
+          <strong>{savedEntry?.mood_name}</strong>
+          <span> berhasil disimpan.</span>
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3 mt-6">

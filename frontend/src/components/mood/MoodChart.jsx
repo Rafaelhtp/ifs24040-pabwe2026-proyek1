@@ -40,11 +40,11 @@ export default function MoodChart({ byMood = [], daily = [] }) {
           <div className="flex items-center gap-3 text-xs font-bold">
             <span className="inline-flex items-center gap-1.5 text-ink">
               <span className="w-3 h-3 rounded-sm bg-[#5798D7] inline-block" />
-              Entri
+              <span>Entri</span>
             </span>
             <span className="inline-flex items-center gap-1.5 text-ink">
               <span className="w-3 h-3 rounded-full bg-pistachio inline-block border border-ink/20" />
-              Energi
+              <span>Energi</span>
             </span>
           </div>
         </div>

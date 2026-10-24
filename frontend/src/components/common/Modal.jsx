@@ -14,9 +14,9 @@ export default function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
     if (!isOpen) return undefined;
 
-    triggerRef.current = document.activeElement;
+    triggerRef.current = globalThis.document?.activeElement;
 
-    const timer = setTimeout(() => {
+    const timer = globalThis.setTimeout(() => {
       if (!dialogRef.current) return;
       const focusables = dialogRef.current.querySelectorAll(FOCUSABLE_SELECTOR);
       if (focusables.length > 0) {
@@ -41,29 +41,24 @@ export default function Modal({ isOpen, onClose, title, children }) {
         }
         const firstEl = focusables[0];
         const lastEl = focusables.at(-1);
+        const activeEl = globalThis.document?.activeElement;
 
         if (event.shiftKey) {
-          if (
-            document.activeElement === firstEl ||
-            !dialogRef.current.contains(document.activeElement)
-          ) {
+          if (activeEl === firstEl || !dialogRef.current.contains(activeEl)) {
             event.preventDefault();
             lastEl?.focus();
           }
-        } else if (
-          document.activeElement === lastEl ||
-          !dialogRef.current.contains(document.activeElement)
-        ) {
+        } else if (activeEl === lastEl || !dialogRef.current.contains(activeEl)) {
           event.preventDefault();
           firstEl?.focus();
         }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('keydown', handleKeyDown);
+      globalThis.clearTimeout(timer);
+      globalThis.removeEventListener('keydown', handleKeyDown);
       if (typeof triggerRef.current?.focus === 'function') {
         triggerRef.current.focus();
       }
@@ -73,16 +68,13 @@ export default function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
 
   return (
-    <div // NOSONAR
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/45 backdrop-blur-xs"
-      role="dialog" // NOSONAR
-      aria-modal="true"
-      aria-labelledby={titleId}
-    >
-      <div
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/45 backdrop-blur-xs">
+      <dialog
+        open
         ref={dialogRef}
-        tabIndex={-1} // NOSONAR
-        className="bg-white rounded-3xl shadow-soft-lg border border-frost-border w-full max-w-lg overflow-hidden"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white rounded-3xl shadow-soft-lg border border-frost-border w-full max-w-lg overflow-hidden m-0 p-0"
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-frost-border bg-frost/60">
           <h2 id={titleId} className="text-lg font-extrabold text-ink">
@@ -98,7 +90,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
           </button>
         </div>
         <div className="p-6 max-h-[82vh] overflow-y-auto">{children}</div>
-      </div>
+      </dialog>
     </div>
   );
 }

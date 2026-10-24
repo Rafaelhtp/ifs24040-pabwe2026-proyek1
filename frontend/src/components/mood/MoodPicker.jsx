@@ -21,7 +21,8 @@ export default function MoodPicker({ moods = [], selectedMoodId, onSelect }) {
     <div>
       <div className="mb-3">
         <span className="block text-base font-extrabold text-ink">
-          Bagaimana perasaanmu hari ini? <span className="text-rose-500">*</span>
+          <span>Bagaimana perasaanmu hari ini? </span>
+          <span className="text-rose-500">*</span>
         </span>
         <span className="block text-xs font-bold text-denim-dark mt-0.5">
           Pilih satu karakter blob yang paling menggambarkan suasana hatimu saat ini

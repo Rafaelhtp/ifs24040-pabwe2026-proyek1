@@ -15,8 +15,8 @@ const apiClient = axios.create({
  */
 function handleUnauthorized() {
   clearToken();
-  if (globalThis.window !== undefined) {
-    globalThis.window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
+  if (typeof globalThis.dispatchEvent === 'function') {
+    globalThis.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
   }
 }
 

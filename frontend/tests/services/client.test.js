@@ -14,9 +14,7 @@ describe('apiClient interceptors', () => {
       removeItem: (key) => store.delete(key)
     };
     dispatchedEvents = [];
-    globalThis.window = {
-      dispatchEvent: vi.fn((evt) => dispatchedEvents.push(evt))
-    };
+    globalThis.dispatchEvent = vi.fn((evt) => dispatchedEvents.push(evt));
   });
 
   it('attaches Bearer token on request when token exists in storage', async () => {

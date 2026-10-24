@@ -54,10 +54,10 @@ export function AuthProvider({ children }) {
       setTokenState(null);
     };
 
-    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+    globalThis.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
     return () => {
       isMounted = false;
-      window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+      globalThis.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
     };
   }, []);
 

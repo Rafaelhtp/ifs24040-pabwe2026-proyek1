@@ -92,12 +92,9 @@ export default function EntryForm() {
                 </span>
               </div>
             ) : (
-              <div
-                role="img"
-                aria-label="Mood belum dipilih"
-                className="w-24 h-24 rounded-full border-3 border-dashed border-denim/60 bg-white/80 flex items-center justify-center text-3xl font-extrabold text-denim"
-              >
-                ?
+              <div className="w-24 h-24 rounded-full border-3 border-dashed border-denim/60 bg-white/80 flex items-center justify-center text-3xl font-extrabold text-denim">
+                <span aria-hidden="true">?</span>
+                <span className="sr-only">Mood belum dipilih</span>
               </div>
             )}
           </div>

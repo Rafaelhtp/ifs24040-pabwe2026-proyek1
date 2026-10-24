@@ -25,7 +25,7 @@ const mockState = {
 
 vi.mock('../../src/context/AuthContext', () => ({
   useAuth: () => mockState.auth,
-  AuthProvider: ({ children }) => <>{children}</>
+  AuthProvider: ({ children }) => <>{children}</> // NOSONAR
 }));
 
 vi.mock('../../src/hooks/useFetch', () => ({

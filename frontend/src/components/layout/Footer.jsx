@@ -26,8 +26,8 @@ export default function Footer({ isAuthenticated }) {
     <footer className="border-t border-frost-border bg-white/90 py-5 text-center text-xs font-medium text-ink-soft">
       <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div>
-          <strong className="text-ink font-extrabold">Moodify</strong> — Jurnal Mood Harian &
-          Rekomendasi Playlist © {new Date().getFullYear()}
+          <strong className="text-ink font-extrabold">Moodify</strong>
+          <span>{` — Jurnal Mood Harian & Rekomendasi Playlist © ${new Date().getFullYear()}`}</span>
         </div>
         <nav
           aria-label="Navigasi Footer"

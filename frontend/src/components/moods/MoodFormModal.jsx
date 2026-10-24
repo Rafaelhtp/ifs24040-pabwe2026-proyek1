@@ -36,7 +36,7 @@ export default function MoodFormModal({
           <div>
             <p className="text-xs font-bold text-denim-dark">Pratinjau Karakter Blob</p>
             <p className="text-sm font-extrabold text-ink">
-              {form?.name?.trim() || 'Nama Mood'}{' '}
+              <span>{`${form?.name?.trim() || 'Nama Mood'} `}</span>
               <span className="text-xs font-normal text-ink-soft">({form?.emoji})</span>
             </p>
           </div>
@@ -57,7 +57,8 @@ export default function MoodFormModal({
 
         <div>
           <label htmlFor="mood-emoji-input" className="block text-xs font-extrabold text-ink mb-1">
-            Simbol Emoji (Wajib untuk Database) <span className="text-rose-500">*</span>
+            <span>Simbol Emoji (Wajib untuk Database) </span>
+            <span className="text-rose-500">*</span>
           </label>
           <div className="flex items-center gap-2 mb-2">
             <input
@@ -90,7 +91,8 @@ export default function MoodFormModal({
 
         <div>
           <label htmlFor="mood-color-input" className="block text-xs font-extrabold text-ink mb-1">
-            Warna Aksen Mood <span className="text-rose-500">*</span>
+            <span>Warna Aksen Mood </span>
+            <span className="text-rose-500">*</span>
           </label>
           <div className="flex items-center gap-3">
             <input

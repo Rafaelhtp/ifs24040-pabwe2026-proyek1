@@ -60,7 +60,7 @@ export default function SoundtrackCard({
           <div>
             <h2 className="text-base font-extrabold text-ink">{title}</h2>
             <p className="text-xs font-medium text-ink-soft">
-              Rekomendasi playlist selaras untuk mood{' '}
+              <span>Rekomendasi playlist selaras untuk mood </span>
               <strong className="text-ink">{song?.mood_name || moodName}</strong>
             </p>
           </div>

@@ -65,8 +65,7 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={contextValue}>
       {children}
-      <div
-        role="status"
+      <output
         aria-live="polite"
         aria-atomic="true"
         className="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0 pointer-events-none"
@@ -93,7 +92,7 @@ export function ToastProvider({ children }) {
             </div>
           );
         })}
-      </div>
+      </output>
     </ToastContext.Provider>
   );
 }

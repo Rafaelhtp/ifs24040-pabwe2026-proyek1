@@ -204,7 +204,7 @@ export default function Register() {
           </form>
 
           <p className="text-center text-xs font-medium text-ink-soft mt-6">
-            Sudah punya akun?{' '}
+            <span>Sudah punya akun? </span>
             <Link to="/auth/login" className="font-extrabold text-denim-dark hover:underline">
               Masuk di sini
             </Link>

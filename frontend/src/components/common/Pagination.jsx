@@ -15,8 +15,11 @@ export default function Pagination({ page = 1, limit = 10, total = 0, onPageChan
       className="flex flex-wrap items-center justify-between gap-4 mt-6 bg-white border border-frost-border rounded-2xl px-5 py-3.5 shadow-soft"
     >
       <span className="text-xs font-medium text-ink-soft">
-        Halaman <strong className="text-ink">{page}</strong> dari{' '}
-        <strong className="text-ink">{totalPages}</strong> ({total} entri)
+        <span>Halaman </span>
+        <strong className="text-ink">{page}</strong>
+        <span> dari </span>
+        <strong className="text-ink">{totalPages}</strong>
+        <span>{` (${total} entri)`}</span>
       </span>
       <div className="flex items-center gap-1.5">
         <button

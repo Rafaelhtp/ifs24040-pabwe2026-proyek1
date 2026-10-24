@@ -102,7 +102,9 @@ export default function Login() {
           </div>
 
           <p className="text-xs text-white font-medium relative z-10">
-            Akun Demo: <strong className="text-white">demo@moodify.com</strong> /{' '}
+            <span>Akun Demo: </span>
+            <strong className="text-white">demo@moodify.com</strong>
+            <span> / </span>
             <strong className="text-white">demo12345</strong>
           </p>
         </div>
@@ -206,7 +208,7 @@ export default function Login() {
           </form>
 
           <p className="text-center text-xs font-medium text-ink-soft mt-6">
-            Belum memiliki akun?{' '}
+            <span>Belum memiliki akun? </span>
             <Link to="/auth/register" className="font-extrabold text-denim-dark hover:underline">
               Daftar akun baru
             </Link>

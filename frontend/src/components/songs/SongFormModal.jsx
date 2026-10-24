@@ -57,7 +57,8 @@ export default function SongFormModal({
 
         <div>
           <label htmlFor="song-mood-select" className="block text-xs font-extrabold text-ink mb-1">
-            Kategori Mood <span className="text-rose-500">*</span>
+            <span>Kategori Mood </span>
+            <span className="text-rose-500">*</span>
           </label>
           <select
             id="song-mood-select"
