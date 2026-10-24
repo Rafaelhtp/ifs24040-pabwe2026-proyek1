@@ -1,7 +1,7 @@
 // Entry point utama untuk menjalankan server HTTP Moodify API dengan Bun
 const fs = require('node:fs');
 const path = require('node:path');
-const { execSync } = require('node:child_process');
+const { execFileSync } = require('node:child_process');
 
 // Muat file .env dari root atau backend/ jika ada dan belum dimuat otomatis
 function loadEnvIfNeeded() {
@@ -45,7 +45,7 @@ function ensureFrontendBuild() {
   if (!fs.existsSync(distIndex) && fs.existsSync(frontendEntry)) {
     try {
       console.log('Membangun aset statis frontend (frontend/dist)...');
-      execSync('bun run build', { cwd: rootDir, stdio: 'inherit' });
+      execFileSync('bun', ['run', 'build'], { cwd: rootDir, stdio: 'inherit' });
     } catch (_err) {
       // Lanjutkan menjalankan API meskipun build frontend gagal
     }
