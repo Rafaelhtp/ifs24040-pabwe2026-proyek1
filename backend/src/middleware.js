@@ -108,9 +108,9 @@ function formatUploadError(err, fieldName) {
     };
   }
 
-  const fallbackMsg = err.message || 'Gagal mengunggah file';
+  const fallbackMsg = err?.message || 'Gagal mengunggah file';
   return {
-    status: err.status || 400,
+    status: err?.status || 400,
     body: {
       success: false,
       data: null,
@@ -132,8 +132,8 @@ function uploadSingle(fieldName) {
 }
 
 function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const authHeader = req.headers?.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({
       success: false,
       data: null,
@@ -146,9 +146,9 @@ function authMiddleware(req, res, next) {
   try {
     const decoded = jwt.verify(token, getJwtSecret());
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      name: decoded.name
+      id: decoded?.id,
+      email: decoded?.email,
+      name: decoded?.name
     };
     return next();
   } catch {
@@ -167,7 +167,7 @@ function validate(req, res, next) {
     return next();
   }
 
-  if (req.file && req.file.filename) {
+  if (req.file?.filename) {
     removeUploadedFile(req.file.filename);
   }
 
@@ -179,20 +179,20 @@ function validate(req, res, next) {
   return res.status(400).json({
     success: false,
     data: null,
-    message: errors[0].message,
+    message: errors[0]?.message,
     errors
   });
 }
 
 function errorHandler(err, req, res, _next) {
-  if (req.file && req.file.filename) {
+  if (req.file?.filename) {
     removeUploadedFile(req.file.filename);
   }
 
-  const statusCode = err.status || 500;
+  const statusCode = err?.status || 500;
   const isProd = process.env.NODE_ENV === 'production';
 
-  let message = err.message || SERVER_ERROR_MSG;
+  let message = err?.message || SERVER_ERROR_MSG;
   if (statusCode === 500 && isProd) {
     message = SERVER_ERROR_MSG;
   }
@@ -201,10 +201,10 @@ function errorHandler(err, req, res, _next) {
     success: false,
     data: null,
     message,
-    errors: err.errors || []
+    errors: err?.errors || []
   };
 
-  if (!isProd && err.stack && statusCode === 500) {
+  if (!isProd && err?.stack && statusCode === 500) {
     response.debug = err.stack;
   }
 

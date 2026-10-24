@@ -49,10 +49,10 @@ export default function Register() {
     setSubmitting(true);
     try {
       const user = await register(name.trim(), email.trim(), password);
-      showToast(`Akun berhasil dibuat! Selamat datang, ${user.name}!`, 'success');
+      showToast(`Akun berhasil dibuat! Selamat datang, ${user?.name || 'Pengguna'}!`, 'success');
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      const msg = err.userMessage || 'Gagal mendaftarkan akun.';
+      const msg = err?.userMessage || 'Gagal mendaftarkan akun.';
       setFormError(msg);
       showToast(msg, 'error');
     } finally {

@@ -1,7 +1,7 @@
 // Pengujian komprehensif REST API Moodify menggunakan Vitest (mencakup seluruh cabang/branch & unit)
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 

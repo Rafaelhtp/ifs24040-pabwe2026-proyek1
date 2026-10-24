@@ -1,5 +1,6 @@
 // Komponen pesan peringatan/error pada formulir dengan dukungan aksesibilitas role="alert"
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export default function FormAlert({ id, message }) {
   if (!message) return null;
@@ -14,3 +15,8 @@ export default function FormAlert({ id, message }) {
     </div>
   );
 }
+
+FormAlert.propTypes = {
+  id: PropTypes.string,
+  message: PropTypes.string
+};

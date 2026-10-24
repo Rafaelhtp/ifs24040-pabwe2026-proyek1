@@ -1,5 +1,6 @@
 // Komponen dialog konfirmasi sebelum menghapus data
 import React from 'react';
+import PropTypes from 'prop-types';
 import Modal from './Modal';
 
 export default function ConfirmDialog({
@@ -36,3 +37,14 @@ export default function ConfirmDialog({
     </Modal>
   );
 }
+
+ConfirmDialog.propTypes = {
+  isOpen: PropTypes.bool,
+  title: PropTypes.string,
+  message: PropTypes.string,
+  confirmLabel: PropTypes.string,
+  cancelLabel: PropTypes.string,
+  loading: PropTypes.bool,
+  onConfirm: PropTypes.func,
+  onCancel: PropTypes.func
+};

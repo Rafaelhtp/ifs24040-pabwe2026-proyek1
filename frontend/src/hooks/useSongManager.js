@@ -33,20 +33,20 @@ export default function useSongManager({
 
   const toForm = useCallback(
     (song) => ({
-      title: song.title || '',
-      artist: song.artist || '',
-      moodId: String(song.mood_id || ''),
-      link: song.link || '',
+      title: song?.title || '',
+      artist: song?.artist || '',
+      moodId: String(song?.mood_id || ''),
+      link: song?.link || '',
       coverFile: null
     }),
     []
   );
 
   const validate = useCallback((form) => {
-    if (!form.title.trim()) return 'Judul lagu wajib diisi.';
-    if (!form.artist.trim()) return 'Nama artis wajib diisi.';
-    if (!form.moodId) return 'Pilih mood untuk lagu ini.';
-    if (form.link.trim() && !isValidUrl(form.link.trim())) {
+    if (!form?.title?.trim()) return 'Judul lagu wajib diisi.';
+    if (!form?.artist?.trim()) return 'Nama artis wajib diisi.';
+    if (!form?.moodId) return 'Pilih mood untuk lagu ini.';
+    if (form?.link?.trim() && !isValidUrl(form.link.trim())) {
       return 'Link lagu harus berupa URL yang valid (diawali http:// atau https://).';
     }
     return null;

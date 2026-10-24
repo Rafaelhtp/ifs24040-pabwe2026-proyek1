@@ -17,10 +17,10 @@ export default function useRandomSong(selectedMoodId) {
     setRandomLoading(true);
     try {
       const res = await getRandomSong(selectedMoodId);
-      setRandomSong(res.data);
+      setRandomSong(res?.data || null);
     } catch (err) {
       setRandomSong(null);
-      showToast(err.userMessage || 'Belum ada lagu untuk mood ini', 'error');
+      showToast(err?.userMessage || 'Belum ada lagu untuk mood ini', 'error');
     } finally {
       setRandomLoading(false);
     }

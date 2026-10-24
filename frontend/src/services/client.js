@@ -15,24 +15,41 @@ const apiClient = axios.create({
  */
 function handleUnauthorized() {
   clearToken();
-  window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
+  if (globalThis.window !== undefined) {
+    globalThis.window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
+  }
+}
+
+/**
+ * Menormalkan dan meneruskan error pemanggilan API sebagai instance Error standar.
+ * @param { Error|object } error - Objek error dari Axios atau jaringan
+ * @returns { Promise<never> } Promise yang ditolak dengan instance Error
+ */
+export function handleApiError(error) {
+  if (error instanceof Error) {
+    return Promise.reject(error);
+  }
+  const fallbackMessage = error?.userMessage || error?.message || MESSAGES.GENERIC_API_ERROR;
+  const normalizedError = new Error(fallbackMessage);
+  Object.assign(normalizedError, error);
+  return Promise.reject(normalizedError);
 }
 
 apiClient.interceptors.request.use(
   (config) => {
     const token = getToken();
-    if (token) {
+    if (token && config?.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => handleApiError(error)
 );
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (!error.response) {
+    if (!error?.response) {
       const networkError = new Error(MESSAGES.NETWORK_ERROR);
       networkError.isNetworkError = true;
       networkError.userMessage = MESSAGES.NETWORK_ERROR;
@@ -52,11 +69,14 @@ apiClient.interceptors.response.use(
       (Array.isArray(data?.errors) && data.errors[0]?.message) ||
       MESSAGES.GENERIC_API_ERROR;
 
-    error.userMessage = apiMessage;
-    error.fieldErrors = data?.errors || [];
-    error.statusCode = status;
+    const enrichedError = error instanceof Error ? error : new Error(apiMessage);
+    Object.assign(enrichedError, error, {
+      userMessage: apiMessage,
+      fieldErrors: data?.errors || [],
+      statusCode: status
+    });
 
-    return Promise.reject(error);
+    return Promise.reject(enrichedError);
   }
 );
 

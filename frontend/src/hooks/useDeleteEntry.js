@@ -17,12 +17,12 @@ export default function useDeleteEntry(onDeleted) {
     if (!entryToDelete) return;
     setIsDeleting(true);
     try {
-      await deleteEntry(entryToDelete.id);
+      await deleteEntry(entryToDelete?.id);
       showToast('Catatan jurnal berhasil dihapus', 'success');
       setEntryToDelete(null);
       if (onDeleted) onDeleted();
     } catch (err) {
-      showToast(err.userMessage || 'Gagal menghapus entri jurnal', 'error');
+      showToast(err?.userMessage || 'Gagal menghapus entri jurnal', 'error');
     } finally {
       setIsDeleting(false);
     }

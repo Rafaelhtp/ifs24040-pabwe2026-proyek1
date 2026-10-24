@@ -1,5 +1,6 @@
 // Komponen bilah filter koleksi lagu berdasarkan kategori mood dan kata kunci
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Search } from 'lucide-react';
 import MoodBlob from '../mood/MoodBlob';
 
@@ -71,3 +72,17 @@ export default function SongFilterBar({
     </section>
   );
 }
+
+SongFilterBar.propTypes = {
+  moods: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      name: PropTypes.string,
+      color: PropTypes.string
+    })
+  ),
+  selectedMoodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onSelectMood: PropTypes.func,
+  searchQuery: PropTypes.string,
+  onSearchChange: PropTypes.func
+};

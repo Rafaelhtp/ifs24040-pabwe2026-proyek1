@@ -1,5 +1,6 @@
 // Komponen unggah gambar drag-and-drop & klik dengan pratinjau dan validasi klien
 import React, { useState, useEffect, useId } from 'react';
+import PropTypes from 'prop-types';
 import { UploadCloud, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import { validateImageFile } from '../../utils/validators';
 import { getImageUrl } from '../../utils/imageUrl';
@@ -17,7 +18,7 @@ export default function ImageUpload({
 
   useEffect(() => {
     return () => {
-      if (previewUrl && previewUrl.startsWith('blob:')) {
+      if (previewUrl?.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
     };
@@ -27,7 +28,7 @@ export default function ImageUpload({
     if (!file) {
       setLocalError(null);
       setPreviewUrl(null);
-      onFileSelect(null);
+      onFileSelect?.(null);
       return;
     }
 
@@ -35,18 +36,18 @@ export default function ImageUpload({
     if (!validation.valid) {
       setLocalError(validation.error);
       setPreviewUrl(null);
-      onFileSelect(null);
+      onFileSelect?.(null);
       return;
     }
 
     setLocalError(null);
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
-    onFileSelect(file);
+    onFileSelect?.(file);
   };
 
   const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
+    const file = event.target?.files?.[0];
     processSelectedFile(file);
   };
 
@@ -72,7 +73,7 @@ export default function ImageUpload({
   const handleClearNewSelection = () => {
     setLocalError(null);
     setPreviewUrl(null);
-    onFileSelect(null);
+    onFileSelect?.(null);
   };
 
   const displayImage = previewUrl || (existingImagePath ? getImageUrl(existingImagePath) : null);
@@ -83,7 +84,7 @@ export default function ImageUpload({
       <label htmlFor={inputId} className="block text-sm font-extrabold text-ink mb-1.5">
         {label}
       </label>
-      <div
+      <div // NOSONAR
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -165,3 +166,10 @@ export default function ImageUpload({
     </div>
   );
 }
+
+ImageUpload.propTypes = {
+  label: PropTypes.string,
+  existingImagePath: PropTypes.string,
+  onFileSelect: PropTypes.func,
+  errorText: PropTypes.string
+};

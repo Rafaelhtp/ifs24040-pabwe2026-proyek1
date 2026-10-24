@@ -25,19 +25,19 @@ export default function useMoodManager({ onChanged }) {
 
   const toForm = useCallback(
     (mood) => ({
-      name: mood.name || '',
-      emoji: mood.emoji || DEFAULT_MOOD_EMOJI,
-      color: mood.color || DEFAULT_ACCENT_COLOR
+      name: mood?.name || '',
+      emoji: mood?.emoji || DEFAULT_MOOD_EMOJI,
+      color: mood?.color || DEFAULT_ACCENT_COLOR
     }),
     []
   );
 
   const validate = useCallback((form) => {
-    if (!form.name.trim()) return 'Nama mood wajib diisi.';
-    if (!form.emoji.trim()) {
+    if (!form?.name?.trim()) return 'Nama mood wajib diisi.';
+    if (!form?.emoji?.trim()) {
       return 'Emoji mood wajib diisi (dibutuhkan oleh penyimpanan database).';
     }
-    if (!isValidHexColor(form.color)) {
+    if (!isValidHexColor(form?.color)) {
       return 'Pilih warna dengan format hex yang valid (contoh: #5798D7).';
     }
     return null;
@@ -45,17 +45,17 @@ export default function useMoodManager({ onChanged }) {
 
   const buildPayload = useCallback(
     (form) => ({
-      name: form.name.trim(),
-      emoji: form.emoji.trim(),
-      color: form.color.trim()
+      name: form?.name?.trim() || '',
+      emoji: form?.emoji?.trim() || '',
+      color: form?.color?.trim() || ''
     }),
     []
   );
 
   const handleDeleteError = useCallback((err, targetMood, showToast) => {
-    if (err.statusCode === 409) {
+    if (err?.statusCode === 409) {
       setConflictAlert(
-        `Mood "${targetMood.name}" masih dipakai oleh entri jurnal dan tidak dapat dihapus.`
+        `Mood "${targetMood?.name}" masih dipakai oleh entri jurnal dan tidak dapat dihapus.`
       );
       showToast('Mood masih dipakai oleh entri jurnal', 'error');
       return true;
@@ -72,9 +72,9 @@ export default function useMoodManager({ onChanged }) {
     update: updateMood,
     remove: deleteMood,
     messages: {
-      created: (form) => `Mood "${form.name.trim()}" berhasil ditambahkan!`,
-      updated: (form) => `Mood "${form.name.trim()}" berhasil diperbarui!`,
-      deleted: (mood) => `Mood "${mood.name}" berhasil dihapus`,
+      created: (form) => `Mood "${form?.name?.trim()}" berhasil ditambahkan!`,
+      updated: (form) => `Mood "${form?.name?.trim()}" berhasil diperbarui!`,
+      deleted: (mood) => `Mood "${mood?.name}" berhasil dihapus`,
       saveError: 'Gagal menyimpan mood.',
       deleteError: 'Gagal menghapus mood'
     },

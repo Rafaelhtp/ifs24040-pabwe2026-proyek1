@@ -1,5 +1,6 @@
 // Modal formulir tambah/edit kategori mood dengan pratinjau langsung MoodBlob
 import React from 'react';
+import PropTypes from 'prop-types';
 import Modal from '../common/Modal';
 import FormAlert from '../form/FormAlert';
 import TextField from '../form/TextField';
@@ -16,11 +17,12 @@ export default function MoodFormModal({
   isSubmitting,
   onSubmit
 }) {
-  const submitLabel = isSubmitting
-    ? 'Menyimpan...'
-    : editingMood
-    ? 'Simpan Perubahan'
-    : 'Tambah Mood';
+  let submitLabel = 'Tambah Mood';
+  if (isSubmitting) {
+    submitLabel = 'Menyimpan...';
+  } else if (editingMood) {
+    submitLabel = 'Simpan Perubahan';
+  }
 
   return (
     <Modal
@@ -30,12 +32,12 @@ export default function MoodFormModal({
     >
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <div className="bg-frost/60 border border-frost-border rounded-2xl p-4 flex items-center gap-4">
-          <MoodBlob moodName={form.name || 'Mood Baru'} color={form.color} size="md" />
+          <MoodBlob moodName={form?.name || 'Mood Baru'} color={form?.color} size="md" />
           <div>
             <p className="text-xs font-bold text-denim-dark">Pratinjau Karakter Blob</p>
             <p className="text-sm font-extrabold text-ink">
-              {form.name.trim() || 'Nama Mood'}{' '}
-              <span className="text-xs font-normal text-ink-soft">({form.emoji})</span>
+              {form?.name?.trim() || 'Nama Mood'}{' '}
+              <span className="text-xs font-normal text-ink-soft">({form?.emoji})</span>
             </p>
           </div>
         </div>
@@ -45,7 +47,7 @@ export default function MoodFormModal({
         <TextField
           id="mood-name-input"
           label="Nama Mood"
-          value={form.name}
+          value={form?.name}
           onChange={(event) => onFieldChange('name', event.target.value)}
           placeholder="Contoh: Bersyukur"
           required
@@ -61,7 +63,7 @@ export default function MoodFormModal({
             <input
               id="mood-emoji-input"
               type="text"
-              value={form.emoji}
+              value={form?.emoji}
               onChange={(event) => onFieldChange('emoji', event.target.value)}
               required
               className="w-20 text-center text-xl px-3 py-1.5 rounded-2xl border border-frost-border"
@@ -75,7 +77,7 @@ export default function MoodFormModal({
                 type="button"
                 onClick={() => onFieldChange('emoji', item)}
                 className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center border transition-colors ${
-                  form.emoji === item
+                  form?.emoji === item
                     ? 'border-denim bg-frost font-bold'
                     : 'border-frost-border hover:bg-frost/50'
                 }`}
@@ -94,13 +96,13 @@ export default function MoodFormModal({
             <input
               id="mood-color-input"
               type="color"
-              value={form.color}
+              value={form?.color}
               onChange={(event) => onFieldChange('color', event.target.value)}
               className="w-12 h-10 rounded-xl border border-frost-border cursor-pointer p-1 bg-white"
             />
             <input
               type="text"
-              value={form.color}
+              value={form?.color}
               onChange={(event) => onFieldChange('color', event.target.value)}
               aria-label="Kode hex warna mood"
               placeholder="#5798D7"
@@ -130,3 +132,21 @@ export default function MoodFormModal({
     </Modal>
   );
 }
+
+MoodFormModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  editingMood: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    name: PropTypes.string
+  }),
+  form: PropTypes.shape({
+    name: PropTypes.string,
+    emoji: PropTypes.string,
+    color: PropTypes.string
+  }),
+  onFieldChange: PropTypes.func,
+  formError: PropTypes.string,
+  isSubmitting: PropTypes.bool,
+  onSubmit: PropTypes.func
+};

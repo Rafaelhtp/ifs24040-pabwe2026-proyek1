@@ -104,15 +104,15 @@ export default function useCrudModal({
     try {
       if (editingItem) {
         await update(editingItem.id, payload);
-        showToast(resolveMessage(messages.updated, form, 'Data berhasil diperbarui!'), 'success');
+        showToast(resolveMessage(messages?.updated, form, 'Data berhasil diperbarui!'), 'success');
       } else {
         await create(payload);
-        showToast(resolveMessage(messages.created, form, 'Data berhasil ditambahkan!'), 'success');
+        showToast(resolveMessage(messages?.created, form, 'Data berhasil ditambahkan!'), 'success');
       }
       setModalOpen(false);
       if (onChanged) onChanged();
     } catch (err) {
-      const msg = err.userMessage || messages.saveError || 'Gagal menyimpan data.';
+      const msg = err?.userMessage || messages?.saveError || 'Gagal menyimpan data.';
       setFormError(msg);
       showToast(msg, 'error');
     } finally {
@@ -127,14 +127,14 @@ export default function useCrudModal({
 
     try {
       await remove(target.id);
-      showToast(resolveMessage(messages.deleted, target, 'Data berhasil dihapus'), 'success');
+      showToast(resolveMessage(messages?.deleted, target, 'Data berhasil dihapus'), 'success');
       if (onDeleted) onDeleted(target);
       setItemToDelete(null);
       if (onChanged) onChanged();
     } catch (err) {
       const handled = onDeleteError ? onDeleteError(err, target, showToast) : false;
       if (!handled) {
-        showToast(err.userMessage || messages.deleteError || 'Gagal menghapus data', 'error');
+        showToast(err?.userMessage || messages?.deleteError || 'Gagal menghapus data', 'error');
       }
       setItemToDelete(null);
     } finally {

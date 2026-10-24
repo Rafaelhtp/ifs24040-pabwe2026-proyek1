@@ -1,5 +1,6 @@
 // Komponen footer aplikasi dengan tautan navigasi cepat
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 
@@ -46,3 +47,7 @@ export default function Footer({ isAuthenticated }) {
     </footer>
   );
 }
+
+Footer.propTypes = {
+  isAuthenticated: PropTypes.bool
+};

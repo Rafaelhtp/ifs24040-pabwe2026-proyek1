@@ -48,7 +48,7 @@ export default function Songs() {
     selectedMoodId,
     onChanged: refetch,
     onSongDeleted: (deleted) => {
-      if (randomSong?.id === deleted.id) {
+      if (randomSong?.id === deleted?.id) {
         setRandomSong(null);
       }
     }

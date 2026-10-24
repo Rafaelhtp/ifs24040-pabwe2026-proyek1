@@ -1,5 +1,6 @@
 // Komponen grafik mingguan: ComposedChart Sumbu Ganda (Daily) & Distribusi Mood (By Mood + Legenda MoodBlob)
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -185,3 +186,21 @@ export default function MoodChart({ byMood = [], daily = [] }) {
     </div>
   );
 }
+
+MoodChart.propTypes = {
+  byMood: PropTypes.arrayOf(
+    PropTypes.shape({
+      mood_id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      name: PropTypes.string,
+      color: PropTypes.string,
+      count: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+    })
+  ),
+  daily: PropTypes.arrayOf(
+    PropTypes.shape({
+      date: PropTypes.string,
+      count: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      avg_energy: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+    })
+  )
+};

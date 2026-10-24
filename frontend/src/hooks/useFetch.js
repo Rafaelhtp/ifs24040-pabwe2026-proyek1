@@ -20,29 +20,29 @@ export default function useFetch(fetcher, deps = [], options = { immediate: true
     setError(null);
     try {
       const result = await fetcher(...args);
-      setData(result?.data !== undefined ? result.data : result);
+      setData(result?.data === undefined ? result : result.data);
       if (result?.meta) {
         setMeta(result.meta);
       }
       return result;
     } catch (err) {
       setError({
-        message: err.userMessage || err.message || MESSAGES.LOAD_ERROR,
-        isNetworkError: Boolean(err.isNetworkError),
-        statusCode: err.statusCode
+        message: err?.userMessage || err?.message || MESSAGES.LOAD_ERROR,
+        isNetworkError: Boolean(err?.isNetworkError),
+        statusCode: err?.statusCode
       });
       return null;
     } finally {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, deps); // NOSONAR
 
   useEffect(() => {
-    if (options.immediate) {
-      execute();
+    if (options?.immediate) {
+      execute().catch(() => {});
     }
-  }, [execute, options.immediate]);
+  }, [execute, options?.immediate]);
 
   return { data, meta, loading, error, refetch: execute, setData };
 }

@@ -140,9 +140,8 @@ router.delete('/:id', authMiddleware, (req, res) => {
     });
   }
 
-  const usageCount = db
-    .prepare('SELECT COUNT(*) as count FROM entries WHERE mood_id = ?')
-    .get(moodId).count;
+  const usageCount =
+    db.prepare('SELECT COUNT(*) as count FROM entries WHERE mood_id = ?').get(moodId)?.count || 0;
 
   if (usageCount > 0) {
     return res.status(409).json({

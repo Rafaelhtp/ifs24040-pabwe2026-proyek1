@@ -35,10 +35,10 @@ export default function Login() {
     setDemoLoading(true);
     try {
       const user = await login('demo@moodify.com', 'demo12345');
-      showToast(`Selamat datang kembali, ${user.name}!`, 'success');
+      showToast(`Selamat datang kembali, ${user?.name || 'Pengguna'}!`, 'success');
       navigate(destination, { replace: true });
     } catch (err) {
-      const msg = err.userMessage || 'Gagal masuk dengan akun demo.';
+      const msg = err?.userMessage || 'Gagal masuk dengan akun demo.';
       setFormError(msg);
       showToast(msg, 'error');
     } finally {
@@ -62,10 +62,10 @@ export default function Login() {
     setSubmitting(true);
     try {
       const user = await login(email.trim(), password);
-      showToast(`Selamat datang kembali, ${user.name}!`, 'success');
+      showToast(`Selamat datang kembali, ${user?.name || 'Pengguna'}!`, 'success');
       navigate(destination, { replace: true });
     } catch (err) {
-      const msg = err.userMessage || 'Gagal masuk. Periksa email dan password Anda.';
+      const msg = err?.userMessage || 'Gagal masuk. Periksa email dan password Anda.';
       setFormError(msg);
       showToast(msg, 'error');
     } finally {

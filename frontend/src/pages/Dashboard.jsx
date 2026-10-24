@@ -27,8 +27,8 @@ export default function Dashboard() {
     ]);
     return {
       data: {
-        stats: statsRes.data,
-        recentEntries: entriesRes.data || []
+        stats: statsRes?.data || null,
+        recentEntries: entriesRes?.data || []
       }
     };
   }, []);

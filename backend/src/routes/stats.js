@@ -13,7 +13,7 @@ function roundTwoDecimals(value) {
 
 // GET /api/stats/weekly
 router.get('/weekly', authMiddleware, (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user?.id;
 
   // Buat daftar tanggal 7 hari terakhir (dari 6 hari lalu sampai hari ini)
   const last7Days = [];
@@ -21,7 +21,7 @@ router.get('/weekly', authMiddleware, (req, res) => {
     last7Days.push(formatRelativeDate(i));
   }
   const startDate = last7Days[0];
-  const endDate = last7Days[last7Days.length - 1];
+  const endDate = last7Days.at(-1);
 
   // Total entri dan rata-rata energi dalam 7 hari terakhir
   const summaryRow = db
@@ -34,8 +34,8 @@ router.get('/weekly', authMiddleware, (req, res) => {
     `)
     .get(userId, startDate, endDate);
 
-  const totalEntries7d = summaryRow.total_entries || 0;
-  const avgEnergy7d = roundTwoDecimals(summaryRow.avg_energy);
+  const totalEntries7d = summaryRow?.total_entries || 0;
+  const avgEnergy7d = roundTwoDecimals(summaryRow?.avg_energy);
 
   // Distribusi per mood dalam 7 hari terakhir
   const byMoodRows = db

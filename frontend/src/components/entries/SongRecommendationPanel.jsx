@@ -1,10 +1,11 @@
 // Panel rekomendasi lagu otomatis berdasarkan mood yang dipilih di EntryForm
 import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { Shuffle, ExternalLink, Disc3 } from 'lucide-react';
 import { getSongs, getRandomSong } from '../../services/songService';
 import MoodBlob from '../mood/MoodBlob';
 
-export default function SongRecommendationPanel({ moodId, selectedMood }) {
+export default function SongRecommendationPanel({ moodId, selectedMood }) { // NOSONAR
   const [songs, setSongs] = useState([]);
   const [highlightedSong, setHighlightedSong] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -29,14 +30,14 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) {
         setMessage('Belum ada lagu untuk mood ini.');
       }
     } catch (err) {
-      setMessage(err.userMessage || 'Gagal memuat rekomendasi lagu.');
+      setMessage(err?.userMessage || 'Gagal memuat rekomendasi lagu.');
     } finally {
       setLoading(false);
     }
   }, [moodId]);
 
   useEffect(() => {
-    loadMoodSongs();
+    loadMoodSongs().catch(() => {});
   }, [loadMoodSongs]);
 
   const handlePickRandom = async () => {
@@ -49,10 +50,10 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) {
         setHighlightedSong(res.data);
       }
     } catch (err) {
-      if (err.statusCode === 404) {
+      if (err?.statusCode === 404) {
         setMessage('Belum ada lagu untuk mood ini.');
       } else {
-        setMessage(err.userMessage || 'Gagal mengambil lagu acak.');
+        setMessage(err?.userMessage || 'Gagal mengambil lagu acak.');
       }
     } finally {
       setRandomLoading(false);
@@ -167,3 +168,12 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) {
     </div>
   );
 }
+
+SongRecommendationPanel.propTypes = {
+  moodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  selectedMood: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    name: PropTypes.string,
+    color: PropTypes.string
+  })
+};

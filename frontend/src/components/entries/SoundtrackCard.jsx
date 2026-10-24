@@ -1,5 +1,6 @@
 // Komponen Kartu "Soundtrack Mood Kamu Hari Ini" (dipakai di Dashboard & Layar Sukses EntryForm)
 import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Disc3, Shuffle, ExternalLink, Music2 } from 'lucide-react';
 import { getRandomSong } from '../../services/songService';
@@ -28,10 +29,10 @@ export default function SoundtrackCard({
       setSong(res?.data || null);
     } catch (err) {
       setSong(null);
-      if (err.statusCode === 404) {
+      if (err?.statusCode === 404) {
         setNotFound(true);
       } else {
-        setErrorMsg(err.userMessage || 'Gagal mengambil lagu acak');
+        setErrorMsg(err?.userMessage || 'Gagal mengambil lagu acak');
       }
     } finally {
       setLoading(false);
@@ -39,7 +40,7 @@ export default function SoundtrackCard({
   }, [moodId]);
 
   useEffect(() => {
-    fetchRandom();
+    fetchRandom().catch(() => {});
   }, [fetchRandom]);
 
   const coverUrl = song?.cover_path ? getImageUrl(song.cover_path) : null;
@@ -160,3 +161,10 @@ export default function SoundtrackCard({
     </section>
   );
 }
+
+SoundtrackCard.propTypes = {
+  moodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  moodName: PropTypes.string,
+  moodColor: PropTypes.string,
+  title: PropTypes.string
+};

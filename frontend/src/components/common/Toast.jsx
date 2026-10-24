@@ -1,5 +1,6 @@
 // Komponen & Context Toast untuk menampilkan notifikasi pop-up sukses/gagal/info
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
@@ -20,10 +21,28 @@ function ToastIcon({ type }) {
   return <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />;
 }
 
+ToastIcon.propTypes = {
+  type: PropTypes.string
+};
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const timersRef = useRef(new Map());
+
+  useEffect(() => {
+    const activeTimers = timersRef.current;
+    return () => {
+      activeTimers.forEach((timerId) => clearTimeout(timerId));
+      activeTimers.clear();
+    };
+  }, []);
 
   const removeToast = useCallback((id) => {
+    const timerId = timersRef.current.get(id);
+    if (timerId) {
+      clearTimeout(timerId);
+      timersRef.current.delete(id);
+    }
     setToasts((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
@@ -32,16 +51,19 @@ export function ToastProvider({ children }) {
       const id = crypto.randomUUID();
       setToasts((prev) => [...prev, { id, message, type }]);
       if (duration > 0) {
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
           removeToast(id);
         }, duration);
+        timersRef.current.set(id, timerId);
       }
     },
     [removeToast]
   );
 
+  const contextValue = useMemo(() => ({ showToast }), [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <div
         role="status"
@@ -75,6 +97,10 @@ export function ToastProvider({ children }) {
     </ToastContext.Provider>
   );
 }
+
+ToastProvider.propTypes = {
+  children: PropTypes.node
+};
 
 /**
  * Mengakses fungsi showToast dari ToastContext.

@@ -1,12 +1,13 @@
 // Komponen banner penampil hasil rekomendasi lagu acak di halaman Lagu
 import React from 'react';
+import PropTypes from 'prop-types';
 import { ExternalLink } from 'lucide-react';
 import MoodBlob from '../mood/MoodBlob';
 
 export default function RandomSongBanner({ song, onClose }) {
   if (!song) return null;
 
-  const isYoutube = Boolean(song.link && song.link.toLowerCase().includes('youtube'));
+  const isYoutube = Boolean(song.link?.toLowerCase().includes('youtube'));
 
   return (
     <div className="bg-white border-2 border-pistachio rounded-3xl p-5 shadow-soft flex flex-wrap items-center justify-between gap-4">
@@ -45,3 +46,14 @@ export default function RandomSongBanner({ song, onClose }) {
     </div>
   );
 }
+
+RandomSongBanner.propTypes = {
+  song: PropTypes.shape({
+    title: PropTypes.string,
+    artist: PropTypes.string,
+    mood_name: PropTypes.string,
+    color: PropTypes.string,
+    link: PropTypes.string
+  }),
+  onClose: PropTypes.func
+};

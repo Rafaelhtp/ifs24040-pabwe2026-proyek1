@@ -94,7 +94,7 @@ function buildEntryFilterQuery(userId, query) {
     params.push(to);
   }
 
-  if (q && q.trim() !== '') {
+  if (q?.trim()) {
     conditions.push('e.note LIKE ?');
     params.push(`%${q.trim()}%`);
   }
@@ -107,17 +107,17 @@ function buildEntryFilterQuery(userId, query) {
 
 // GET /api/entries?mood_id=&from=&to=&q=&page=&limit=
 router.get('/', (req, res) => {
-  const userId = req.user.id;
-  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-  const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 10));
+  const userId = req.user?.id;
+  const page = Math.max(1, Number.parseInt(req.query?.page, 10) || 1);
+  const limit = Math.max(1, Math.min(100, Number.parseInt(req.query?.limit, 10) || 10));
   const offset = (page - 1) * limit;
 
-  const { whereClause, params } = buildEntryFilterQuery(userId, req.query);
+  const { whereClause, params } = buildEntryFilterQuery(userId, req.query || {});
 
   const countRow = db
     .prepare(`SELECT COUNT(*) as total FROM entries e WHERE ${whereClause}`)
     .get(...params);
-  const total = countRow.total;
+  const total = countRow?.total || 0;
 
   const rows = db
     .prepare(`
@@ -158,7 +158,7 @@ router.get('/', (req, res) => {
 // GET /api/entries/:id
 router.get('/:id', (req, res) => {
   const entryId = Number(req.params.id);
-  const entry = selectEntryByIdStmt.get(entryId, req.user.id);
+  const entry = selectEntryByIdStmt.get(entryId, req.user?.id);
 
   if (!entry) {
     return res.status(404).json({
@@ -183,12 +183,12 @@ router.post(
   entryValidationRules,
   validate,
   (req, res) => {
-    const userId = req.user.id;
+    const userId = req.user?.id;
     const entryDate = req.body.entry_date.trim();
     const moodId = Number(req.body.mood_id);
     const energyLevel = Number(req.body.energy_level);
-    const note = req.body.note !== undefined ? req.body.note : null;
-    const imagePath = req.file ? req.file.filename : null;
+    const note = req.body.note === undefined ? null : req.body.note;
+    const imagePath = req.file?.filename || null;
 
     const info = db
       .prepare(`
@@ -213,10 +213,10 @@ router.put(
   uploadSingle('image'),
   (req, res, next) => {
     const entryId = Number(req.params.id);
-    const existing = selectOwnedEntryRawStmt.get(entryId, req.user.id);
+    const existing = selectOwnedEntryRawStmt.get(entryId, req.user?.id);
 
     if (!existing) {
-      if (req.file && req.file.filename) {
+      if (req.file?.filename) {
         removeUploadedFile(req.file.filename);
       }
       return res.status(404).json({
@@ -237,10 +237,10 @@ router.put(
     const entryDate = req.body.entry_date.trim();
     const moodId = Number(req.body.mood_id);
     const energyLevel = Number(req.body.energy_level);
-    const note = req.body.note !== undefined ? req.body.note : existing.note;
+    const note = req.body.note === undefined ? existing.note : req.body.note;
 
     let imagePath = existing.image_path;
-    if (req.file) {
+    if (req.file?.filename) {
       if (existing.image_path) {
         removeUploadedFile(existing.image_path);
       }
@@ -251,9 +251,9 @@ router.put(
       UPDATE entries
       SET entry_date = ?, mood_id = ?, energy_level = ?, note = ?, image_path = ?, updated_at = datetime('now')
       WHERE id = ? AND user_id = ?
-    `).run(entryDate, moodId, energyLevel, note, imagePath, existing.id, req.user.id);
+    `).run(entryDate, moodId, energyLevel, note, imagePath, existing.id, req.user?.id);
 
-    const updatedEntry = selectEntryByIdStmt.get(existing.id, req.user.id);
+    const updatedEntry = selectEntryByIdStmt.get(existing.id, req.user?.id);
 
     return res.status(200).json({
       success: true,
@@ -266,7 +266,7 @@ router.put(
 // DELETE /api/entries/:id
 router.delete('/:id', (req, res) => {
   const entryId = Number(req.params.id);
-  const existing = selectOwnedEntryRawStmt.get(entryId, req.user.id);
+  const existing = selectOwnedEntryRawStmt.get(entryId, req.user?.id);
 
   if (!existing) {
     return res.status(404).json({
@@ -279,7 +279,7 @@ router.delete('/:id', (req, res) => {
 
   db.prepare('DELETE FROM entries WHERE id = ? AND user_id = ?').run(
     entryId,
-    req.user.id
+    req.user?.id
   );
 
   if (existing.image_path) {

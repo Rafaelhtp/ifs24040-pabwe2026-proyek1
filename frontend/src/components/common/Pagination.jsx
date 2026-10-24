@@ -1,5 +1,6 @@
 // Komponen navigasi halaman (Pagination)
 import React from 'react';
+import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function Pagination({ page = 1, limit = 10, total = 0, onPageChange }) {
@@ -20,7 +21,7 @@ export default function Pagination({ page = 1, limit = 10, total = 0, onPageChan
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          onClick={() => onPageChange(page - 1)}
+          onClick={() => onPageChange?.(page - 1)}
           disabled={page <= 1}
           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-frost-border text-xs font-bold text-ink hover:bg-frost disabled:opacity-40 disabled:pointer-events-none transition-colors"
         >
@@ -31,7 +32,7 @@ export default function Pagination({ page = 1, limit = 10, total = 0, onPageChan
           <button
             key={pageNum}
             type="button"
-            onClick={() => onPageChange(pageNum)}
+            onClick={() => onPageChange?.(pageNum)}
             aria-current={pageNum === page ? 'page' : undefined}
             className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-colors ${
               pageNum === page
@@ -44,7 +45,7 @@ export default function Pagination({ page = 1, limit = 10, total = 0, onPageChan
         ))}
         <button
           type="button"
-          onClick={() => onPageChange(page + 1)}
+          onClick={() => onPageChange?.(page + 1)}
           disabled={page >= totalPages}
           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-frost-border text-xs font-bold text-ink hover:bg-frost disabled:opacity-40 disabled:pointer-events-none transition-colors"
         >
@@ -55,3 +56,10 @@ export default function Pagination({ page = 1, limit = 10, total = 0, onPageChan
     </nav>
   );
 }
+
+Pagination.propTypes = {
+  page: PropTypes.number,
+  limit: PropTypes.number,
+  total: PropTypes.number,
+  onPageChange: PropTypes.func
+};

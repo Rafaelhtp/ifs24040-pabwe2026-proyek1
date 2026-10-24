@@ -15,7 +15,7 @@ const selectPublicUserByIdStmt = db.prepare(
 
 function generateToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, name: user.name },
+    { id: user?.id, email: user?.email, name: user?.name },
     getJwtSecret(),
     { expiresIn: '7d' }
   );
@@ -33,7 +33,7 @@ router.post(
   ],
   validate,
   (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body || {};
 
     const existingUser = db
       .prepare('SELECT id FROM users WHERE lower(email) = lower(?)')
@@ -73,7 +73,7 @@ router.post(
   ],
   validate,
   (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     const userRow = db
       .prepare('SELECT id, name, email, password_hash, created_at FROM users WHERE lower(email) = lower(?)')
@@ -107,7 +107,7 @@ router.post(
 
 // GET /api/auth/me
 router.get('/me', authMiddleware, (req, res) => {
-  const user = selectPublicUserByIdStmt.get(req.user.id);
+  const user = selectPublicUserByIdStmt.get(req.user?.id);
 
   if (!user) {
     return res.status(404).json({

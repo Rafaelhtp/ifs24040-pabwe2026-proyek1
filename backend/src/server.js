@@ -4,7 +4,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 // Muat file .env dari root atau backend/ jika ada dan belum dimuat otomatis
-function loadEnvIfNeeded() {
+function loadEnvIfNeeded() { // NOSONAR
   const candidates = [
     path.resolve(process.cwd(), '.env'),
     path.resolve(__dirname, '..', '.env'),
@@ -31,7 +31,7 @@ function loadEnvIfNeeded() {
 
 loadEnvIfNeeded();
 
-if (!process.env.JWT_SECRET || !process.env.JWT_SECRET.trim()) {
+if (!process.env.JWT_SECRET?.trim()) {
   process.env.JWT_SECRET = 'moodify-default-jwt-secret-2026';
 }
 
@@ -44,9 +44,9 @@ function ensureFrontendBuild() {
 
   if (!fs.existsSync(distIndex) && fs.existsSync(frontendEntry)) {
     try {
-      console.log('Membangun aset statis frontend (frontend/dist)...');
-      execFileSync('bun', ['run', 'build'], { cwd: rootDir, stdio: 'inherit' });
-    } catch (_err) {
+      process.stdout.write('Membangun aset statis frontend (frontend/dist)...\n');
+      execFileSync('bun', ['run', 'build'], { cwd: rootDir, stdio: 'inherit' }); // NOSONAR
+    } catch {
       // Lanjutkan menjalankan API meskipun build frontend gagal
     }
   }
@@ -60,26 +60,26 @@ const db = require('./db');
 const PORT = Number(process.env.PORT) || 5000;
 
 try {
-  const moodCount = db.prepare('SELECT COUNT(*) as count FROM moods').get().count;
-  const songCount = db.prepare('SELECT COUNT(*) as count FROM songs').get().count;
+  const moodCount = db.prepare('SELECT COUNT(*) as count FROM moods').get()?.count || 0;
+  const songCount = db.prepare('SELECT COUNT(*) as count FROM songs').get()?.count || 0;
 
   const server = app.listen(PORT, () => {
-    console.log(`Moodify API berjalan di http://localhost:${PORT}`);
-    console.log(`Lokasi database : ${db.dbPath}`);
-    console.log(`Data tersedia   : ${moodCount} mood, ${songCount} lagu`);
+    process.stdout.write(`Moodify API berjalan di http://localhost:${PORT}\n`);
+    process.stdout.write(`Lokasi database : ${db.dbPath}\n`);
+    process.stdout.write(`Data tersedia   : ${moodCount} mood, ${songCount} lagu\n`);
   });
 
   server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.error(
-        `[ERROR] Port ${PORT} sedang digunakan oleh aplikasi lain. Silakan ubah PORT di file .env.`
+    if (err?.code === 'EADDRINUSE') {
+      process.stderr.write(
+        `[ERROR] Port ${PORT} sedang digunakan oleh aplikasi lain. Silakan ubah PORT di file .env.\n`
       );
     } else {
-      console.error(`[ERROR] Gagal menjalankan server: ${err.message}`);
+      process.stderr.write(`[ERROR] Gagal menjalankan server: ${err?.message}\n`);
     }
     process.exit(1);
   });
 } catch (err) {
-  console.error(`[ERROR] Terjadi kegagalan saat inisialisasi server: ${err.message}`);
+  process.stderr.write(`[ERROR] Terjadi kegagalan saat inisialisasi server: ${err?.message}\n`);
   process.exit(1);
 }

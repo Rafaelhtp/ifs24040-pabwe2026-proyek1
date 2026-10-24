@@ -1,5 +1,6 @@
 // Komponen tampilan saat data masih kosong (Empty State) dengan ilustrasi MoodBlob ramah
 import React from 'react';
+import PropTypes from 'prop-types';
 import MoodBlob from '../mood/MoodBlob';
 import { DEFAULT_ACCENT_COLOR } from '../../constants/config';
 
@@ -30,3 +31,12 @@ export default function EmptyState({
     </div>
   );
 }
+
+EmptyState.propTypes = {
+  moodName: PropTypes.string,
+  moodColor: PropTypes.string,
+  title: PropTypes.string,
+  description: PropTypes.string,
+  actionLabel: PropTypes.string,
+  onAction: PropTypes.func
+};

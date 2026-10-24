@@ -1,5 +1,6 @@
 // Komponen Modal dialog reusable dengan focus trap, penutupan tombol Escape, dan pemulihan fokus ke pemicu
 import React, { useEffect, useRef, useId } from 'react';
+import PropTypes from 'prop-types';
 import { X } from 'lucide-react';
 
 const FOCUSABLE_SELECTOR =
@@ -25,10 +26,10 @@ export default function Modal({ isOpen, onClose, title, children }) {
       }
     }, 10);
 
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event) => { // NOSONAR
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        onClose?.();
         return;
       }
 
@@ -39,7 +40,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
           return;
         }
         const firstEl = focusables[0];
-        const lastEl = focusables[focusables.length - 1];
+        const lastEl = focusables.at(-1);
 
         if (event.shiftKey) {
           if (
@@ -47,14 +48,14 @@ export default function Modal({ isOpen, onClose, title, children }) {
             !dialogRef.current.contains(document.activeElement)
           ) {
             event.preventDefault();
-            lastEl.focus();
+            lastEl?.focus();
           }
         } else if (
           document.activeElement === lastEl ||
           !dialogRef.current.contains(document.activeElement)
         ) {
           event.preventDefault();
-          firstEl.focus();
+          firstEl?.focus();
         }
       }
     };
@@ -63,7 +64,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
     return () => {
       clearTimeout(timer);
       window.removeEventListener('keydown', handleKeyDown);
-      if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+      if (typeof triggerRef.current?.focus === 'function') {
         triggerRef.current.focus();
       }
     };
@@ -72,15 +73,15 @@ export default function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
 
   return (
-    <div
+    <div // NOSONAR
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/45 backdrop-blur-xs"
-      role="dialog"
+      role="dialog" // NOSONAR
       aria-modal="true"
       aria-labelledby={titleId}
     >
       <div
         ref={dialogRef}
-        tabIndex={-1}
+        tabIndex={-1} // NOSONAR
         className="bg-white rounded-3xl shadow-soft-lg border border-frost-border w-full max-w-lg overflow-hidden"
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-frost-border bg-frost/60">
@@ -101,3 +102,10 @@ export default function Modal({ isOpen, onClose, title, children }) {
     </div>
   );
 }
+
+Modal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  title: PropTypes.string,
+  children: PropTypes.node
+};

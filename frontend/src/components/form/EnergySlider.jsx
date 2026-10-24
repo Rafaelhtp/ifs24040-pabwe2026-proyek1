@@ -1,5 +1,6 @@
 // Komponen indikator tingkat energi harian (1-5) berbentuk baterai/bar dengan kontras WCAG AA
 import React from 'react';
+import PropTypes from 'prop-types';
 import { BatteryLow, BatteryMedium, BatteryFull, Zap } from 'lucide-react';
 import { ENERGY_LEVELS } from '../../constants/config';
 
@@ -9,6 +10,10 @@ function EnergyIcon({ level }) {
   if (level === 4) return <BatteryFull className="w-4 h-4" aria-hidden="true" />;
   return <Zap className="w-4 h-4" aria-hidden="true" />;
 }
+
+EnergyIcon.propTypes = {
+  level: PropTypes.number
+};
 
 export default function EnergySlider({ value = 3, onChange }) {
   const numValue = Number(value) || 3;
@@ -36,10 +41,9 @@ export default function EnergySlider({ value = 3, onChange }) {
         </span>
       </div>
 
-      <div
-        role="radiogroup"
+      <fieldset
         aria-label="Pilih tingkat energi 1 sampai 5"
-        className="grid grid-cols-5 gap-2 p-2 bg-white rounded-2xl border border-frost-border shadow-2xs"
+        className="grid grid-cols-5 gap-2 p-2 bg-white rounded-2xl border border-frost-border shadow-2xs m-0"
       >
         {ENERGY_LEVELS.map((item) => {
           const isFilled = item.level <= numValue;
@@ -49,10 +53,9 @@ export default function EnergySlider({ value = 3, onChange }) {
             <button
               key={item.level}
               type="button"
-              role="radio"
-              aria-checked={isCurrent}
+              aria-pressed={isCurrent}
               aria-label={`Energi ${item.level}: ${item.label}`}
-              onClick={() => onChange(item.level)}
+              onClick={() => onChange?.(item.level)}
               className={`h-11 min-h-[44px] rounded-xl flex flex-col items-center justify-center transition-all duration-150 border ${
                 isFilled
                   ? `${current.barColor} border-transparent shadow-2xs`
@@ -66,7 +69,7 @@ export default function EnergySlider({ value = 3, onChange }) {
             </button>
           );
         })}
-      </div>
+      </fieldset>
 
       <div className="flex justify-between text-[11px] font-bold text-ink-soft mt-2 px-1">
         <span>1 Sangat Lelah</span>
@@ -76,3 +79,8 @@ export default function EnergySlider({ value = 3, onChange }) {
     </div>
   );
 }
+
+EnergySlider.propTypes = {
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onChange: PropTypes.func
+};

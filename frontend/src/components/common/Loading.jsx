@@ -1,5 +1,6 @@
 // Komponen indikator pemuatan data (Loading spinner) dengan gaya Soft Organic
 import React from 'react';
+import PropTypes from 'prop-types';
 import MoodBlob from '../mood/MoodBlob';
 import { DEFAULT_ACCENT_COLOR } from '../../constants/config';
 
@@ -18,3 +19,8 @@ export default function Loading({ text = 'Memuat data...', fullScreen = false })
     </div>
   );
 }
+
+Loading.propTypes = {
+  text: PropTypes.string,
+  fullScreen: PropTypes.bool
+};

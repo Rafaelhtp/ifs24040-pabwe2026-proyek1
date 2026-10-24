@@ -73,7 +73,7 @@ router.get('/', (req, res) => {
     params.push(Number(mood_id));
   }
 
-  if (q && q.trim() !== '') {
+  if (q?.trim()) {
     conditions.push('(s.title LIKE ? OR s.artist LIKE ?)');
     const keyword = `%${q.trim()}%`;
     params.push(keyword, keyword);
@@ -156,14 +156,14 @@ router.post(
     const artist = req.body.artist.trim();
     const moodId = Number(req.body.mood_id);
     const link = req.body.link ? req.body.link.trim() : null;
-    const coverPath = req.file ? req.file.filename : null;
+    const coverPath = req.file?.filename || null;
 
     const info = db
       .prepare(`
         INSERT INTO songs (title, artist, mood_id, link, cover_path, created_by)
         VALUES (?, ?, ?, ?, ?, ?)
       `)
-      .run(title, artist, moodId, link, coverPath, req.user.id);
+      .run(title, artist, moodId, link, coverPath, req.user?.id);
 
     const createdSong = selectSongByIdStmt.get(Number(info.lastInsertRowid));
 
@@ -185,7 +185,7 @@ router.put(
     const existing = selectRawSongByIdStmt.get(songId);
 
     if (!existing) {
-      if (req.file && req.file.filename) {
+      if (req.file?.filename) {
         removeUploadedFile(req.file.filename);
       }
       return res.status(404).json({
@@ -209,7 +209,7 @@ router.put(
     const link = resolveUpdatedLink(req.body.link, existing.link);
 
     let coverPath = existing.cover_path;
-    if (req.file) {
+    if (req.file?.filename) {
       if (existing.cover_path) {
         removeUploadedFile(existing.cover_path);
       }

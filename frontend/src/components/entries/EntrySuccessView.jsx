@@ -1,5 +1,6 @@
 // Tampilan sukses setelah menyimpan catatan jurnal beserta rekomendasi SoundtrackCard
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, BookOpen, PenLine } from 'lucide-react';
 import MoodBlob from '../mood/MoodBlob';
@@ -13,8 +14,8 @@ export default function EntrySuccessView({ savedEntry, onWriteAnother }) {
       <div className="bg-white rounded-3xl border border-frost-border p-8 text-center shadow-soft-lg">
         <div className="flex justify-center mb-4">
           <MoodBlob
-            moodName={savedEntry.mood_name}
-            color={savedEntry.color}
+            moodName={savedEntry?.mood_name}
+            color={savedEntry?.color}
             size="xl"
             animated
           />
@@ -27,8 +28,8 @@ export default function EntrySuccessView({ savedEntry, onWriteAnother }) {
           Terima kasih sudah berbagi cerita hari ini!
         </h1>
         <p className="text-sm text-ink-soft mt-1">
-          Catatan untuk tanggal <strong>{formatDateLong(savedEntry.entry_date)}</strong> dengan mood{' '}
-          <strong>{savedEntry.mood_name}</strong> berhasil disimpan.
+          Catatan untuk tanggal <strong>{formatDateLong(savedEntry?.entry_date)}</strong> dengan mood{' '}
+          <strong>{savedEntry?.mood_name}</strong> berhasil disimpan.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
@@ -51,11 +52,21 @@ export default function EntrySuccessView({ savedEntry, onWriteAnother }) {
       </div>
 
       <SoundtrackCard
-        moodId={savedEntry.mood_id}
-        moodName={savedEntry.mood_name}
-        moodColor={savedEntry.color}
-        title={`Soundtrack Mood ${savedEntry.mood_name} Kamu`}
+        moodId={savedEntry?.mood_id}
+        moodName={savedEntry?.mood_name}
+        moodColor={savedEntry?.color}
+        title={`Soundtrack Mood ${savedEntry?.mood_name} Kamu`}
       />
     </div>
   );
 }
+
+EntrySuccessView.propTypes = {
+  savedEntry: PropTypes.shape({
+    mood_id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    mood_name: PropTypes.string,
+    color: PropTypes.string,
+    entry_date: PropTypes.string
+  }),
+  onWriteAnother: PropTypes.func
+};

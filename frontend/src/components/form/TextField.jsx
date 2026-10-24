@@ -1,5 +1,6 @@
 // Komponen input teks reusable dengan label, ikon opsional, dan atribut aksesibilitas
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export default function TextField({
   id,
@@ -45,3 +46,18 @@ export default function TextField({
     </div>
   );
 }
+
+TextField.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  type: PropTypes.string,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onChange: PropTypes.func,
+  placeholder: PropTypes.string,
+  required: PropTypes.bool,
+  autoComplete: PropTypes.string,
+  icon: PropTypes.elementType,
+  hasError: PropTypes.bool,
+  describedBy: PropTypes.string
+};

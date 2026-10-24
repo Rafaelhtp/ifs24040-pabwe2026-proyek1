@@ -1,5 +1,6 @@
 // Komponen peringatan konflik 409 ketika mood yang akan dihapus masih dipakai entri jurnal
 import React from 'react';
+import PropTypes from 'prop-types';
 import { AlertTriangle, X } from 'lucide-react';
 
 export default function MoodConflictAlert({ message, onClose }) {
@@ -30,3 +31,8 @@ export default function MoodConflictAlert({ message, onClose }) {
     </div>
   );
 }
+
+MoodConflictAlert.propTypes = {
+  message: PropTypes.string,
+  onClose: PropTypes.func
+};

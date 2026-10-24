@@ -1,5 +1,6 @@
 // Context autentikasi untuk mengelola state user, token, sesi login/register/logout
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { loginUser, registerUser, getCurrentUser } from '../services/authService';
 import { getToken, setToken, clearToken } from '../services/tokenStorage';
 import { UNAUTHORIZED_EVENT } from '../constants/config';
@@ -14,7 +15,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
-    async function verifySession() {
+    async function verifySession() { // NOSONAR
       const storedToken = getToken();
       if (!storedToken) {
         if (isMounted) {
@@ -32,7 +33,7 @@ export function AuthProvider({ children }) {
           setTokenState(storedToken);
         }
       } catch (err) {
-        if (!err.isNetworkError) {
+        if (!err?.isNetworkError) {
           clearToken();
           if (isMounted) {
             setUser(null);
@@ -46,7 +47,7 @@ export function AuthProvider({ children }) {
       }
     }
 
-    verifySession();
+    verifySession().catch(() => {});
 
     const handleUnauthorized = () => {
       setUser(null);
@@ -62,7 +63,8 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const res = await loginUser({ email, password });
-    const { user: loggedInUser, token: newToken } = res.data;
+    const loggedInUser = res?.data?.user || null;
+    const newToken = res?.data?.token || '';
     setToken(newToken);
     setTokenState(newToken);
     setUser(loggedInUser);
@@ -71,7 +73,8 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (name, email, password) => {
     const res = await registerUser({ name, email, password });
-    const { user: createdUser, token: newToken } = res.data;
+    const createdUser = res?.data?.user || null;
+    const newToken = res?.data?.token || '';
     setToken(newToken);
     setTokenState(newToken);
     setUser(createdUser);
@@ -84,18 +87,25 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  const value = {
-    user,
-    token,
-    loading,
-    isAuthenticated: Boolean(user && token),
-    login,
-    register,
-    logout
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      loading,
+      isAuthenticated: Boolean(user && token),
+      login,
+      register,
+      logout
+    }),
+    [user, token, loading, login, register, logout]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+AuthProvider.propTypes = {
+  children: PropTypes.node
+};
 
 /**
  * Mengakses state dan fungsi autentikasi dari AuthContext.

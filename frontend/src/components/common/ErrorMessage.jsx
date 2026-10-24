@@ -1,13 +1,14 @@
 // Komponen penampil pesan error API maupun kegagalan koneksi ke server
 import React from 'react';
+import PropTypes from 'prop-types';
 import { RefreshCw, WifiOff, AlertCircle } from 'lucide-react';
 import { MESSAGES } from '../../constants/messages';
 
 export default function ErrorMessage({ error, onRetry }) {
   if (!error) return null;
 
-  const isNetwork = Boolean(error.isNetworkError);
-  let messageText = error.message || MESSAGES.LOAD_ERROR;
+  const isNetwork = Boolean(error?.isNetworkError);
+  let messageText = error?.message || MESSAGES.LOAD_ERROR;
   if (typeof error === 'string') {
     messageText = error;
   } else if (isNetwork) {
@@ -45,3 +46,14 @@ export default function ErrorMessage({ error, onRetry }) {
     </div>
   );
 }
+
+ErrorMessage.propTypes = {
+  error: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({
+      message: PropTypes.string,
+      isNetworkError: PropTypes.bool
+    })
+  ]),
+  onRetry: PropTypes.func
+};

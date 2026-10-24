@@ -1,5 +1,6 @@
 // Komponen SVG Ilustrasi Karakter Blob Organik (Mochi/Pebble) sesuai Nama & Warna Mood API
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const SIZE_MAP = {
   xs: 28,
@@ -291,3 +292,12 @@ export default function MoodBlob({
     </svg>
   );
 }
+
+MoodBlob.propTypes = {
+  moodName: PropTypes.string,
+  color: PropTypes.string,
+  size: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  selected: PropTypes.bool,
+  animated: PropTypes.bool,
+  className: PropTypes.string
+};

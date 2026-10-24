@@ -54,8 +54,8 @@ export default function useEntryForm({ id, moods = [] }) {
       } catch (err) {
         if (isMounted) {
           setLoadError({
-            message: err.userMessage || 'Entri jurnal tidak ditemukan',
-            isNetworkError: Boolean(err.isNetworkError)
+            message: err?.userMessage || 'Entri jurnal tidak ditemukan',
+            isNetworkError: Boolean(err?.isNetworkError)
           });
         }
       } finally {
@@ -65,13 +65,13 @@ export default function useEntryForm({ id, moods = [] }) {
       }
     }
 
-    loadExisting();
+    loadExisting().catch(() => {});
     return () => {
       isMounted = false;
     };
   }, [id, isEditMode]);
 
-  const selectedMood = moods.find((m) => Number(m.id) === Number(moodId)) || null;
+  const selectedMood = moods.find((m) => Number(m?.id) === Number(moodId)) || null;
 
   const handleResetForNew = () => {
     setSavedSuccessEntry(null);
@@ -87,7 +87,7 @@ export default function useEntryForm({ id, moods = [] }) {
   };
 
   const handleSubmitEntry = async (event) => {
-    event.preventDefault();
+    event?.preventDefault?.();
     setFormError('');
 
     if (!isValidDate(entryDate)) {
@@ -130,7 +130,7 @@ export default function useEntryForm({ id, moods = [] }) {
         }
       );
     } catch (err) {
-      const msg = err.userMessage || 'Gagal menyimpan catatan jurnal.';
+      const msg = err?.userMessage || 'Gagal menyimpan catatan jurnal.';
       setFormError(msg);
       showToast(msg, 'error');
     } finally {

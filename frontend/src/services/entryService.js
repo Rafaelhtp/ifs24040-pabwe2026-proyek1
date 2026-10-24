@@ -1,5 +1,5 @@
 // Service pemanggilan API untuk Entri Jurnal Harian (/api/entries/*)
-import apiClient from './client';
+import apiClient, { handleApiError } from './client';
 import { cleanQueryParams } from '../utils/params';
 
 const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
@@ -10,10 +10,12 @@ const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
  * @returns {Promise<object>} Respons JSON berisi array data entri dan meta paginasi
  */
 export async function getEntries(params = {}) {
-  const response = await apiClient.get('/entries', {
-    params: cleanQueryParams(params)
-  });
-  return response.data;
+  const response = await apiClient
+    .get('/entries', {
+      params: cleanQueryParams(params)
+    })
+    .catch(handleApiError);
+  return response?.data;
 }
 
 /**
@@ -22,8 +24,8 @@ export async function getEntries(params = {}) {
  * @returns {Promise<object>} Respons JSON berisi detail entri jurnal
  */
 export async function getEntryById(id) {
-  const response = await apiClient.get(`/entries/${id}`);
-  return response.data;
+  const response = await apiClient.get(`/entries/${id}`).catch(handleApiError);
+  return response?.data;
 }
 
 /**
@@ -32,10 +34,12 @@ export async function getEntryById(id) {
  * @returns {Promise<object>} Respons JSON entri yang baru dibuat
  */
 export async function createEntry(formData) {
-  const response = await apiClient.post('/entries', formData, {
-    headers: MULTIPART_HEADERS
-  });
-  return response.data;
+  const response = await apiClient
+    .post('/entries', formData, {
+      headers: MULTIPART_HEADERS
+    })
+    .catch(handleApiError);
+  return response?.data;
 }
 
 /**
@@ -45,10 +49,12 @@ export async function createEntry(formData) {
  * @returns {Promise<object>} Respons JSON entri yang telah diperbarui
  */
 export async function updateEntry(id, formData) {
-  const response = await apiClient.put(`/entries/${id}`, formData, {
-    headers: MULTIPART_HEADERS
-  });
-  return response.data;
+  const response = await apiClient
+    .put(`/entries/${id}`, formData, {
+      headers: MULTIPART_HEADERS
+    })
+    .catch(handleApiError);
+  return response?.data;
 }
 
 /**
@@ -57,6 +63,6 @@ export async function updateEntry(id, formData) {
  * @returns {Promise<object>} Respons JSON konfirmasi penghapusan
  */
 export async function deleteEntry(id) {
-  const response = await apiClient.delete(`/entries/${id}`);
-  return response.data;
+  const response = await apiClient.delete(`/entries/${id}`).catch(handleApiError);
+  return response?.data;
 }

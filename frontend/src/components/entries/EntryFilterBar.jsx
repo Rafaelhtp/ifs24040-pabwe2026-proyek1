@@ -1,5 +1,6 @@
 // Komponen bilah filter halaman Jurnal (filter MoodBlob, kata kunci, dan rentang tanggal)
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Search, Calendar, RotateCcw } from 'lucide-react';
 import MoodBlob from '../mood/MoodBlob';
 
@@ -129,3 +130,21 @@ export default function EntryFilterBar({
     </section>
   );
 }
+
+EntryFilterBar.propTypes = {
+  moods: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      name: PropTypes.string,
+      color: PropTypes.string
+    })
+  ),
+  moodIdParam: PropTypes.string,
+  fromParam: PropTypes.string,
+  toParam: PropTypes.string,
+  searchInput: PropTypes.string,
+  onSearchChange: PropTypes.func,
+  onFilterChange: PropTypes.func,
+  onReset: PropTypes.func,
+  hasActiveFilter: PropTypes.bool
+};

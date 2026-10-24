@@ -1,5 +1,6 @@
 // Komponen pemilih mood interaktif berbasis karakter SVG MoodBlob
 import React from 'react';
+import PropTypes from 'prop-types';
 import MoodBlob from './MoodBlob';
 
 export default function MoodPicker({ moods = [], selectedMoodId, onSelect }) {
@@ -8,11 +9,11 @@ export default function MoodPicker({ moods = [], selectedMoodId, onSelect }) {
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
       event.preventDefault();
       const next = moods[(index + 1) % moods.length];
-      onSelect(next.id);
+      onSelect?.(next?.id);
     } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
       event.preventDefault();
       const prev = moods[(index - 1 + moods.length) % moods.length];
-      onSelect(prev.id);
+      onSelect?.(prev?.id);
     }
   };
 
@@ -27,20 +28,18 @@ export default function MoodPicker({ moods = [], selectedMoodId, onSelect }) {
         </span>
       </div>
 
-      <div
-        role="radiogroup"
+      <fieldset
         aria-label="Pilih suasana hati"
-        className="grid grid-cols-3 sm:grid-cols-4 gap-3"
+        className="grid grid-cols-3 sm:grid-cols-4 gap-3 m-0 p-0 border-0"
       >
         {moods.map((mood, idx) => {
-          const isSelected = Number(selectedMoodId) === Number(mood.id);
+          const isSelected = Number(selectedMoodId) === Number(mood?.id);
           return (
             <button
               key={mood.id}
               type="button"
-              role="radio"
-              aria-checked={isSelected}
-              onClick={() => onSelect(mood.id)}
+              aria-pressed={isSelected}
+              onClick={() => onSelect?.(mood.id)}
               onKeyDown={(event) => handleKeyDown(event, idx)}
               className={`group flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all duration-200 ${
                 isSelected
@@ -64,7 +63,19 @@ export default function MoodPicker({ moods = [], selectedMoodId, onSelect }) {
             </button>
           );
         })}
-      </div>
+      </fieldset>
     </div>
   );
 }
+
+MoodPicker.propTypes = {
+  moods: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      name: PropTypes.string,
+      color: PropTypes.string
+    })
+  ),
+  selectedMoodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onSelect: PropTypes.func
+};

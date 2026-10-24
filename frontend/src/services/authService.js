@@ -1,5 +1,5 @@
 // Service pemanggilan API untuk Autentikasi Pengguna (/api/auth/*)
-import apiClient from './client';
+import apiClient, { handleApiError } from './client';
 
 /**
  * Mengirim permintaan login pengguna ke endpoint POST /api/auth/login.
@@ -7,8 +7,8 @@ import apiClient from './client';
  * @returns {Promise<object>} Respons JSON dari server berisi data user dan token
  */
 export async function loginUser(credentials) {
-  const response = await apiClient.post('/auth/login', credentials);
-  return response.data;
+  const response = await apiClient.post('/auth/login', credentials).catch(handleApiError);
+  return response?.data;
 }
 
 /**
@@ -17,8 +17,8 @@ export async function loginUser(credentials) {
  * @returns {Promise<object>} Respons JSON dari server berisi data user dan token
  */
 export async function registerUser(payload) {
-  const response = await apiClient.post('/auth/register', payload);
-  return response.data;
+  const response = await apiClient.post('/auth/register', payload).catch(handleApiError);
+  return response?.data;
 }
 
 /**
@@ -26,6 +26,6 @@ export async function registerUser(payload) {
  * @returns {Promise<object>} Respons JSON berisi data profil pengguna aktif
  */
 export async function getCurrentUser() {
-  const response = await apiClient.get('/auth/me');
-  return response.data;
+  const response = await apiClient.get('/auth/me').catch(handleApiError);
+  return response?.data;
 }

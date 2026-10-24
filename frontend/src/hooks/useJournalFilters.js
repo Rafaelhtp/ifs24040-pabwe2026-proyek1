@@ -15,7 +15,7 @@ export default function useJournalFilters() {
   const fromParam = searchParams.get('from') || '';
   const toParam = searchParams.get('to') || '';
   const qParam = searchParams.get('q') || '';
-  const pageParam = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+  const pageParam = Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10));
 
   const [searchInput, setSearchInput] = useState(qParam);
   const debouncedSearch = useDebounce(searchInput, DEBOUNCE_DELAY_MS);

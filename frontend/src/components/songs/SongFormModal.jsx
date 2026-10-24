@@ -1,5 +1,6 @@
 // Modal formulir tambah/edit lagu rekomendasi
 import React from 'react';
+import PropTypes from 'prop-types';
 import Modal from '../common/Modal';
 import FormAlert from '../form/FormAlert';
 import TextField from '../form/TextField';
@@ -16,11 +17,12 @@ export default function SongFormModal({
   moods = [],
   onSubmit
 }) {
-  const submitLabel = isSubmitting
-    ? 'Menyimpan...'
-    : editingSong
-    ? 'Simpan Perubahan'
-    : 'Tambah Lagu';
+  let submitLabel = 'Tambah Lagu';
+  if (isSubmitting) {
+    submitLabel = 'Menyimpan...';
+  } else if (editingSong) {
+    submitLabel = 'Simpan Perubahan';
+  }
 
   return (
     <Modal
@@ -34,7 +36,7 @@ export default function SongFormModal({
         <TextField
           id="song-title-input"
           label="Judul Lagu"
-          value={form.title}
+          value={form?.title}
           onChange={(event) => onFieldChange('title', event.target.value)}
           placeholder="Contoh: Manusia Kuat"
           required
@@ -45,7 +47,7 @@ export default function SongFormModal({
         <TextField
           id="song-artist-input"
           label="Nama Artis / Penyanyi"
-          value={form.artist}
+          value={form?.artist}
           onChange={(event) => onFieldChange('artist', event.target.value)}
           placeholder="Contoh: Tulus"
           required
@@ -59,7 +61,7 @@ export default function SongFormModal({
           </label>
           <select
             id="song-mood-select"
-            value={form.moodId}
+            value={form?.moodId}
             onChange={(event) => onFieldChange('moodId', event.target.value)}
             required
             className="w-full px-3.5 py-2.5 rounded-2xl border border-frost-border text-sm text-ink bg-white"
@@ -77,7 +79,7 @@ export default function SongFormModal({
           id="song-link-input"
           label="Tautan Lagu (URL YouTube / Platform Musik, Opsional)"
           type="url"
-          value={form.link}
+          value={form?.link}
           onChange={(event) => onFieldChange('link', event.target.value)}
           placeholder="https://www.youtube.com/results?search_query=..."
         />
@@ -109,3 +111,29 @@ export default function SongFormModal({
     </Modal>
   );
 }
+
+SongFormModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  editingSong: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    cover_path: PropTypes.string
+  }),
+  form: PropTypes.shape({
+    title: PropTypes.string,
+    artist: PropTypes.string,
+    moodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    link: PropTypes.string
+  }),
+  onFieldChange: PropTypes.func,
+  formError: PropTypes.string,
+  isSubmitting: PropTypes.bool,
+  moods: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      name: PropTypes.string,
+      emoji: PropTypes.string
+    })
+  ),
+  onSubmit: PropTypes.func
+};
