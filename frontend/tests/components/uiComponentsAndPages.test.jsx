@@ -292,6 +292,7 @@ describe('UI components and pages SSR coverage', () => {
     expect(wrap(<Moods />)).toContain('Kelola Kategori Mood');
     expect(wrap(<Stats />)).toContain('Menghitung');
     expect(wrap(<NotFound />)).toContain('404 Not Found');
+    expect(wrap(<App />, '/')).toContain('Memeriksa');
     expect(wrap(<App />, '/auth/login')).toContain('Moodify');
   });
 });

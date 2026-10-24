@@ -739,6 +739,7 @@ describe('Moodify REST API Integration & Branch Coverage Tests', () => {
     process.env.JWT_SECRET = savedSecret;
     expect(typeof app.generateTraceId()).toBe('string');
     expect(app.generateTraceId().length).toBeGreaterThan(0);
+    expect(typeof app.generateFakeId()).toBe('string');
 
     const newUploadSubdir = path.join(testUploadDir, 'subdir-baru');
     expect(getUploadDir(newUploadSubdir)).toBe(newUploadSubdir);

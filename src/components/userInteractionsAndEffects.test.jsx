@@ -1,0 +1,734 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const hookRuntime = {
+  activeScope: 'default',
+  scopes: new Map(),
+  effects: [],
+  cleanups: [],
+  reset() {
+    this.activeScope = 'default';
+    this.scopes = new Map();
+    this.effects = [];
+    this.cleanups = [];
+  },
+  getScope(name = this.activeScope) {
+    if (!this.scopes.has(name)) {
+      this.scopes.set(name, { slots: [], cursor: 0 });
+    }
+    return this.scopes.get(name);
+  },
+  render(fn, scopeName = 'default') {
+    const prevScope = this.activeScope;
+    this.activeScope = scopeName;
+    const scope = this.getScope(scopeName);
+    scope.cursor = 0;
+    const tree = fn();
+    if (tree && typeof tree.type === 'function') {
+      tree.type(tree.props);
+    }
+    this.activeScope = prevScope;
+    return tree;
+  },
+  flushEffects() {
+    const pending = [...this.effects];
+    this.effects = [];
+    for (const eff of pending) {
+      const cleanup = eff();
+      if (typeof cleanup === 'function') {
+        this.cleanups.push(cleanup);
+      }
+    }
+  },
+  runCleanups() {
+    while (this.cleanups.length > 0) {
+      const fn = this.cleanups.pop();
+      fn();
+    }
+  }
+};
+
+const navigateMock = vi.fn();
+
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal();
+  const mocked = {
+    ...actual,
+    createContext: (defaultValue) => {
+      const ctx = {
+        _currentValue: defaultValue,
+        Provider: ({ value, children }) => { // NOSONAR
+          ctx._currentValue = value;
+          return children;
+        }
+      };
+      return ctx;
+    },
+    useContext: (ctx) => ctx._currentValue,
+    useState: (initial) => {
+      const scope = hookRuntime.getScope();
+      const idx = scope.cursor++;
+      if (!(idx in scope.slots)) {
+        scope.slots[idx] = typeof initial === 'function' ? initial() : initial;
+      }
+      const setState = (val) => {
+        scope.slots[idx] =
+          typeof val === 'function' ? val(scope.slots[idx]) : val;
+      };
+      return [scope.slots[idx], setState];
+    },
+    useRef: (initial) => {
+      const scope = hookRuntime.getScope();
+      const idx = scope.cursor++;
+      if (!(idx in scope.slots)) {
+        scope.slots[idx] = { current: initial };
+      }
+      return scope.slots[idx];
+    },
+    useEffect: (cb) => {
+      hookRuntime.effects.push(cb);
+    },
+    useCallback: (cb) => cb,
+    useMemo: (fn) => fn(),
+    useId: () => 'test-id'
+  };
+  return {
+    ...mocked,
+    default: mocked
+  };
+});
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+    useLocation: () => ({ pathname: '/dashboard', state: null }),
+    useParams: () => ({ id: undefined }),
+    useSearchParams: () => [new URLSearchParams(), vi.fn()]
+  };
+});
+
+import { AuthProvider, useAuth } from '../../src/context/AuthContext';
+import Modal from '../../src/components/common/Modal';
+import { ToastProvider, useToast } from '../../src/components/common/Toast';
+import Pagination from '../../src/components/common/Pagination';
+import Navbar from '../../src/components/layout/Navbar';
+import Login from '../../src/pages/Login';
+import Register from '../../src/pages/Register';
+import Dashboard from '../../src/pages/Dashboard';
+import Journal from '../../src/pages/Journal';
+import Songs from '../../src/pages/Songs';
+import Moods from '../../src/pages/Moods';
+import EntryForm from '../../src/pages/EntryForm';
+import Stats from '../../src/pages/Stats';
+import SongRecommendationPanel from '../../src/components/entries/SongRecommendationPanel';
+import SoundtrackCard from '../../src/components/entries/SoundtrackCard';
+import EntryCard from '../../src/components/entries/EntryCard';
+import EntryFilterBar from '../../src/components/entries/EntryFilterBar';
+import ImageUpload from '../../src/components/form/ImageUpload';
+import EnergySlider from '../../src/components/form/EnergySlider';
+import MoodPicker from '../../src/components/mood/MoodPicker';
+import MoodChart from '../../src/components/mood/MoodChart';
+import MoodCard from '../../src/components/moods/MoodCard';
+import MoodFormModal from '../../src/components/moods/MoodFormModal';
+import SongCard from '../../src/components/songs/SongCard';
+import SongFilterBar from '../../src/components/songs/SongFilterBar';
+import SongFormModal from '../../src/components/songs/SongFormModal';
+import * as authService from '../../src/services/authService';
+import * as songService from '../../src/services/songService';
+import * as statsService from '../../src/services/statsService';
+import * as entryService from '../../src/services/entryService';
+import { setToken, clearToken } from '../../src/services/tokenStorage';
+import { UNAUTHORIZED_EVENT } from '../../src/constants/config';
+
+// Helper untuk menelusuri pohon elemen React dan mengumpulkan semua node yang cocok
+function collectNodes(node, predicate, results = []) { // NOSONAR
+  if (!node || typeof node !== 'object') return results;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      collectNodes(child, predicate, results);
+    }
+    return results;
+  }
+  if (predicate(node)) {
+    results.push(node);
+  }
+  if (node.props?.children) {
+    collectNodes(node.props.children, predicate, results);
+  }
+  return results;
+}
+
+describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast, Navbar, Login, Register, and widgets', () => {
+  beforeEach(() => {
+    hookRuntime.reset();
+    navigateMock.mockReset();
+    vi.restoreAllMocks();
+
+    const store = new Map();
+    globalThis.localStorage = {
+      getItem: (key) => (store.has(key) ? store.get(key) : null),
+      setItem: (key, value) => store.set(key, String(value)),
+      removeItem: (key) => store.delete(key)
+    };
+    globalThis.addEventListener = vi.fn();
+    globalThis.removeEventListener = vi.fn();
+  });
+
+  it('AuthContext: verifies session (empty, valid, 401 error, network error), login, register, logout, and unauthorized event', async () => {
+    expect(() => useAuth()).toThrow('useAuth harus digunakan di dalam AuthProvider');
+
+    // 1. Tanpa token
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    hookRuntime.flushEffects();
+    expect(useAuth().isAuthenticated).toBe(false);
+    hookRuntime.runCleanups();
+
+    // 2. Dengan token valid + handleUnauthorized + login + register + logout
+    hookRuntime.reset();
+    setToken('valid-jwt');
+    vi.spyOn(authService, 'getCurrentUser').mockResolvedValueOnce({
+      data: { id: 1, name: 'Budi', email: 'budi@moodify.com' }
+    });
+    vi.spyOn(authService, 'loginUser').mockResolvedValueOnce({
+      data: { user: { id: 2, name: 'Login User' }, token: 'login-jwt' }
+    });
+    vi.spyOn(authService, 'registerUser').mockResolvedValueOnce({
+      data: { user: { id: 3, name: 'Reg User' }, token: 'reg-jwt' }
+    });
+
+    const listeners = {};
+    globalThis.addEventListener = vi.fn((evt, cb) => {
+      listeners[evt] = cb;
+    });
+
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    let ctx = useAuth();
+    expect(ctx.user?.name).toBe('Budi');
+
+    const loggedIn = await ctx.login('budi@moodify.com', 'password123');
+    expect(loggedIn.name).toBe('Login User');
+
+    const registered = await ctx.register('Reg User', 'reg@moodify.com', 'password123');
+    expect(registered.name).toBe('Reg User');
+
+    listeners[UNAUTHORIZED_EVENT]?.();
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    ctx = useAuth();
+    expect(ctx.user).toBeNull();
+
+    ctx.logout();
+    hookRuntime.runCleanups();
+
+    // 3. getCurrentUser gagal karena non-network error (401)
+    hookRuntime.reset();
+    setToken('expired-jwt');
+    vi.spyOn(authService, 'getCurrentUser').mockRejectedValueOnce({ isNetworkError: false });
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    hookRuntime.runCleanups();
+
+    // 4. getCurrentUser gagal karena network error
+    hookRuntime.reset();
+    setToken('keep-jwt');
+    vi.spyOn(authService, 'getCurrentUser').mockRejectedValueOnce({ isNetworkError: true });
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    hookRuntime.runCleanups();
+    clearToken();
+  });
+
+  it('Modal: handles focus trap, Escape key, Tab/Shift+Tab cycling, and cleanup focus restore', () => {
+    const onClose = vi.fn();
+    let keydownHandler = null;
+    globalThis.addEventListener = vi.fn((evt, cb) => {
+      if (evt === 'keydown') keydownHandler = cb;
+    });
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn) => {
+      fn();
+      return 123;
+    });
+    vi.spyOn(globalThis, 'clearTimeout').mockImplementation(() => {});
+
+    const triggerEl = { focus: vi.fn() };
+    const firstBtn = { focus: vi.fn() };
+    const lastBtn = { focus: vi.fn() };
+    globalThis.document = { activeElement: triggerEl };
+
+    expect(
+      hookRuntime.render(() => Modal({ isOpen: false, onClose, title: 'Tutup' }), 'modal')
+    ).toBeNull();
+    hookRuntime.flushEffects();
+
+    hookRuntime.reset();
+    hookRuntime.render(
+      () => Modal({ isOpen: true, onClose, title: 'Buka', children: null }),
+      'modal'
+    );
+    const modalScope = hookRuntime.getScope('modal');
+    modalScope.slots[0].current = {
+      focus: vi.fn(),
+      contains: () => false,
+      querySelectorAll: () => [firstBtn, lastBtn]
+    };
+    hookRuntime.flushEffects();
+    expect(firstBtn.focus).toHaveBeenCalled();
+
+    // Cabang setTimeout ketika focusables kosong -> fokus ke dialogRef.current
+    modalScope.slots[0].current.querySelectorAll = () => [];
+    hookRuntime.render(
+      () => Modal({ isOpen: true, onClose, title: 'Buka', children: null }),
+      'modal'
+    );
+    hookRuntime.flushEffects();
+    expect(modalScope.slots[0].current.focus).toHaveBeenCalled();
+
+    // Kembalikan 2 tombol focusable untuk uji Tab/Shift+Tab/Escape
+    modalScope.slots[0].current.querySelectorAll = () => [firstBtn, lastBtn];
+    keydownHandler({ key: 'Escape', preventDefault: vi.fn() });
+    expect(onClose).toHaveBeenCalled();
+
+    globalThis.document.activeElement = firstBtn;
+    keydownHandler({ key: 'Tab', shiftKey: true, preventDefault: vi.fn() });
+    expect(lastBtn.focus).toHaveBeenCalled();
+
+    globalThis.document.activeElement = lastBtn;
+    keydownHandler({ key: 'Tab', shiftKey: false, preventDefault: vi.fn() });
+    expect(firstBtn.focus).toHaveBeenCalled();
+
+    modalScope.slots[0].current.querySelectorAll = () => [];
+    keydownHandler({ key: 'Tab', shiftKey: false, preventDefault: vi.fn() });
+
+    hookRuntime.runCleanups();
+    expect(triggerEl.focus).toHaveBeenCalled();
+  });
+
+  it('ToastProvider & useToast: shows success/error/info toasts, removes toast on click or timeout, and cleans up timers', () => {
+    expect(() => useToast()).toThrow('useToast harus digunakan di dalam ToastProvider');
+
+    let timeoutCb = null;
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn) => {
+      timeoutCb = fn;
+      return 99;
+    });
+    vi.spyOn(globalThis, 'clearTimeout').mockImplementation(() => {});
+
+    hookRuntime.render(() => ToastProvider({ children: null }), 'toast');
+    hookRuntime.flushEffects();
+    const toastApi = useToast();
+
+    toastApi.showToast('Berhasil disimpan', 'success', 3000);
+    toastApi.showToast('Terjadi kesalahan', 'error', 0);
+    toastApi.showToast('Informasi baru', 'info', 3000);
+
+    const tree = hookRuntime.render(() => ToastProvider({ children: null }), 'toast');
+    const closeButtons = collectNodes(
+      tree,
+      (n) => n.type === 'button' && n.props?.['aria-label'] === 'Tutup notifikasi'
+    );
+    expect(closeButtons.length).toBe(3);
+
+    const icons = collectNodes(
+      tree,
+      (n) => typeof n.type === 'function' && n.type.name === 'ToastIcon'
+    );
+    icons.forEach((iconNode) => iconNode.type(iconNode.props));
+
+    closeButtons[0].props.onClick();
+    timeoutCb?.();
+    hookRuntime.runCleanups();
+  });
+
+  it('Navbar: handles logout, mobile menu toggle, and active/inactive link classes for authenticated and guest users', () => {
+    hookRuntime.render(() => ToastProvider({ children: null }), 'toast');
+    setToken('jwt-nav');
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    hookRuntime.getScope('auth').slots[0] = { id: 1, name: 'Nadya', email: 'nadya@moodify.com' };
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+
+    let navTree = hookRuntime.render(() => Navbar(), 'nav');
+    const navLinks = collectNodes(navTree, (n) => typeof n.props?.className === 'function');
+    expect(navLinks[0].props.className({ isActive: true })).toContain('bg-denim');
+    expect(navLinks[0].props.className({ isActive: false })).toContain('text-ink-soft');
+
+    // Buka mobile menu saat login
+    const toggleBtn = collectNodes(
+      navTree,
+      (n) => n.type === 'button' && n.props?.['aria-label'] === 'Buka atau tutup menu navigasi'
+    )[0];
+    toggleBtn.props.onClick();
+
+    navTree = hookRuntime.render(() => Navbar(), 'nav');
+    const clickableNodes = collectNodes(navTree, (n) => typeof n.props?.onClick === 'function');
+    clickableNodes.forEach((node) => node.props.onClick());
+    expect(navigateMock).toHaveBeenCalledWith('/auth/login');
+
+    // Buka mobile menu saat guest (belum login)
+    clearToken();
+    hookRuntime.getScope('auth').slots[0] = null;
+    hookRuntime.getScope('auth').slots[1] = null;
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    hookRuntime.getScope('nav').slots[0] = true;
+    navTree = hookRuntime.render(() => Navbar(), 'nav');
+    const guestClickables = collectNodes(navTree, (n) => typeof n.props?.onClick === 'function');
+    guestClickables.forEach((node) => node.props.onClick());
+  });
+
+  it('Login & Register: validates inputs, submits credentials, handles demo login and API errors', async () => {
+    hookRuntime.render(() => ToastProvider({ children: null }), 'toast');
+    clearToken();
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+
+    // --- LOGIN ---
+    let loginTree = hookRuntime.render(() => Login(), 'login');
+    const getLoginInputs = () => collectNodes(loginTree, (n) => n.type === 'input');
+    const submitLogin = async () => {
+      loginTree = hookRuntime.render(() => Login(), 'login');
+      await collectNodes(loginTree, (n) => n.type === 'form')[0].props.onSubmit({
+        preventDefault: vi.fn()
+      });
+    };
+
+    getLoginInputs()[0].props.onChange({ target: { value: 'salah-format' } });
+    getLoginInputs()[1].props.onChange({ target: { value: '123' } });
+    await submitLogin();
+
+    getLoginInputs()[0].props.onChange({ target: { value: 'user@moodify.com' } });
+    await submitLogin();
+
+    vi.spyOn(authService, 'loginUser')
+      .mockResolvedValueOnce({ data: { user: { name: 'Demo' }, token: 't1' } })
+      .mockRejectedValueOnce({ userMessage: 'Gagal demo' })
+      .mockResolvedValueOnce({ data: { user: { name: 'User' }, token: 't2' } })
+      .mockRejectedValueOnce({ userMessage: 'Password salah' });
+
+    const demoBtn = collectNodes(
+      loginTree,
+      (n) => n.type === 'button' && n.props?.type === 'button'
+    )[0];
+    await demoBtn.props.onClick();
+    await demoBtn.props.onClick();
+
+    getLoginInputs()[1].props.onChange({ target: { value: 'password123' } });
+    await submitLogin();
+    await submitLogin();
+    // Render ulang Login saat formError terisi
+    loginTree = hookRuntime.render(() => Login(), 'login');
+    expect(collectNodes(loginTree, (n) => n.props?.role === 'alert').length).toBe(1);
+
+    // --- REGISTER ---
+    let regTree = hookRuntime.render(() => Register(), 'register');
+    const getRegInputs = () => collectNodes(regTree, (n) => n.type === 'input');
+    const submitReg = async () => {
+      regTree = hookRuntime.render(() => Register(), 'register');
+      await collectNodes(regTree, (n) => n.type === 'form')[0].props.onSubmit({
+        preventDefault: vi.fn()
+      });
+    };
+
+    await submitReg();
+    getRegInputs()[0].props.onChange({ target: { value: 'Nadya' } });
+    getRegInputs()[1].props.onChange({ target: { value: 'bukan-email' } });
+    await submitReg();
+
+    getRegInputs()[1].props.onChange({ target: { value: 'nadya@moodify.com' } });
+    getRegInputs()[2].props.onChange({ target: { value: '12345' } });
+    await submitReg();
+
+    getRegInputs()[2].props.onChange({ target: { value: 'password123' } });
+    getRegInputs()[3].props.onChange({ target: { value: 'beda12345' } });
+    await submitReg();
+
+    vi.spyOn(authService, 'registerUser')
+      .mockResolvedValueOnce({ data: { user: { name: 'Nadya' }, token: 'reg-t' } })
+      .mockRejectedValueOnce({ userMessage: 'Email sudah terdaftar' });
+    getRegInputs()[3].props.onChange({ target: { value: 'password123' } });
+    await submitReg();
+    await submitReg();
+    regTree = hookRuntime.render(() => Register(), 'register');
+    expect(collectNodes(regTree, (n) => n.props?.role === 'alert').length).toBe(1);
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard', { replace: true });
+  });
+
+  it('SongRecommendationPanel, SoundtrackCard, ImageUpload, MoodPicker, MoodChart, Dashboard, Stats, and card/filter callbacks', async () => {
+    vi.spyOn(songService, 'getSongs').mockResolvedValueOnce({
+      data: [
+        { id: 1, title: 'Lagu 1', artist: 'Artis 1', link: 'https://youtube.com/watch?v=1' },
+        { id: 2, title: 'Lagu 2', artist: 'Artis 2', link: 'https://spotify.com/track/2' }
+      ]
+    });
+    vi.spyOn(songService, 'getRandomSong')
+      .mockResolvedValueOnce({
+        data: {
+          id: 2,
+          title: 'Lagu 2',
+          artist: 'Artis 2',
+          mood_name: 'Senang',
+          color: '#FACC15',
+          cover_path: 'uploads/c.png',
+          link: 'https://youtube.com/watch?v=2'
+        }
+      })
+      .mockRejectedValueOnce({ statusCode: 404 })
+      .mockRejectedValueOnce({ userMessage: 'Error acak' });
+
+    // SongRecommendationPanel
+    let panelTree = hookRuntime.render(
+      () =>
+        SongRecommendationPanel({
+          moodId: 1,
+          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
+        }),
+      'panel'
+    );
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    panelTree = hookRuntime.render(
+      () =>
+        SongRecommendationPanel({
+          moodId: 1,
+          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
+        }),
+      'panel'
+    );
+    const randomBtn = collectNodes(panelTree, (n) => n.type === 'button')[0];
+    await randomBtn.props.onClick();
+    await randomBtn.props.onClick();
+    await randomBtn.props.onClick();
+
+    // SoundtrackCard (200 song, 404 notFound, 500 errorMsg)
+    vi.spyOn(songService, 'getRandomSong')
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          title: 'Monokrom',
+          artist: 'Tulus',
+          mood_name: 'Senang',
+          color: '#FACC15',
+          cover_path: 'uploads/c.jpg',
+          link: 'https://youtube.com/watch?v=1'
+        }
+      })
+      .mockRejectedValueOnce({ statusCode: 404 })
+      .mockRejectedValueOnce({ userMessage: 'Server sibuk' });
+
+    hookRuntime.render(() => SoundtrackCard({ moodId: 1, moodName: 'Senang' }), 'soundtrack');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    let cardTree = hookRuntime.render(
+      () => SoundtrackCard({ moodId: 1, moodName: 'Senang' }),
+      'soundtrack'
+    );
+    const shuffleBtn = collectNodes(cardTree, (n) => n.type === 'button')[0];
+    await shuffleBtn.props.onClick();
+    cardTree = hookRuntime.render(
+      () => SoundtrackCard({ moodId: 1, moodName: 'Senang' }),
+      'soundtrack'
+    );
+    await shuffleBtn.props.onClick();
+    cardTree = hookRuntime.render(
+      () => SoundtrackCard({ moodId: 1, moodName: 'Senang' }),
+      'soundtrack'
+    );
+    expect(cardTree).toBeDefined();
+
+    // ImageUpload
+    globalThis.URL.createObjectURL = vi.fn(() => 'blob:preview-1');
+    globalThis.URL.revokeObjectURL = vi.fn();
+    const onFileSelect = vi.fn();
+    let uploadTree = hookRuntime.render(() => ImageUpload({ onFileSelect }), 'upload');
+    const dropZone = collectNodes(uploadTree, (n) => typeof n.props?.onDrop === 'function')[0];
+    const fileInput = collectNodes(uploadTree, (n) => n.type === 'input')[0];
+
+    dropZone.props.onDragOver({ preventDefault: vi.fn() });
+    dropZone.props.onDragLeave({ preventDefault: vi.fn() });
+    dropZone.props.onDrop({
+      preventDefault: vi.fn(),
+      dataTransfer: { files: [{ type: 'image/png', size: 1024 }] }
+    });
+    fileInput.props.onChange({ target: { files: [{ type: 'text/plain', size: 100 }] } });
+    fileInput.props.onChange({ target: { files: [] } });
+    fileInput.props.onChange({ target: { files: [{ type: 'image/jpeg', size: 2048 }] } });
+    uploadTree = hookRuntime.render(() => ImageUpload({ onFileSelect }), 'upload');
+    const clearBtn = collectNodes(uploadTree, (n) => n.type === 'button')[0];
+    clearBtn?.props.onClick();
+    hookRuntime.flushEffects();
+    hookRuntime.runCleanups();
+
+    // MoodPicker, EnergySlider, Pagination, FilterBars, Cards, Modals callbacks
+    const pickerTree = MoodPicker({
+      moods: [
+        { id: 1, name: 'Senang', color: '#FACC15' },
+        { id: 2, name: 'Tenang', color: '#60A5FA' }
+      ],
+      selectedMoodId: 1,
+      onSelect: vi.fn()
+    });
+    const moodButtons = collectNodes(pickerTree, (n) => n.type === 'button');
+    moodButtons[0].props.onClick();
+    moodButtons[0].props.onKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() });
+    moodButtons[0].props.onKeyDown({ key: 'ArrowLeft', preventDefault: vi.fn() });
+
+    const sliderTree = EnergySlider({ value: 3, onChange: vi.fn() });
+    collectNodes(sliderTree, (n) => n.type === 'button')[0].props.onClick();
+
+    const pageTree = Pagination({ page: 2, limit: 5, total: 15, onPageChange: vi.fn() });
+    collectNodes(pageTree, (n) => n.type === 'button').forEach((btn) => btn.props.onClick());
+
+    const entryFilterTree = EntryFilterBar({
+      moods: [{ id: 1, name: 'Senang', color: '#FACC15' }],
+      moodIdParam: '1',
+      fromParam: '',
+      toParam: '',
+      searchInput: '',
+      onSearchChange: vi.fn(),
+      onFilterChange: vi.fn(),
+      onReset: vi.fn(),
+      hasActiveFilter: true
+    });
+    collectNodes(entryFilterTree, (n) => typeof n.props?.onClick === 'function').forEach((b) =>
+      b.props.onClick()
+    );
+    collectNodes(entryFilterTree, (n) => typeof n.props?.onChange === 'function').forEach((i) =>
+      i.props.onChange({ target: { value: '2026-04-21' } })
+    );
+
+    const songFilterTree = SongFilterBar({
+      moods: [{ id: 1, name: 'Senang', color: '#FACC15' }],
+      selectedMoodId: '1',
+      onSelectMood: vi.fn(),
+      searchQuery: '',
+      onSearchChange: vi.fn()
+    });
+    collectNodes(songFilterTree, (n) => typeof n.props?.onClick === 'function').forEach((b) =>
+      b.props.onClick()
+    );
+    collectNodes(songFilterTree, (n) => typeof n.props?.onChange === 'function').forEach((i) =>
+      i.props.onChange({ target: { value: 'Tulus' } })
+    );
+
+    const moodCardTree = MoodCard({
+      mood: { id: 1, name: 'Senang', emoji: '😊', color: '#FACC15' },
+      onEdit: vi.fn(),
+      onDelete: vi.fn()
+    });
+    collectNodes(moodCardTree, (n) => n.type === 'button').forEach((b) => b.props.onClick());
+
+    const songCardTree = SongCard({
+      song: { id: 1, title: 'A', artist: 'B', color: '#FACC15' },
+      canManage: true,
+      onEdit: vi.fn(),
+      onDelete: vi.fn()
+    });
+    collectNodes(songCardTree, (n) => n.type === 'button').forEach((b) => b.props.onClick());
+
+    const entryCardTree = EntryCard({
+      entry: { id: 1, mood_name: 'Senang', entry_date: '2026-04-21', energy_level: 4 },
+      onDelete: vi.fn()
+    });
+    collectNodes(entryCardTree, (n) => n.type === 'button').forEach((b) => b.props.onClick());
+
+    // MoodFormModal & SongFormModal field changes
+    const mModalTree = hookRuntime.render(
+      () =>
+        MoodFormModal({
+          isOpen: true,
+          onClose: vi.fn(),
+          editingMood: null,
+          form: { name: 'Senang', emoji: '😊', color: '#FACC15' },
+          onFieldChange: vi.fn(),
+          formError: '',
+          isSubmitting: true,
+          onSubmit: vi.fn()
+        }),
+      'mmodal'
+    );
+    collectNodes(mModalTree, (n) => typeof n.props?.onChange === 'function').forEach((i) =>
+      i.props.onChange({ target: { value: '#123456' } })
+    );
+    collectNodes(mModalTree, (n) => n.type === 'button' && n.props?.type === 'button').forEach(
+      (b) => b.props.onClick?.()
+    );
+
+    const sModalTree = hookRuntime.render(
+      () =>
+        SongFormModal({
+          isOpen: true,
+          onClose: vi.fn(),
+          editingSong: null,
+          form: { title: 'A', artist: 'B', moodId: '1', link: '' },
+          onFieldChange: vi.fn(),
+          formError: '',
+          isSubmitting: false,
+          moods: [{ id: 1, name: 'Senang', emoji: '😊' }],
+          onSubmit: vi.fn()
+        }),
+      'smodal'
+    );
+    collectNodes(sModalTree, (n) => typeof n.props?.onChange === 'function').forEach((i) =>
+      i.props.onChange({ target: { value: 'Baru' } })
+    );
+
+    // Dashboard, Stats, Journal, Songs, Moods, and EntryForm execution
+    vi.spyOn(statsService, 'getWeeklyStats').mockResolvedValue({ data: null });
+    vi.spyOn(entryService, 'getEntries').mockResolvedValue({
+      data: [{ id: 1, mood_id: 1, mood_name: 'Senang', entry_date: '2026-04-21', energy_level: 4 }],
+      meta: { page: 1, limit: 6, total: 12 }
+    });
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    hookRuntime.render(() => Dashboard(), 'dash');
+    hookRuntime.render(() => Stats(), 'stats');
+    hookRuntime.render(() => Journal(), 'journal');
+    hookRuntime.render(() => Songs(), 'songs');
+    hookRuntime.render(() => Moods(), 'moods');
+    const efTree = hookRuntime.render(() => EntryForm(), 'entryform');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Render ulang Journal, Songs, EntryForm setelah data dimuat & jalankan callback-nya
+    const jTree = hookRuntime.render(() => Journal(), 'journal');
+    collectNodes(jTree, (n) => typeof n.props?.onDelete === 'function').forEach((c) =>
+      c.props.onDelete({ id: 1, mood_name: 'Senang', entry_date: '2026-04-21' })
+    );
+    collectNodes(jTree, (n) => typeof n.props?.onPageChange === 'function').forEach((p) =>
+      p.props.onPageChange(2)
+    );
+    hookRuntime.render(() => Journal(), 'journal');
+
+    collectNodes(efTree, (n) => typeof n.props?.onChange === 'function').forEach((i) =>
+      i.props.onChange({ target: { value: 'Catatan baru' } })
+    );
+    collectNodes(efTree, (n) => typeof n.props?.onSelect === 'function').forEach((p) =>
+      p.props.onSelect(1)
+    );
+    collectNodes(efTree, (n) => typeof n.props?.onFileSelect === 'function').forEach((u) =>
+      u.props.onFileSelect(null)
+    );
+
+    // MoodChart Tooltip formatters
+    const chartTree = MoodChart({
+      byMood: [{ mood_id: 1, name: 'Senang', count: 2, color: '#FACC15' }],
+      daily: [{ date: '2026-04-21', count: 2, avg_energy: 4 }]
+    });
+    const tooltips = collectNodes(chartTree, (n) => typeof n.props?.formatter === 'function');
+    expect(tooltips[0].props.formatter(2, 'count')[0]).toBe('2 entri');
+    expect(tooltips[0].props.formatter(4, 'avg_energy')[0]).toBe('4 / 5.0');
+    expect(tooltips[0].props.formatter(1, 'other')[0]).toBe(1);
+    expect(
+      tooltips[0].props.labelFormatter('21 Apr', [{ payload: { date: '2026-04-21' } }])
+    ).toContain('2026-04-21');
+    expect(tooltips[1].props.formatter(3)[0]).toBe('3 kali');
+  });
+});

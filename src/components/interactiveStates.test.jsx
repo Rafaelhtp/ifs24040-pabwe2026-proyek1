@@ -43,6 +43,7 @@ import Moods from '../../src/pages/Moods';
 import EntryForm from '../../src/pages/EntryForm';
 import Login from '../../src/pages/Login';
 import Register from '../../src/pages/Register';
+import App from '../../src/App';
 
 const renderInRouter = (node, path = '/dashboard') =>
   renderToStaticMarkup(
@@ -89,6 +90,9 @@ describe('Page and Component Data/Error/Empty Branch Coverage', () => {
     mockState.auth.isAuthenticated = true;
     expect(renderInRouter(<Login />)).not.toContain('Masuk ke Akunmu');
     expect(renderInRouter(<Register />)).not.toContain('Daftar Akun Baru');
+    expect(renderInRouter(<App />, '/')).toContain('Moodify');
+    mockState.auth.isAuthenticated = false;
+    expect(renderInRouter(<App />, '/')).toContain('Moodify');
   });
 
   it('renders Dashboard in error, empty, and populated states', () => {

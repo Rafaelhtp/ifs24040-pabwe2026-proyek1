@@ -2,17 +2,15 @@
 import fs from 'node:fs';
 import { defineConfig } from 'vitest/config';
 
-// Sinkronkan ke src/ bila belum dibuat oleh postinstall di CI/Jenkins
-if (!fs.existsSync('./src/app.js')) {
-  try {
-    fs.mkdirSync('./src', { recursive: true });
-    fs.cpSync('./frontend/src', './src', { recursive: true });
-    fs.cpSync('./backend/src', './src', { recursive: true });
-    fs.cpSync('./backend/tests', './src', { recursive: true });
-    fs.cpSync('./frontend/tests', './src', { recursive: true });
-  } catch {
-    // Abaikan jika gagal menyalin pada environment read-only
-  }
+// Sinkronkan ke src/ setiap kali vitest dijalankan agar src/ selalu mutakhir
+try {
+  fs.mkdirSync('./src', { recursive: true });
+  fs.cpSync('./frontend/src', './src', { recursive: true, force: true });
+  fs.cpSync('./backend/src', './src', { recursive: true, force: true });
+  fs.cpSync('./backend/tests', './src', { recursive: true, force: true });
+  fs.cpSync('./frontend/tests', './src', { recursive: true, force: true });
+} catch {
+  // Abaikan jika gagal menyalin pada environment read-only
 }
 
 // Pastikan path di coverage/lcov.info selalu dinormalisasi ke src/ setelah npx vitest run --coverage selesai
