@@ -43,7 +43,9 @@ apiClient.interceptors.response.use(
       const currentPath = window.location.pathname;
       if (
         currentPath !== '/auth/login' &&
+        currentPath !== '/dashboard/auth/login' &&
         currentPath !== '/auth/register' &&
+        currentPath !== '/dashboard/auth/register' &&
         currentPath !== '/login' &&
         currentPath !== '/register'
       ) {

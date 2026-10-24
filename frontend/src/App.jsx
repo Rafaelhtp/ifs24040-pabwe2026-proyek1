@@ -38,7 +38,9 @@ export default function App() {
 
             {/* Rute Publik Utama */}
             <Route path="/auth/login" element={<Login />} />
+            <Route path="/dashboard/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />
+            <Route path="/dashboard/auth/register" element={<Register />} />
             <Route path="/songs" element={<Songs />} />
 
             {/* Redirect kompatibilitas dari /login dan /register ke /auth/* */}
