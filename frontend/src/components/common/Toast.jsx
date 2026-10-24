@@ -29,7 +29,7 @@ export function ToastProvider({ children }) {
 
   const showToast = useCallback(
     (message, type = 'success', duration = 3500) => {
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const id = crypto.randomUUID();
       setToasts((prev) => [...prev, { id, message, type }]);
       if (duration > 0) {
         setTimeout(() => {

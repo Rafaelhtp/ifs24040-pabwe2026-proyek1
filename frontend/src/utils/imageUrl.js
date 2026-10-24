@@ -1,10 +1,14 @@
 // Utilitas pembentuk URL relatif untuk API (/api) dan gambar (/uploads/nama_file)
 
-const rawBaseUrl = import.meta.env.VITE_API_URL
+let normalizedBaseUrl = import.meta.env.VITE_API_URL
   ? String(import.meta.env.VITE_API_URL).trim()
   : '';
 
-export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, '');
+while (normalizedBaseUrl.endsWith('/')) {
+  normalizedBaseUrl = normalizedBaseUrl.slice(0, -1);
+}
+
+export const API_BASE_URL = normalizedBaseUrl;
 
 /**
  * Mengubah nama file gambar dari server menjadi URL relatif /uploads/<filename>.

@@ -1,7 +1,7 @@
 // Utilitas validasi input di sisi klien sebelum dikirim ke API
 import { MAX_IMAGE_SIZE_BYTES, MIN_PASSWORD_LENGTH } from '../constants/config';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];

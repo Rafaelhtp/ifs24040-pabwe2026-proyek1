@@ -1,4 +1,5 @@
 // Konfigurasi aplikasi Express (tanpa app.listen agar dapat diuji langsung)
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const express = require('express');
@@ -28,9 +29,9 @@ app.use((_req, res, next) => {
   next();
 });
 
-// Helper pembuatan trace ID sederhana non-kriptografi
+// Helper pembuatan trace ID menggunakan modul kriptografi bawaan Node.js
 function generateTraceId() {
-  return Math.random().toString(36).substring(2, 15);
+  return crypto.randomBytes(8).toString('hex');
 }
 
 // Helper pengecekan origin CORS yang aman dan dapat dikonfigurasi via CLIENT_URL
