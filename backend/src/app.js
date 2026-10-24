@@ -98,7 +98,9 @@ app.use('/api', (_req, res) => {
 function resolveFrontendDist(customCandidates) {
   const candidates = customCandidates || [
     path.resolve(__dirname, '../../frontend/dist'),
-    path.resolve(__dirname, '../../dist')
+    path.resolve(__dirname, '../frontend/dist'),
+    path.resolve(__dirname, '../../dist'),
+    path.resolve(__dirname, '../dist')
   ];
   return candidates.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || null;
 }

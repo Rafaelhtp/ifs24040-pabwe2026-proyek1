@@ -1,5 +1,8 @@
 // Konfigurasi Vitest untuk mendukung stage Test di Jenkins (npx vitest run --coverage)
+import fs from 'node:fs';
 import { defineConfig } from 'vitest/config';
+
+const hasRootSrc = fs.existsSync('./src/app.js');
 
 export default defineConfig({
   test: {
@@ -11,8 +14,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       reportsDirectory: './coverage',
-      include: ['backend/src/**/*.js'],
-      exclude: ['backend/src/server.js']
+      include: hasRootSrc ? ['src/**/*.js'] : ['backend/src/**/*.js'],
+      exclude: ['**/server.js']
     }
   }
 });

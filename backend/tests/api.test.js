@@ -15,16 +15,20 @@ process.env.UPLOAD_DIR = testUploadDir;
 const { describe, test, expect, beforeAll, afterAll } =
   typeof Bun !== 'undefined' ? require('bun:test') : globalThis;
 
-const app = require('../src/app');
-const db = require('../src/db');
-const { seedDatabase } = require('../src/seed');
+const srcDir = fs.existsSync(path.resolve(__dirname, '../../src/app.js'))
+  ? '../../src'
+  : '../src';
+
+const app = require(`${srcDir}/app`);
+const db = require(`${srcDir}/db`);
+const { seedDatabase } = require(`${srcDir}/seed`);
 const {
   errorHandler,
   getUploadDir,
   removeUploadedFile,
   getJwtSecret,
   formatUploadError
-} = require('../src/middleware');
+} = require(`${srcDir}/middleware`);
 
 const PNG_BYTES = Uint8Array.from(
   Buffer.from(
