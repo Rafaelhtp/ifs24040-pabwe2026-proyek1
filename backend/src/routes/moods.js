@@ -6,72 +6,70 @@ const { authMiddleware, validate } = require('../middleware');
 
 const router = express.Router();
 
-// GET /api/moods (publik)
-router.get('/', (_req, res, next) => {
-  try {
-    const moods = db
-      .prepare('SELECT id, name, emoji, color, created_at FROM moods ORDER BY id ASC')
-      .all();
+const MOOD_NOT_FOUND_MSG = 'Mood tidak ditemukan';
+const UNIQUE_NAME_MSG = 'Nama mood harus unik';
+const selectMoodByIdStmt = db.prepare(
+  'SELECT id, name, emoji, color, created_at FROM moods WHERE id = ?'
+);
 
-    return res.status(200).json({
-      success: true,
-      data: moods,
-      message: 'Daftar mood berhasil diambil'
-    });
-  } catch (err) {
-    return next(err);
-  }
+const moodValidationRules = [
+  body('name').trim().notEmpty().withMessage('Nama mood wajib diisi'),
+  body('emoji').trim().notEmpty().withMessage('Emoji mood wajib diisi'),
+  body('color')
+    .optional({ values: 'falsy' })
+    .trim()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Format warna harus berupa kode hex (contoh: #FACC15)')
+];
+
+// GET /api/moods (publik)
+router.get('/', (_req, res) => {
+  const moods = db
+    .prepare('SELECT id, name, emoji, color, created_at FROM moods ORDER BY id ASC')
+    .all();
+
+  return res.status(200).json({
+    success: true,
+    data: moods,
+    message: 'Daftar mood berhasil diambil'
+  });
 });
 
 // POST /api/moods (auth)
 router.post(
   '/',
   authMiddleware,
-  [
-    body('name').trim().notEmpty().withMessage('Nama mood wajib diisi'),
-    body('emoji').trim().notEmpty().withMessage('Emoji mood wajib diisi'),
-    body('color')
-      .optional({ values: 'falsy' })
-      .trim()
-      .matches(/^#[0-9A-Fa-f]{6}$/)
-      .withMessage('Format warna harus berupa kode hex (contoh: #FACC15)')
-  ],
+  moodValidationRules,
   validate,
-  (req, res, next) => {
-    try {
-      const name = req.body.name.trim();
-      const emoji = req.body.emoji.trim();
-      const color = req.body.color ? req.body.color.trim() : '#9CA3AF';
+  (req, res) => {
+    const name = req.body.name.trim();
+    const emoji = req.body.emoji.trim();
+    const color = req.body.color ? req.body.color.trim() : '#9CA3AF';
 
-      const duplicate = db
-        .prepare('SELECT id FROM moods WHERE lower(name) = lower(?)')
-        .get(name);
+    const duplicate = db
+      .prepare('SELECT id FROM moods WHERE lower(name) = lower(?)')
+      .get(name);
 
-      if (duplicate) {
-        return res.status(409).json({
-          success: false,
-          data: null,
-          message: 'Nama mood sudah ada',
-          errors: [{ field: 'name', message: 'Nama mood harus unik' }]
-        });
-      }
-
-      const info = db
-        .prepare('INSERT INTO moods (name, emoji, color) VALUES (?, ?, ?)')
-        .run(name, emoji, color);
-
-      const newMood = db
-        .prepare('SELECT id, name, emoji, color, created_at FROM moods WHERE id = ?')
-        .get(Number(info.lastInsertRowid));
-
-      return res.status(201).json({
-        success: true,
-        data: newMood,
-        message: 'Mood baru berhasil ditambahkan'
+    if (duplicate) {
+      return res.status(409).json({
+        success: false,
+        data: null,
+        message: 'Nama mood sudah ada',
+        errors: [{ field: 'name', message: UNIQUE_NAME_MSG }]
       });
-    } catch (err) {
-      return next(err);
     }
+
+    const info = db
+      .prepare('INSERT INTO moods (name, emoji, color) VALUES (?, ?, ?)')
+      .run(name, emoji, color);
+
+    const newMood = selectMoodByIdStmt.get(Number(info.lastInsertRowid));
+
+    return res.status(201).json({
+      success: true,
+      data: newMood,
+      message: 'Mood baru berhasil ditambahkan'
+    });
   }
 );
 
@@ -79,107 +77,89 @@ router.post(
 router.put(
   '/:id',
   authMiddleware,
-  [
-    body('name').trim().notEmpty().withMessage('Nama mood wajib diisi'),
-    body('emoji').trim().notEmpty().withMessage('Emoji mood wajib diisi'),
-    body('color')
-      .optional({ values: 'falsy' })
-      .trim()
-      .matches(/^#[0-9A-Fa-f]{6}$/)
-      .withMessage('Format warna harus berupa kode hex (contoh: #FACC15)')
-  ],
+  moodValidationRules,
   validate,
-  (req, res, next) => {
-    try {
-      const moodId = Number(req.params.id);
-      const existing = db.prepare('SELECT * FROM moods WHERE id = ?').get(moodId);
-
-      if (!existing) {
-        return res.status(404).json({
-          success: false,
-          data: null,
-          message: 'Mood tidak ditemukan',
-          errors: []
-        });
-      }
-
-      const name = req.body.name.trim();
-      const emoji = req.body.emoji.trim();
-      const color = req.body.color ? req.body.color.trim() : existing.color;
-
-      const duplicate = db
-        .prepare('SELECT id FROM moods WHERE lower(name) = lower(?) AND id != ?')
-        .get(name, moodId);
-
-      if (duplicate) {
-        return res.status(409).json({
-          success: false,
-          data: null,
-          message: 'Nama mood sudah digunakan',
-          errors: [{ field: 'name', message: 'Nama mood harus unik' }]
-        });
-      }
-
-      db.prepare('UPDATE moods SET name = ?, emoji = ?, color = ? WHERE id = ?').run(
-        name,
-        emoji,
-        color,
-        moodId
-      );
-
-      const updated = db
-        .prepare('SELECT id, name, emoji, color, created_at FROM moods WHERE id = ?')
-        .get(moodId);
-
-      return res.status(200).json({
-        success: true,
-        data: updated,
-        message: 'Mood berhasil diperbarui'
-      });
-    } catch (err) {
-      return next(err);
-    }
-  }
-);
-
-// DELETE /api/moods/:id (auth)
-router.delete('/:id', authMiddleware, (req, res, next) => {
-  try {
+  (req, res) => {
     const moodId = Number(req.params.id);
-    const existing = db.prepare('SELECT * FROM moods WHERE id = ?').get(moodId);
+    const existing = selectMoodByIdStmt.get(moodId);
 
     if (!existing) {
       return res.status(404).json({
         success: false,
         data: null,
-        message: 'Mood tidak ditemukan',
+        message: MOOD_NOT_FOUND_MSG,
         errors: []
       });
     }
 
-    const usageCount = db
-      .prepare('SELECT COUNT(*) as count FROM entries WHERE mood_id = ?')
-      .get(moodId).count;
+    const name = req.body.name.trim();
+    const emoji = req.body.emoji.trim();
+    const color = req.body.color ? req.body.color.trim() : existing.color;
 
-    if (usageCount > 0) {
+    const duplicate = db
+      .prepare('SELECT id FROM moods WHERE lower(name) = lower(?) AND id != ?')
+      .get(name, moodId);
+
+    if (duplicate) {
       return res.status(409).json({
         success: false,
         data: null,
-        message: 'Mood tidak dapat dihapus karena masih digunakan oleh entri jurnal',
-        errors: []
+        message: 'Nama mood sudah digunakan',
+        errors: [{ field: 'name', message: UNIQUE_NAME_MSG }]
       });
     }
 
-    db.prepare('DELETE FROM moods WHERE id = ?').run(moodId);
+    db.prepare('UPDATE moods SET name = ?, emoji = ?, color = ? WHERE id = ?').run(
+      name,
+      emoji,
+      color,
+      moodId
+    );
+
+    const updated = selectMoodByIdStmt.get(moodId);
 
     return res.status(200).json({
       success: true,
-      data: { id: moodId },
-      message: 'Mood berhasil dihapus'
+      data: updated,
+      message: 'Mood berhasil diperbarui'
     });
-  } catch (err) {
-    return next(err);
   }
+);
+
+// DELETE /api/moods/:id (auth)
+router.delete('/:id', authMiddleware, (req, res) => {
+  const moodId = Number(req.params.id);
+  const existing = selectMoodByIdStmt.get(moodId);
+
+  if (!existing) {
+    return res.status(404).json({
+      success: false,
+      data: null,
+      message: MOOD_NOT_FOUND_MSG,
+      errors: []
+    });
+  }
+
+  const usageCount = db
+    .prepare('SELECT COUNT(*) as count FROM entries WHERE mood_id = ?')
+    .get(moodId).count;
+
+  if (usageCount > 0) {
+    return res.status(409).json({
+      success: false,
+      data: null,
+      message: 'Mood tidak dapat dihapus karena masih digunakan oleh entri jurnal',
+      errors: []
+    });
+  }
+
+  db.prepare('DELETE FROM moods WHERE id = ?').run(moodId);
+
+  return res.status(200).json({
+    success: true,
+    data: { id: moodId },
+    message: 'Mood berhasil dihapus'
+  });
 });
 
 module.exports = router;

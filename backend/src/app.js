@@ -11,12 +11,14 @@ const entryRoutes = require('./routes/entries');
 const songRoutes = require('./routes/songs');
 const statsRoutes = require('./routes/stats');
 
+const NOT_FOUND_MESSAGE = 'Endpoint tidak ditemukan';
+
 const app = express();
 
 // Matikan header x-powered-by demi keamanan
 app.disable('x-powered-by');
 
-// Middleware header keamanan dasar (kompatibel penuh dengan Bun & Node tanpa merusak aset)
+// Middleware header keamanan dasar
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -26,17 +28,21 @@ app.use((_req, res, next) => {
   next();
 });
 
-// Konfigurasi CORS (mendukung banyak origin yang dipisahkan koma atau origin yang sama saat deploy)
-const rawClientUrls = process.env.CLIENT_URL || '*';
-const allowedOrigins = rawClientUrls
-  .split(',')
-  .map((item) => item.trim())
-  .filter(Boolean);
+// Helper pengecekan origin CORS yang aman dan dapat dikonfigurasi via CLIENT_URL
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  const rawUrls = process.env.CLIENT_URL || '*';
+  const allowedList = rawUrls
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return allowedList.includes('*') || allowedList.includes(origin);
+}
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      if (isOriginAllowed(origin)) {
         return callback(null, true);
       }
       const corsErr = new Error(`Origin ${origin} tidak diizinkan oleh kebijakan CORS`);
@@ -50,7 +56,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Sajikan robots.txt secara eksplisit sebagai text/plain agar SEO Lighthouse selalu valid (bukan fallback index.html)
+// Sajikan robots.txt secara eksplisit sebagai text/plain untuk kebutuhan SEO
 app.get('/robots.txt', (_req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600');
@@ -58,12 +64,7 @@ app.get('/robots.txt', (_req, res) => {
 });
 
 // Layani file gambar statis di /uploads
-app.use(
-  '/uploads',
-  express.static(getUploadDir(), {
-    maxAge: '7d'
-  })
-);
+app.use('/uploads', express.static(getUploadDir(), { maxAge: '7d' }));
 
 // Endpoint cek kesehatan server
 app.get('/api/health', (_req, res) => {
@@ -86,14 +87,14 @@ app.use('/api', (_req, res) => {
   return res.status(404).json({
     success: false,
     data: null,
-    message: 'Endpoint tidak ditemukan',
+    message: NOT_FOUND_MESSAGE,
     errors: []
   });
 });
 
 // Helper pencari direktori build frontend (frontend/dist atau dist)
-function resolveFrontendDist() {
-  const candidates = [
+function resolveFrontendDist(customCandidates) {
+  const candidates = customCandidates || [
     path.resolve(__dirname, '../../frontend/dist'),
     path.resolve(__dirname, '../../dist')
   ];
@@ -109,34 +110,15 @@ if (initialDistDir) {
       immutable: true
     })
   );
-  app.use(
-    express.static(initialDistDir, {
-      index: false,
-      maxAge: '1h'
-    })
-  );
+  app.use(express.static(initialDistDir, { index: false, maxAge: '1h' }));
 }
 
-// Fallback SPA untuk seluruh rute frontend (seperti /auth/login, /songs, /dashboard, /journal, /stats, /moods)
+// Fallback SPA untuk rute frontend jika hasil build tersedia
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-    return next();
-  }
-  const activeDistDir = initialDistDir || resolveFrontendDist();
+  const activeDistDir = resolveFrontendDist();
   if (!activeDistDir) {
     return next();
   }
-
-  // Jika request meminta file statis di dist (mis. /favicon.svg), sajikan langsung jika ada
-  const requestedFile = path.join(activeDistDir, req.path);
-  if (
-    req.path !== '/' &&
-    fs.existsSync(requestedFile) &&
-    fs.statSync(requestedFile).isFile()
-  ) {
-    return res.sendFile(requestedFile);
-  }
-
   res.setHeader('Cache-Control', 'no-cache');
   return res.sendFile(path.join(activeDistDir, 'index.html'));
 });
@@ -146,12 +128,15 @@ app.use((_req, res) => {
   return res.status(404).json({
     success: false,
     data: null,
-    message: 'Endpoint tidak ditemukan',
+    message: NOT_FOUND_MESSAGE,
     errors: []
   });
 });
 
 // Global error handler
 app.use(errorHandler);
+
+app.isOriginAllowed = isOriginAllowed;
+app.resolveFrontendDist = resolveFrontendDist;
 
 module.exports = app;

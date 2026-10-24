@@ -1,4 +1,5 @@
 // Middleware autentikasi JWT, upload file (multer), validasi, dan error handler global
+const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -7,11 +8,18 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 
-// Pastikan direktori upload dapat ditulis oleh user 1000:1000 di container Alpine
-function getUploadDir() {
+const RUNTIME_FALLBACK_KEY = crypto.randomBytes(32).toString('hex');
+const SERVER_ERROR_MSG = 'Terjadi kesalahan pada server';
+
+function getJwtSecret() {
+  return process.env.JWT_SECRET || RUNTIME_FALLBACK_KEY;
+}
+
+// Pastikan direktori upload dapat ditulis oleh user non-root di container Alpine
+function getUploadDir(customDir) {
   const defaultDir = path.join(__dirname, '..', 'uploads');
-  const rawDir = process.env.UPLOAD_DIR || defaultDir;
-  let resolved = path.resolve(process.cwd(), rawDir);
+  const rawDir = customDir || process.env.UPLOAD_DIR || defaultDir;
+  const resolved = path.resolve(process.cwd(), rawDir);
 
   try {
     if (!fs.existsSync(resolved)) {
@@ -19,7 +27,7 @@ function getUploadDir() {
     }
     fs.accessSync(resolved, fs.constants.W_OK);
     return resolved;
-  } catch (_err) {
+  } catch {
     const fallback = path.join(os.tmpdir(), 'moodify-uploads');
     if (!fs.existsSync(fallback)) {
       fs.mkdirSync(fallback, { recursive: true });
@@ -30,15 +38,17 @@ function getUploadDir() {
 
 // Hapus file dari folder upload dengan aman jika ada
 function removeUploadedFile(filename) {
-  if (!filename) return;
+  if (!filename) return false;
   try {
     const safeName = path.basename(filename);
     const filePath = path.join(getUploadDir(), safeName);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
+      return true;
     }
-  } catch (_err) {
-    // Abaikan jika gagal menghapus file lama
+    return false;
+  } catch {
+    return false;
   }
 }
 
@@ -74,35 +84,49 @@ const multerInstance = multer({
   }
 });
 
+function formatUploadError(err, fieldName) {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return {
+        status: 413,
+        body: {
+          success: false,
+          data: null,
+          message: 'Ukuran file terlalu besar. Maksimal 2 MB',
+          errors: [{ field: fieldName, message: 'Maksimal ukuran file adalah 2 MB' }]
+        }
+      };
+    }
+    return {
+      status: 400,
+      body: {
+        success: false,
+        data: null,
+        message: `Kesalahan upload file: ${err.message}`,
+        errors: [{ field: fieldName, message: err.message }]
+      }
+    };
+  }
+
+  const fallbackMsg = err.message || 'Gagal mengunggah file';
+  return {
+    status: err.status || 400,
+    body: {
+      success: false,
+      data: null,
+      message: fallbackMsg,
+      errors: [{ field: fieldName, message: fallbackMsg }]
+    }
+  };
+}
+
 function uploadSingle(fieldName) {
   return (req, res, next) => {
     const uploader = multerInstance.single(fieldName);
     uploader(req, res, (err) => {
       if (!err) return next();
-
-      if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(413).json({
-            success: false,
-            data: null,
-            message: 'Ukuran file terlalu besar. Maksimal 2 MB',
-            errors: [{ field: fieldName, message: 'Maksimal ukuran file adalah 2 MB' }]
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          data: null,
-          message: `Kesalahan upload file: ${err.message}`,
-          errors: [{ field: fieldName, message: err.message }]
-        });
-      }
-
-      return res.status(err.status || 400).json({
-        success: false,
-        data: null,
-        message: err.message || 'Gagal mengunggah file',
-        errors: [{ field: fieldName, message: err.message || 'File tidak valid' }]
-      });
+      const formatted = formatUploadError(err, fieldName);
+      return res.status(formatted.status).json(formatted.body);
     });
   };
 }
@@ -120,15 +144,14 @@ function authMiddleware(req, res, next) {
 
   const token = authHeader.split(' ')[1];
   try {
-    const secret = process.env.JWT_SECRET || 'moodify-default-jwt-secret-2026';
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = {
       id: decoded.id,
       email: decoded.email,
       name: decoded.name
     };
     return next();
-  } catch (_err) {
+  } catch {
     return res.status(401).json({
       success: false,
       data: null,
@@ -156,7 +179,7 @@ function validate(req, res, next) {
   return res.status(400).json({
     success: false,
     data: null,
-    message: errors[0]?.message || 'Validasi input gagal',
+    message: errors[0].message,
     errors
   });
 }
@@ -168,10 +191,11 @@ function errorHandler(err, req, res, _next) {
 
   const statusCode = err.status || 500;
   const isProd = process.env.NODE_ENV === 'production';
-  const message =
-    statusCode === 500 && isProd
-      ? 'Terjadi kesalahan pada server'
-      : err.message || 'Terjadi kesalahan pada server';
+
+  let message = err.message || SERVER_ERROR_MSG;
+  if (statusCode === 500 && isProd) {
+    message = SERVER_ERROR_MSG;
+  }
 
   const response = {
     success: false,
@@ -193,5 +217,7 @@ module.exports = {
   validate,
   errorHandler,
   getUploadDir,
-  removeUploadedFile
+  removeUploadedFile,
+  getJwtSecret,
+  formatUploadError
 };
