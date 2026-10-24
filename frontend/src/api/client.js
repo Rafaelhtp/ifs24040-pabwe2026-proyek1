@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../utils/imageUrl';
 export const TOKEN_STORAGE_KEY = 'moodify_token';
 
 const apiClient = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: API_BASE_URL ? `${API_BASE_URL}/api` : '/api',
   timeout: 15000
 });
 
