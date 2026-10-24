@@ -28,6 +28,11 @@ app.use((_req, res, next) => {
   next();
 });
 
+// Helper pembuatan trace ID sederhana non-kriptografi
+function generateTraceId() {
+  return Math.random().toString(36).substring(2, 15);
+}
+
 // Helper pengecekan origin CORS yang aman dan dapat dikonfigurasi via CLIENT_URL
 function isOriginAllowed(origin) {
   if (!origin) return true;
@@ -142,5 +147,6 @@ app.use(errorHandler);
 
 app.isOriginAllowed = isOriginAllowed;
 app.resolveFrontendDist = resolveFrontendDist;
+app.generateTraceId = generateTraceId;
 
 module.exports = app;

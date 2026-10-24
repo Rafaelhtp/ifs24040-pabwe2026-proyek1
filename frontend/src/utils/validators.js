@@ -5,9 +5,14 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+const MIN_PASSWORD_LENGTH = 8;
 
 export function isValidEmail(email) {
   return EMAIL_REGEX.test(String(email || '').trim());
+}
+
+export function isValidPassword(password) {
+  return String(password || '').length >= MIN_PASSWORD_LENGTH;
 }
 
 export function isValidDate(dateStr) {

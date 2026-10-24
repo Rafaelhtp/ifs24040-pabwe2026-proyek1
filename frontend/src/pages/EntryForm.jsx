@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Calendar, ArrowLeft, CheckCircle2, BookOpen, PenLine, Save } from 'lucide-react';
-import { getEntryById, createEntry, updateEntry } from '../api/entryApi';
+import { getEntryById, createEntry, updateEntry } from '../services/entryService';
 import useMoods from '../hooks/useMoods';
 import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';

@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import MoodBlob from '../components/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
-import { isValidEmail } from '../utils/validators';
+import { isValidEmail, isValidPassword } from '../utils/validators';
 
 export default function Register() {
   usePageTitle('Daftar Akun Baru');
@@ -25,8 +25,8 @@ export default function Register() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleUserRegister = async (event) => {
+    event.preventDefault();
     setFormError('');
 
     if (!name.trim()) {
@@ -37,7 +37,7 @@ export default function Register() {
       setFormError('Format alamat email tidak valid.');
       return;
     }
-    if (password.length < 8) {
+    if (!isValidPassword(password)) {
       setFormError('Password harus terdiri dari minimal 8 karakter.');
       return;
     }
@@ -108,7 +108,7 @@ export default function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleUserRegister} className="space-y-4" noValidate>
             <div>
               <label htmlFor="reg-name" className="block text-xs font-extrabold text-ink mb-1">
                 Nama Lengkap

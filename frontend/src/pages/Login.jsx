@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import MoodBlob from '../components/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
-import { isValidEmail } from '../utils/validators';
+import { isValidEmail, isValidPassword } from '../utils/validators';
 
 export default function Login() {
   usePageTitle('Masuk Akun');
@@ -46,16 +46,16 @@ export default function Login() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleUserLogin = async (event) => {
+    event.preventDefault();
     setFormError('');
 
     if (!isValidEmail(email)) {
       setFormError('Masukkan alamat email yang valid.');
       return;
     }
-    if (!password) {
-      setFormError('Password wajib diisi.');
+    if (!isValidPassword(password)) {
+      setFormError('Password wajib diisi minimal 8 karakter.');
       return;
     }
 
@@ -149,7 +149,7 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleUserLogin} className="space-y-4" noValidate>
             <div>
               <label htmlFor="username" className="block text-xs font-extrabold text-ink mb-1.5">
                 Email

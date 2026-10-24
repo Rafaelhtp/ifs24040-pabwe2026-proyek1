@@ -1,7 +1,7 @@
 // Halaman Kelola Mood (/moods): kartu MoodBlob + nama + emoji + warna; tangani error 409 saat masih dipakai entri
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react';
-import { createMood, updateMood, deleteMood } from '../api/moodApi';
+import { createMood, updateMood, deleteMood } from '../services/moodService';
 import useMoods from '../hooks/useMoods';
 import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';

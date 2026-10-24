@@ -1,6 +1,6 @@
 // Custom hook untuk memuat daftar mood dari API
 import { useCallback } from 'react';
-import { getMoods } from '../api/moodApi';
+import { getMoods } from '../services/moodService';
 import useFetch from './useFetch';
 
 export default function useMoods() {

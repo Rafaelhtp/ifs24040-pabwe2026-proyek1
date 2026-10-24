@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, Calendar, RotateCcw, PenLine } from 'lucide-react';
-import { getEntries, deleteEntry } from '../api/entryApi';
+import { getEntries, deleteEntry } from '../services/entryService';
 import useMoods from '../hooks/useMoods';
 import useDebounce from '../hooks/useDebounce';
 import useFetch from '../hooks/useFetch';

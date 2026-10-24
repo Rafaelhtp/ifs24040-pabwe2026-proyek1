@@ -2,7 +2,7 @@
 import React, { useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CalendarCheck2, Zap, PenLine } from 'lucide-react';
-import { getWeeklyStats } from '../api/statsApi';
+import { getWeeklyStats } from '../services/statsService';
 import useFetch from '../hooks/useFetch';
 import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';

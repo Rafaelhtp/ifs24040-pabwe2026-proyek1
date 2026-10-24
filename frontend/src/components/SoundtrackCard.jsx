@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Disc3, Shuffle, ExternalLink, Music2 } from 'lucide-react';
-import { getRandomSong } from '../api/songApi';
+import { getRandomSong } from '../services/songService';
 import MoodBlob from './MoodBlob';
 import { getImageUrl } from '../utils/imageUrl';
 

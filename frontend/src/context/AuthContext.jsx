@@ -1,7 +1,7 @@
 // Context autentikasi untuk mengelola state user, token, sesi login/register/logout
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { loginUser, registerUser, getCurrentUser } from '../api/authApi';
-import { TOKEN_STORAGE_KEY } from '../api/client';
+import { loginUser, registerUser, getCurrentUser } from '../services/authService';
+import { TOKEN_STORAGE_KEY } from '../services/client';
 
 const AuthContext = createContext(null);
 

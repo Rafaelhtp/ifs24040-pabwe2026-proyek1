@@ -1,7 +1,7 @@
 // Panel rekomendasi lagu otomatis berdasarkan mood yang dipilih di EntryForm
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shuffle, ExternalLink, Disc3 } from 'lucide-react';
-import { getSongs, getRandomSong } from '../api/songApi';
+import { getSongs, getRandomSong } from '../services/songService';
 import MoodBlob from './MoodBlob';
 
 export default function SongRecommendationPanel({ moodId, selectedMood }) {

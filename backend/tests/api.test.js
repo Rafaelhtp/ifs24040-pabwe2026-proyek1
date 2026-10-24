@@ -22,7 +22,6 @@ const srcDir = fs.existsSync(path.resolve(__dirname, '../../src/app.js'))
 const app = require(`${srcDir}/app`);
 const db = require(`${srcDir}/db`);
 const { seedDatabase } = require(`${srcDir}/seed`);
-const { generateSimpleId } = require(`${srcDir}/utils/random`);
 const {
   errorHandler,
   getUploadDir,
@@ -738,8 +737,8 @@ describe('Moodify REST API Integration & Branch Coverage Tests', () => {
     expect(typeof getJwtSecret()).toBe('string');
     expect(getJwtSecret().length).toBeGreaterThan(10);
     process.env.JWT_SECRET = savedSecret;
-    expect(typeof generateSimpleId()).toBe('string');
-    expect(generateSimpleId().length).toBeGreaterThan(0);
+    expect(typeof app.generateTraceId()).toBe('string');
+    expect(app.generateTraceId().length).toBeGreaterThan(0);
 
     const newUploadSubdir = path.join(testUploadDir, 'subdir-baru');
     expect(getUploadDir(newUploadSubdir)).toBe(newUploadSubdir);
