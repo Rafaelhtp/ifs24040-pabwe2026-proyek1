@@ -723,11 +723,26 @@ describe('Moodify REST API Integration & Branch Coverage Tests', () => {
     expect(corsBlockedRes.status).toBe(403);
     process.env.CLIENT_URL = '*';
 
-    // c. Uji resolveFrontendDist dengan kandidat direktori sementara
+    // c. Uji resolveFrontendDist, registerFrontendStatic, dan SPA fallback
     const tempDist = path.join(os.tmpdir(), `moodify-dist-test-${Date.now()}`);
     fs.mkdirSync(tempDist, { recursive: true });
-    fs.writeFileSync(path.join(tempDist, 'index.html'), '<!doctype html><html></html>');
+    fs.writeFileSync(path.join(tempDist, 'index.html'), '<!doctype html><html><body>SPA</body></html>');
     expect(app.resolveFrontendDist([tempDist])).toBe(tempDist);
+    expect(app.registerFrontendStatic({ use: () => {} }, null)).toBe(false);
+    expect(app.registerFrontendStatic({ use: () => {} }, tempDist)).toBe(true);
+
+    const rootDistDir = path.resolve(__dirname, '../../dist');
+    const hadRootDist = fs.existsSync(path.join(rootDistDir, 'index.html'));
+    if (!hadRootDist) {
+      fs.mkdirSync(rootDistDir, { recursive: true });
+      fs.writeFileSync(path.join(rootDistDir, 'index.html'), '<!doctype html><html><body>Moodify</body></html>');
+    }
+    const spaFallbackRes = await fetch(`${baseUrl}/halaman-spa-aktif`);
+    expect(spaFallbackRes.status).toBe(200);
+    if (!hadRootDist) {
+      fs.rmSync(rootDistDir, { recursive: true, force: true });
+    }
+
     fs.rmSync(tempDist, { recursive: true, force: true });
     expect(app.resolveFrontendDist([tempDist])).toBeNull();
 
@@ -743,12 +758,27 @@ describe('Moodify REST API Integration & Branch Coverage Tests', () => {
 
     const newUploadSubdir = path.join(testUploadDir, 'subdir-baru');
     expect(getUploadDir(newUploadSubdir)).toBe(newUploadSubdir);
+
+    // Uji blok catch getUploadDir (fallback ke os.tmpdir()/moodify-uploads)
+    const fallbackUploadDir = path.join(os.tmpdir(), 'moodify-uploads');
+    fs.rmSync(fallbackUploadDir, { recursive: true, force: true });
+    expect(getUploadDir('\0invalid-upload-path')).toBe(fallbackUploadDir);
+    expect(getUploadDir('\0invalid-upload-path')).toBe(fallbackUploadDir);
+
     expect(removeUploadedFile('')).toBe(false);
     expect(removeUploadedFile('file-tidak-ada.png')).toBe(false);
+
+    // Uji blok catch removeUploadedFile ketika target adalah direktori (unlinkSync melempar error)
+    const dirInUploads = path.join(getUploadDir(), 'folder-bukan-file');
+    fs.mkdirSync(dirInUploads, { recursive: true });
+    expect(removeUploadedFile('folder-bukan-file')).toBe(false);
+    fs.rmSync(dirInUploads, { recursive: true, force: true });
 
     const unexpectedFieldErr = new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'other');
     const formattedMulter = formatUploadError(unexpectedFieldErr, 'image');
     expect(formattedMulter.status).toBe(400);
+    const formattedEmpty = formatUploadError({}, 'image');
+    expect(formattedEmpty.status).toBe(400);
 
     // Uji errorHandler di mode development/test vs production
     const tempFile = path.join(getUploadDir(), 'err-cleanup.png');

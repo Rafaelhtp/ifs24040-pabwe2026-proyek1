@@ -112,17 +112,20 @@ function resolveFrontendDist(customCandidates) {
   return candidates.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || null;
 }
 
-const initialDistDir = resolveFrontendDist();
-if (initialDistDir) {
-  app.use(
+function registerFrontendStatic(targetApp, distDir) {
+  if (!distDir) return false;
+  targetApp.use(
     '/assets',
-    express.static(path.join(initialDistDir, 'assets'), {
+    express.static(path.join(distDir, 'assets'), {
       maxAge: '1y',
       immutable: true
     })
   );
-  app.use(express.static(initialDistDir, { index: false, maxAge: '1h' }));
+  targetApp.use(express.static(distDir, { index: false, maxAge: '1h' }));
+  return true;
 }
+
+registerFrontendStatic(app, resolveFrontendDist());
 
 // Fallback SPA untuk rute frontend jika hasil build tersedia
 app.get('*', (req, res, next) => {
@@ -149,6 +152,7 @@ app.use(errorHandler);
 
 app.isOriginAllowed = isOriginAllowed;
 app.resolveFrontendDist = resolveFrontendDist;
+app.registerFrontendStatic = registerFrontendStatic;
 app.generateTraceId = generateTraceId;
 app.generateFakeId = generateFakeId;
 

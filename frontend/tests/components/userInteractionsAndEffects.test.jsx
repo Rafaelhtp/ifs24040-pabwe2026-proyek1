@@ -48,6 +48,7 @@ const hookRuntime = {
 };
 
 const navigateMock = vi.fn();
+let mockParams = { id: undefined };
 
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal();
@@ -103,7 +104,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
     ...actual,
     useNavigate: () => navigateMock,
     useLocation: () => ({ pathname: '/dashboard', state: null }),
-    useParams: () => ({ id: undefined }),
+    useParams: () => mockParams,
     useSearchParams: () => [new URLSearchParams(), vi.fn()]
   };
 });
@@ -135,6 +136,7 @@ import SongCard from '../../src/components/songs/SongCard';
 import SongFilterBar from '../../src/components/songs/SongFilterBar';
 import SongFormModal from '../../src/components/songs/SongFormModal';
 import * as authService from '../../src/services/authService';
+import * as moodService from '../../src/services/moodService';
 import * as songService from '../../src/services/songService';
 import * as statsService from '../../src/services/statsService';
 import * as entryService from '../../src/services/entryService';
@@ -163,6 +165,7 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
   beforeEach(() => {
     hookRuntime.reset();
     navigateMock.mockReset();
+    mockParams = { id: undefined };
     vi.restoreAllMocks();
 
     const store = new Map();
@@ -406,10 +409,10 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     await submitLogin();
 
     vi.spyOn(authService, 'loginUser')
-      .mockResolvedValueOnce({ data: { user: { name: 'Demo' }, token: 't1' } })
-      .mockRejectedValueOnce({ userMessage: 'Gagal demo' })
-      .mockResolvedValueOnce({ data: { user: { name: 'User' }, token: 't2' } })
-      .mockRejectedValueOnce({ userMessage: 'Password salah' });
+      .mockResolvedValueOnce({ data: { user: {}, token: 't1' } })
+      .mockRejectedValueOnce({})
+      .mockResolvedValueOnce({ data: { user: {}, token: 't2' } })
+      .mockRejectedValueOnce({});
 
     const demoBtn = collectNodes(
       loginTree,
@@ -421,11 +424,18 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     getLoginInputs()[1].props.onChange({ target: { value: 'password123' } });
     await submitLogin();
     await submitLogin();
-    // Render ulang Login saat formError terisi
+    // Render ulang Login saat formError terisi, submitting=true, dan demoLoading=true
+    hookRuntime.getScope('login').slots[2] = true;
+    hookRuntime.getScope('login').slots[3] = true;
     loginTree = hookRuntime.render(() => Login(), 'login');
     expect(collectNodes(loginTree, (n) => n.props?.role === 'alert').length).toBe(1);
 
     // --- REGISTER ---
+    clearToken();
+    hookRuntime.getScope('auth').slots[0] = null;
+    hookRuntime.getScope('auth').slots[1] = null;
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+
     let regTree = hookRuntime.render(() => Register(), 'register');
     const getRegInputs = () => collectNodes(regTree, (n) => n.type === 'input');
     const submitReg = async () => {
@@ -449,11 +459,12 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     await submitReg();
 
     vi.spyOn(authService, 'registerUser')
-      .mockResolvedValueOnce({ data: { user: { name: 'Nadya' }, token: 'reg-t' } })
-      .mockRejectedValueOnce({ userMessage: 'Email sudah terdaftar' });
+      .mockResolvedValueOnce({ data: { user: {}, token: 'reg-t' } })
+      .mockRejectedValueOnce({});
     getRegInputs()[3].props.onChange({ target: { value: 'password123' } });
     await submitReg();
     await submitReg();
+    hookRuntime.getScope('register').slots[4] = true;
     regTree = hookRuntime.render(() => Register(), 'register');
     expect(collectNodes(regTree, (n) => n.props?.role === 'alert').length).toBe(1);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard', { replace: true });
@@ -681,23 +692,51 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     );
 
     // Dashboard, Stats, Journal, Songs, Moods, and EntryForm execution
+    vi.spyOn(moodService, 'getMoods').mockResolvedValue({
+      data: [{ id: 1, name: 'Senang', emoji: '😊', color: '#FACC15' }]
+    });
+    vi.spyOn(songService, 'getSongs').mockResolvedValue({
+      data: [{ id: 1, title: 'Lagu 1', artist: 'Artis 1', mood_id: 1, mood_name: 'Senang', color: '#FACC15' }]
+    });
     vi.spyOn(statsService, 'getWeeklyStats').mockResolvedValue({ data: null });
     vi.spyOn(entryService, 'getEntries').mockResolvedValue({
-      data: [{ id: 1, mood_id: 1, mood_name: 'Senang', entry_date: '2026-04-21', energy_level: 4 }],
-      meta: { page: 1, limit: 6, total: 12 }
+      data: [],
+      meta: { page: 1, limit: 6, total: 0 }
     });
+    vi.spyOn(entryService, 'createEntry').mockResolvedValue({
+      data: { id: 99, mood_id: 1, mood_name: 'Senang', color: '#FACC15', entry_date: '2026-04-21' }
+    });
+
+    hookRuntime.render(() => ToastProvider({ children: null }), 'toast');
     hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
     hookRuntime.render(() => Dashboard(), 'dash');
     hookRuntime.render(() => Stats(), 'stats');
     hookRuntime.render(() => Journal(), 'journal');
     hookRuntime.render(() => Songs(), 'songs');
     hookRuntime.render(() => Moods(), 'moods');
-    const efTree = hookRuntime.render(() => EntryForm(), 'entryform');
+    hookRuntime.render(() => EntryForm(), 'entryform');
     hookRuntime.flushEffects();
     await Promise.resolve();
     await Promise.resolve();
 
-    // Render ulang Journal, Songs, EntryForm setelah data dimuat & jalankan callback-nya
+    // Render ulang Dashboard & Stats saat data kosong (EmptyState + onAction)
+    const dashEmptyTree = hookRuntime.render(() => Dashboard(), 'dash');
+    collectNodes(dashEmptyTree, (n) => typeof n.props?.onAction === 'function').forEach((e) =>
+      e.props.onAction()
+    );
+    const statsEmptyTree = hookRuntime.render(() => Stats(), 'stats');
+    collectNodes(statsEmptyTree, (n) => typeof n.props?.onAction === 'function').forEach((e) =>
+      e.props.onAction()
+    );
+
+    // Render ulang Journal, Songs, Moods setelah data dimuat & jalankan callback-nya
+    vi.spyOn(entryService, 'getEntries').mockResolvedValue({
+      data: [{ id: 1, mood_id: 1, mood_name: 'Senang', entry_date: '2026-04-21', energy_level: 4 }],
+      meta: { page: 1, limit: 6, total: 12 }
+    });
+    hookRuntime.getScope('journal').slots[4] = [
+      { id: 1, mood_id: 1, mood_name: 'Senang', entry_date: '2026-04-21', energy_level: 4 }
+    ];
     const jTree = hookRuntime.render(() => Journal(), 'journal');
     collectNodes(jTree, (n) => typeof n.props?.onDelete === 'function').forEach((c) =>
       c.props.onDelete({ id: 1, mood_name: 'Senang', entry_date: '2026-04-21' })
@@ -707,8 +746,32 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     );
     hookRuntime.render(() => Journal(), 'journal');
 
+    // Songs: onDelete -> songToDelete message & RandomSongBanner onClose
+    let songsTree = hookRuntime.render(() => Songs(), 'songs');
+    collectNodes(songsTree, (n) => typeof n.props?.onClose === 'function').forEach((b) =>
+      b.props.onClose()
+    );
+    collectNodes(songsTree, (n) => typeof n.props?.onDelete === 'function').forEach((c) =>
+      c.props.onDelete({ id: 1, title: 'Lagu 1', artist: 'Artis 1' })
+    );
+    songsTree = hookRuntime.render(() => Songs(), 'songs');
+    expect(songsTree).toBeDefined();
+
+    // Moods: onDelete -> moodToDelete message
+    let moodsTree = hookRuntime.render(() => Moods(), 'moods');
+    collectNodes(moodsTree, (n) => typeof n.props?.onDelete === 'function').forEach((c) =>
+      c.props.onDelete({ id: 1, name: 'Senang' })
+    );
+    moodsTree = hookRuntime.render(() => Moods(), 'moods');
+    expect(moodsTree).toBeDefined();
+
+    // EntryForm setelah moods berhasil dimuat: uji validasi gagal (moodId kosong) & input perubahan
+    let efTree = hookRuntime.render(() => EntryForm(), 'entryform');
+    collectNodes(efTree, (n) => n.type === 'form')[0].props.onSubmit({
+      preventDefault: vi.fn()
+    });
     collectNodes(efTree, (n) => typeof n.props?.onChange === 'function').forEach((i) =>
-      i.props.onChange({ target: { value: 'Catatan baru' } })
+      i.props.onChange({ target: { value: '2026-04-21' } })
     );
     collectNodes(efTree, (n) => typeof n.props?.onSelect === 'function').forEach((p) =>
       p.props.onSelect(1)
@@ -716,6 +779,46 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     collectNodes(efTree, (n) => typeof n.props?.onFileSelect === 'function').forEach((u) =>
       u.props.onFileSelect(null)
     );
+    // Render ulang EntryForm saat selectedMood ada, lalu submit berhasil -> savedSuccessEntry
+    efTree = hookRuntime.render(() => EntryForm(), 'entryform');
+    await collectNodes(efTree, (n) => n.type === 'form')[0].props.onSubmit({
+      preventDefault: vi.fn()
+    });
+    efTree = hookRuntime.render(() => EntryForm(), 'entryform');
+    expect(efTree).toBeDefined();
+
+    // EntryForm mode edit (id = '10'): uji loadError & isSubmitting/isEditMode
+    mockParams = { id: '10' };
+    vi.spyOn(entryService, 'getEntryById').mockRejectedValueOnce({
+      userMessage: 'Jurnal tidak ditemukan'
+    });
+    hookRuntime.render(() => EntryForm(), 'entryform-edit');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    const efErrTree = hookRuntime.render(() => EntryForm(), 'entryform-edit');
+    collectNodes(efErrTree, (n) => typeof n.props?.onRetry === 'function').forEach((r) =>
+      r.props.onRetry()
+    );
+
+    vi.spyOn(entryService, 'getEntryById').mockResolvedValueOnce({
+      data: {
+        id: 10,
+        entry_date: '2026-04-20',
+        mood_id: 1,
+        energy_level: 4,
+        note: 'Kemarin',
+        image_path: 'uploads/old.png'
+      }
+    });
+    hookRuntime.render(() => EntryForm(), 'entryform-edit-ok');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    hookRuntime.render(() => EntryForm(), 'entryform-edit-ok');
+    // Set isSubmitting = true di slot EntryForm edit untuk menutup cabang submitButtonLabel
+    hookRuntime.getScope('entryform-edit-ok').slots[11] = true;
+    hookRuntime.render(() => EntryForm(), 'entryform-edit-ok');
 
     // MoodChart Tooltip formatters
     const chartTree = MoodChart({
