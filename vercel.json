@@ -1,25 +1,25 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && bun install && bun run build",
-  "outputDirectory": "frontend/dist",
   "installCommand": "bun install",
-  "builds": [
-    {
-      "src": "backend/server.js",
-      "use": "@vercel/node"
+  "buildCommand": "bun run build",
+  "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "backend/src/**"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "backend/server.js"
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
     },
     {
-      "handle": "filesystem"
+      "source": "/uploads/(.*)",
+      "destination": "/api/index.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!api/|uploads/|assets/).*)",
+      "destination": "/index.html"
     }
   ]
 }

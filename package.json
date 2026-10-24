@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Aplikasi Moodify Fullstack (Backend REST API + Frontend React Vite)",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "start": "bun backend/src/server.js",
     "dev": "vite --config frontend/vite.config.js",
