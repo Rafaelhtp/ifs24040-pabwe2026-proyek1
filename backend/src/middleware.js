@@ -1,8 +1,8 @@
 // Middleware autentikasi JWT, upload file (multer), validasi, dan error handler global
-const crypto = require('crypto');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');

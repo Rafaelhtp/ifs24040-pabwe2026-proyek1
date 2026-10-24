@@ -1,7 +1,7 @@
 // Koneksi SQLite menggunakan node:sqlite bawaan (kompatibel di Node 24+ dan Bun)
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 const { seedDatabase } = require('./seed');
 

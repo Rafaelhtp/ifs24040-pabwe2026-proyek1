@@ -1,6 +1,6 @@
 // Konfigurasi aplikasi Express (tanpa app.listen agar dapat diuji langsung)
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const express = require('express');
 const cors = require('cors');
 const { getUploadDir, errorHandler } = require('./middleware');
@@ -32,11 +32,13 @@ app.use((_req, res, next) => {
 function isOriginAllowed(origin) {
   if (!origin) return true;
   const rawUrls = process.env.CLIENT_URL || '*';
-  const allowedList = rawUrls
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-  return allowedList.includes('*') || allowedList.includes(origin);
+  const allowedList = new Set(
+    rawUrls
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  );
+  return allowedList.has('*') || allowedList.has(origin);
 }
 
 app.use(
