@@ -14,7 +14,8 @@
     "dev:frontend": "vite --config frontend/vite.config.js",
     "build": "vite build --config frontend/vite.config.js",
     "preview": "vite preview --config frontend/vite.config.js",
-    "test": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text"
+    "test": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
+    "posttest": "sed -i 's|backend/src/|src/|g' coverage/lcov.info || true"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.1.1",
