@@ -7,7 +7,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "postinstall": "mkdir -p src && cp -r frontend/src/* src/ && cp -r backend/src/* src/ && cp -r backend/tests/* src/ || true",
+    "postinstall": "mkdir -p src && cp -r frontend/src/* src/ && cp -r backend/src/* src/ && cp -r backend/tests/* src/ && cp -r frontend/tests/* src/ || true",
     "start": "bun backend/src/server.js",
     "dev": "vite --config frontend/vite.config.js",
     "dev:backend": "bun --watch backend/src/server.js",
