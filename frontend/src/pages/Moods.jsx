@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react';
 import { createMood, updateMood, deleteMood } from '../api/moodApi';
 import useMoods from '../hooks/useMoods';
+import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -15,6 +16,7 @@ import { isValidHexColor } from '../utils/validators';
 const EMOJI_PRESETS = ['😊', '😌', '🔥', '😢', '😰', '😠', '😴', '🥳', '🥹', '🤩', '🤔', '🌻'];
 
 export default function Moods() {
+  usePageTitle('Kelola Kategori Mood');
   const { moods, loading, error, refetch } = useMoods();
   const { showToast } = useToast();
 

@@ -1,36 +1,36 @@
-// Komponen indikator tingkat energi harian (1-5) berbentuk baterai/bar dengan transisi ke Pistachio
+// Komponen indikator tingkat energi harian (1-5) berbentuk baterai/bar dengan kontras WCAG AA
 import React from 'react';
-import { Battery, BatteryLow, BatteryMedium, BatteryFull, Zap } from 'lucide-react';
+import { BatteryLow, BatteryMedium, BatteryFull, Zap } from 'lucide-react';
 
 const ENERGY_LEVELS = [
   {
     level: 1,
     label: 'Sangat Lelah',
-    barColor: 'bg-slate-400',
+    barColor: 'bg-slate-200 text-ink',
     badgeClass: 'bg-slate-100 text-ink border-slate-300'
   },
   {
     level: 2,
     label: 'Energi Rendah',
-    barColor: 'bg-sky-400',
+    barColor: 'bg-sky-200 text-ink',
     badgeClass: 'bg-sky-100 text-ink border-sky-300'
   },
   {
     level: 3,
     label: 'Cukup Stabil',
-    barColor: 'bg-denim',
+    barColor: 'bg-denim text-white',
     badgeClass: 'bg-frost text-ink border-denim'
   },
   {
     level: 4,
     label: 'Berenergi',
-    barColor: 'bg-[#9BB84A]',
+    barColor: 'bg-[#A8BA42] text-ink',
     badgeClass: 'bg-pistachio/40 text-ink border-pistachio-dark'
   },
   {
     level: 5,
     label: 'Penuh Energi',
-    barColor: 'bg-pistachio',
+    barColor: 'bg-pistachio text-ink',
     badgeClass: 'bg-pistachio text-ink border-pistachio-dark'
   }
 ];
@@ -40,10 +40,10 @@ export default function EnergySlider({ value = 3, onChange }) {
   const current = ENERGY_LEVELS.find((item) => item.level === numValue) || ENERGY_LEVELS[2];
 
   const renderIcon = () => {
-    if (numValue <= 1) return <BatteryLow className="w-4 h-4" />;
-    if (numValue <= 3) return <BatteryMedium className="w-4 h-4" />;
-    if (numValue === 4) return <BatteryFull className="w-4 h-4" />;
-    return <Zap className="w-4 h-4" />;
+    if (numValue <= 1) return <BatteryLow className="w-4 h-4" aria-hidden="true" />;
+    if (numValue <= 3) return <BatteryMedium className="w-4 h-4" aria-hidden="true" />;
+    if (numValue === 4) return <BatteryFull className="w-4 h-4" aria-hidden="true" />;
+    return <Zap className="w-4 h-4" aria-hidden="true" />;
   };
 
   return (
@@ -86,11 +86,9 @@ export default function EnergySlider({ value = 3, onChange }) {
               aria-checked={isCurrent}
               aria-label={`Energi ${item.level}: ${item.label}`}
               onClick={() => onChange(item.level)}
-              className={`h-11 rounded-xl flex flex-col items-center justify-center transition-all duration-150 border ${
+              className={`h-11 min-h-[44px] rounded-xl flex flex-col items-center justify-center transition-all duration-150 border ${
                 isFilled
-                  ? `${current.barColor} ${
-                      numValue >= 4 ? 'text-ink' : 'text-white'
-                    } border-transparent shadow-2xs`
+                  ? `${current.barColor} border-transparent shadow-2xs`
                   : 'bg-frost/40 text-ink-soft border-frost-border hover:bg-frost'
               } ${isCurrent ? 'ring-2 ring-denim-dark scale-[1.02]' : ''}`}
             >

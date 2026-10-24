@@ -79,10 +79,10 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) {
             size="sm"
           />
           <div>
-            <h3 className="text-sm font-extrabold text-ink flex items-center gap-1.5">
-              <Disc3 className="w-4 h-4 text-denim" />
+            <h2 className="text-sm font-extrabold text-ink flex items-center gap-1.5">
+              <Disc3 className="w-4 h-4 text-denim" aria-hidden="true" />
               <span>Rekomendasi Lagu Mood {selectedMood?.name || ''}</span>
-            </h3>
+            </h2>
             <p className="text-xs text-ink-soft">
               Temani sesi menulis jurnalmu dengan lagu yang selaras
             </p>

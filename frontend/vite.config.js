@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Konfigurasi Vite untuk aplikasi frontend Moodify
+// Konfigurasi Vite untuk aplikasi frontend Moodify dengan pemisahan vendor chunks
 export default defineConfig({
   root: __dirname,
   plugins: [react()],
@@ -14,7 +14,25 @@ export default defineConfig({
   },
   build: {
     outDir: path.join(__dirname, 'dist'),
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts') || id.includes('d3-')) {
+              return 'chart-vendor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'icons-vendor';
+            }
+            if (id.includes('react') || id.includes('scheduler')) {
+              return 'react-vendor';
+            }
+          }
+          return undefined;
+        }
+      }
+    }
   },
   server: {
     port: 5173,

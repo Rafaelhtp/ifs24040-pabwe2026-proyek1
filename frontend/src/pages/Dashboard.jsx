@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { getWeeklyStats } from '../api/statsApi';
 import { getEntries } from '../api/entryApi';
 import useFetch from '../hooks/useFetch';
+import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';
 import StatCard from '../components/StatCard';
 import SoundtrackCard from '../components/SoundtrackCard';
@@ -15,6 +16,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 
 export default function Dashboard() {
+  usePageTitle('Dashboard');
   const { user } = useAuth();
   const navigate = useNavigate();
 

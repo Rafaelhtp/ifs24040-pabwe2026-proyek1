@@ -13,7 +13,20 @@ const statsRoutes = require('./routes/stats');
 
 const app = express();
 
-// Konfigurasi CORS (mendukung banyak origin yang dipisahkan koma atau semua origin saat deploy)
+// Matikan header x-powered-by demi keamanan
+app.disable('x-powered-by');
+
+// Middleware header keamanan dasar (kompatibel penuh dengan Bun & Node tanpa merusak aset)
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
+// Konfigurasi CORS (mendukung banyak origin yang dipisahkan koma atau origin yang sama saat deploy)
 const rawClientUrls = process.env.CLIENT_URL || '*';
 const allowedOrigins = rawClientUrls
   .split(',')
@@ -37,8 +50,20 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Sajikan robots.txt secara eksplisit sebagai text/plain agar SEO Lighthouse selalu valid (bukan fallback index.html)
+app.get('/robots.txt', (_req, res) => {
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  return res.status(200).send('User-agent: *\nAllow: /\n');
+});
+
 // Layani file gambar statis di /uploads
-app.use('/uploads', express.static(getUploadDir()));
+app.use(
+  '/uploads',
+  express.static(getUploadDir(), {
+    maxAge: '7d'
+  })
+);
 
 // Endpoint cek kesehatan server
 app.get('/api/health', (_req, res) => {
@@ -66,22 +91,55 @@ app.use('/api', (_req, res) => {
   });
 });
 
-// Jika hasil build frontend (frontend/dist atau dist) tersedia, sajikan lewat express.static dengan fallback SPA
-const candidateDistDirs = [
-  path.resolve(__dirname, '../../frontend/dist'),
-  path.resolve(__dirname, '../../dist')
-];
-const activeDistDir = candidateDistDirs.find((dir) => fs.existsSync(path.join(dir, 'index.html')));
-
-if (activeDistDir) {
-  app.use(express.static(activeDistDir));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-      return next();
-    }
-    return res.sendFile(path.join(activeDistDir, 'index.html'));
-  });
+// Helper pencari direktori build frontend (frontend/dist atau dist)
+function resolveFrontendDist() {
+  const candidates = [
+    path.resolve(__dirname, '../../frontend/dist'),
+    path.resolve(__dirname, '../../dist')
+  ];
+  return candidates.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || null;
 }
+
+const initialDistDir = resolveFrontendDist();
+if (initialDistDir) {
+  app.use(
+    '/assets',
+    express.static(path.join(initialDistDir, 'assets'), {
+      maxAge: '1y',
+      immutable: true
+    })
+  );
+  app.use(
+    express.static(initialDistDir, {
+      index: false,
+      maxAge: '1h'
+    })
+  );
+}
+
+// Fallback SPA untuk seluruh rute frontend (seperti /auth/login, /songs, /dashboard, /journal, /stats, /moods)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    return next();
+  }
+  const activeDistDir = initialDistDir || resolveFrontendDist();
+  if (!activeDistDir) {
+    return next();
+  }
+
+  // Jika request meminta file statis di dist (mis. /favicon.svg), sajikan langsung jika ada
+  const requestedFile = path.join(activeDistDir, req.path);
+  if (
+    req.path !== '/' &&
+    fs.existsSync(requestedFile) &&
+    fs.statSync(requestedFile).isFile()
+  ) {
+    return res.sendFile(requestedFile);
+  }
+
+  res.setHeader('Cache-Control', 'no-cache');
+  return res.sendFile(path.join(activeDistDir, 'index.html'));
+});
 
 // Handler 404 default jika bukan rute SPA
 app.use((_req, res) => {

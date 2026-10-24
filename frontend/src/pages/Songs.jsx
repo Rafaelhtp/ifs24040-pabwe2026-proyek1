@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import useMoods from '../hooks/useMoods';
 import useDebounce from '../hooks/useDebounce';
 import useFetch from '../hooks/useFetch';
+import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';
 import SongCard from '../components/SongCard';
 import Modal from '../components/Modal';
@@ -25,6 +26,7 @@ import { useToast } from '../components/Toast';
 import { isValidUrl } from '../utils/validators';
 
 export default function Songs() {
+  usePageTitle('Koleksi Lagu & Playlist');
   const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const { moods } = useMoods();
@@ -207,7 +209,7 @@ export default function Songs() {
             💡 Ingin menambahkan lagu favoritmu sendiri ke dalam daftar rekomendasi?
           </p>
           <Link
-            to="/login"
+            to="/auth/login"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-denim hover:bg-denim-dark text-white text-xs font-extrabold transition-colors"
           >
             <LogIn className="w-3.5 h-3.5" />

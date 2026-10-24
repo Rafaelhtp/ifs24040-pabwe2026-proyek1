@@ -21,11 +21,10 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor Response: tangani kondisi server mati dan token 401 kedaluwarsa
+// Interceptor Response: tangani kondisi server mati dan token 401 kedaluwarsa tanpa log merah
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Jika backend tidak terjangkau sama sekali (network error / tanpa response)
     if (!error.response) {
       const networkError = new Error('Tidak dapat terhubung ke server');
       networkError.isNetworkError = true;
@@ -37,12 +36,18 @@ apiClient.interceptors.response.use(
     const reqUrl = config?.url || '';
     const isAuthEndpoint = reqUrl.includes('/auth/login') || reqUrl.includes('/auth/register');
 
-    // Jika 401 pada rute terlindungi (bukan saat form login/register), bersihkan token dan arahkan ke login
+    // Jika 401 pada rute terlindungi, bersihkan token dan arahkan ke /auth/login
     if (status === 401 && !isAuthEndpoint) {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
       window.dispatchEvent(new CustomEvent('moodify:unauthorized'));
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        window.location.href = '/login';
+      const currentPath = window.location.pathname;
+      if (
+        currentPath !== '/auth/login' &&
+        currentPath !== '/auth/register' &&
+        currentPath !== '/login' &&
+        currentPath !== '/register'
+      ) {
+        window.location.href = '/auth/login';
       }
     }
 

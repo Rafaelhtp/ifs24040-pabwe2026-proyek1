@@ -1,13 +1,15 @@
-// Halaman Login dengan dekorasi MoodBlob mengambang & tombol 1-klik "Masuk dengan Akun Demo" berwarna Pistachio
+// Halaman Login (/auth/login) dengan selector #username, #password, #btn-submit & tombol 1-klik Akun Demo
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { LogIn, Sparkles, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import MoodBlob from '../components/MoodBlob';
+import usePageTitle from '../hooks/usePageTitle';
 import { isValidEmail } from '../utils/validators';
 
 export default function Login() {
+  usePageTitle('Masuk Akun');
   const { login, isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -72,21 +74,22 @@ export default function Login() {
   };
 
   const isBusy = submitting || demoLoading;
+  const errorId = formError ? 'login-form-error' : undefined;
 
   return (
     <div className="min-h-[82vh] flex items-center justify-center py-6">
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 bg-white rounded-3xl border border-frost-border shadow-soft-lg overflow-hidden">
         {/* Panel Ilustrasi Kiri (Split-Screen Dekoratif) */}
-        <div className="md:col-span-5 bg-gradient-to-br from-denim via-denim-dark to-[#346DA8] p-8 text-white flex flex-col justify-between relative overflow-hidden">
+        <div className="md:col-span-5 bg-gradient-to-br from-denim via-denim-dark to-[#193F68] p-8 text-white flex flex-col justify-between relative overflow-hidden">
           <div className="relative z-10">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pistachio text-ink text-xs font-extrabold mb-4">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Ruang Aman Perasaanmu</span>
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">
               Kenali Emosimu Bersama Moodify
             </h1>
-            <p className="text-xs sm:text-sm text-frost mt-2 leading-relaxed">
+            <p className="text-xs sm:text-sm text-white/95 mt-2 leading-relaxed">
               Catat suasana hati harianmu, pantau tingkat energi, dan dengarkan rekomendasi musik yang menenangkan.
             </p>
           </div>
@@ -98,7 +101,7 @@ export default function Login() {
             <MoodBlob moodName="semangat" color="#F97316" size="sm" className="mood-blob-float" />
           </div>
 
-          <p className="text-[11px] text-frost/90 font-medium relative z-10">
+          <p className="text-xs text-white font-medium relative z-10">
             Akun Demo: <strong className="text-white">demo@moodify.com</strong> /{' '}
             <strong className="text-white">demo12345</strong>
           </p>
@@ -119,9 +122,9 @@ export default function Login() {
               type="button"
               onClick={handleInstantDemoLogin}
               disabled={isBusy}
-              className="w-full py-3 px-4 rounded-2xl bg-pistachio hover:bg-pistachio-dark text-ink text-xs sm:text-sm font-extrabold shadow-xs flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+              className="w-full py-3 px-4 rounded-2xl bg-pistachio hover:bg-pistachio-dark text-ink text-xs sm:text-sm font-extrabold shadow-xs flex items-center justify-center gap-2 transition-all disabled:opacity-60 min-h-[44px]"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" aria-hidden="true" />
               <span>
                 {demoLoading ? 'Masuk ke Akun Demo...' : 'Masuk dengan Akun Demo (1 Klik)'}
               </span>
@@ -138,8 +141,9 @@ export default function Login() {
 
           {formError && (
             <div
+              id="login-form-error"
               role="alert"
-              className="mb-4 px-4 py-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700"
+              className="mb-4 px-4 py-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-800"
             >
               {formError}
             </div>
@@ -147,18 +151,21 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="login-email" className="block text-xs font-extrabold text-ink mb-1.5">
-                Alamat Email
+              <label htmlFor="username" className="block text-xs font-extrabold text-ink mb-1.5">
+                Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-ink-soft absolute left-3.5 top-3" />
+                <Mail className="w-4 h-4 text-ink-soft absolute left-3.5 top-3" aria-hidden="true" />
                 <input
-                  id="login-email"
+                  id="username"
+                  name="username"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@email.com"
-                  autoComplete="email"
+                  autoComplete="username"
+                  aria-invalid={Boolean(formError)}
+                  aria-describedby={errorId}
                   required
                   className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-frost-border text-sm text-ink bg-frost/30 focus:bg-white"
                 />
@@ -166,18 +173,21 @@ export default function Login() {
             </div>
 
             <div>
-              <label htmlFor="login-password" className="block text-xs font-extrabold text-ink mb-1.5">
+              <label htmlFor="password" className="block text-xs font-extrabold text-ink mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-ink-soft absolute left-3.5 top-3" />
+                <Lock className="w-4 h-4 text-ink-soft absolute left-3.5 top-3" aria-hidden="true" />
                 <input
-                  id="login-password"
+                  id="password"
+                  name="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Masukkan password"
                   autoComplete="current-password"
+                  aria-invalid={Boolean(formError)}
+                  aria-describedby={errorId}
                   required
                   className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-frost-border text-sm text-ink bg-frost/30 focus:bg-white"
                 />
@@ -185,18 +195,19 @@ export default function Login() {
             </div>
 
             <button
+              id="btn-submit"
               type="submit"
               disabled={isBusy}
-              className="w-full py-3 rounded-2xl bg-denim hover:bg-denim-dark text-white text-sm font-extrabold shadow-soft flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+              className="w-full py-3 rounded-2xl bg-denim hover:bg-denim-dark text-white text-sm font-extrabold shadow-soft flex items-center justify-center gap-2 transition-all disabled:opacity-60 min-h-[44px]"
             >
-              <LogIn className="w-4 h-4" />
+              <LogIn className="w-4 h-4" aria-hidden="true" />
               <span>{submitting ? 'Memproses...' : 'Masuk Sekarang'}</span>
             </button>
           </form>
 
           <p className="text-center text-xs font-medium text-ink-soft mt-6">
             Belum memiliki akun?{' '}
-            <Link to="/register" className="font-extrabold text-denim-dark hover:underline">
+            <Link to="/auth/register" className="font-extrabold text-denim-dark hover:underline">
               Daftar akun baru
             </Link>
           </p>

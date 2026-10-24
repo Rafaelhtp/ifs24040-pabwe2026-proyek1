@@ -116,6 +116,10 @@ export default function SoundtrackCard({
               <img
                 src={coverUrl}
                 alt={`Sampul ${song.title}`}
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
                 className="w-16 h-16 rounded-2xl object-cover border border-frost-border shrink-0"
               />
             ) : (

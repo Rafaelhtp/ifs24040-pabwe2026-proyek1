@@ -20,8 +20,11 @@ export default function SongCard({ song, canManage = false, onEdit, onDelete }) 
           <img
             src={coverUrl}
             alt={`Sampul lagu ${song.title} oleh ${song.artist}`}
-            className="w-16 h-16 rounded-2xl object-cover border border-frost-border shrink-0"
+            width="64"
+            height="64"
             loading="lazy"
+            decoding="async"
+            className="w-16 h-16 rounded-2xl object-cover border border-frost-border shrink-0"
           />
         ) : (
           <div className="w-16 h-16 rounded-2xl bg-frost/60 border border-frost-border flex items-center justify-center shrink-0">
@@ -39,9 +42,9 @@ export default function SongCard({ song, canManage = false, onEdit, onDelete }) 
               <span>{song.mood_name || 'Mood'}</span>
             </span>
           </div>
-          <h3 className="text-sm font-extrabold text-ink truncate" title={song.title}>
+          <h2 className="text-sm font-extrabold text-ink truncate" title={song.title}>
             {song.title}
-          </h3>
+          </h2>
           <p className="text-xs font-medium text-ink-soft truncate mt-0.5" title={song.artist}>
             {song.artist}
           </p>

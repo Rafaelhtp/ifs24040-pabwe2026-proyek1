@@ -31,16 +31,16 @@ export default function MoodChart({ byMood = [], daily = [] }) {
       <div className="bg-white rounded-3xl border border-frost-border p-6 shadow-soft">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
-            <h3 className="text-base font-extrabold text-ink">
+            <h2 className="text-base font-extrabold text-ink">
               Tren Harian (7 Hari Terakhir)
-            </h3>
+            </h2>
             <p className="text-xs text-ink-soft">
               Jumlah entri jurnal & rata-rata tingkat energi harian
             </p>
           </div>
           <div className="flex items-center gap-3 text-xs font-bold">
             <span className="inline-flex items-center gap-1.5 text-ink">
-              <span className="w-3 h-3 rounded-sm bg-denim inline-block" />
+              <span className="w-3 h-3 rounded-sm bg-[#5798D7] inline-block" />
               Entri
             </span>
             <span className="inline-flex items-center gap-1.5 text-ink">
@@ -50,7 +50,7 @@ export default function MoodChart({ byMood = [], daily = [] }) {
           </div>
         </div>
 
-        <div className="h-72 w-full">
+        <div className="h-72 min-h-[288px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={formattedDaily}
@@ -59,19 +59,19 @@ export default function MoodChart({ byMood = [], daily = [] }) {
               <CartesianGrid strokeDasharray="3 3" stroke="#E6F1FA" />
               <XAxis
                 dataKey="shortDate"
-                tick={{ fontSize: 12, fill: '#64748B', fontWeight: 600 }}
+                tick={{ fontSize: 12, fill: '#1E293B', fontWeight: 600 }}
               />
               <YAxis
                 yAxisId="left"
                 allowDecimals={false}
-                tick={{ fontSize: 12, fill: '#5798D7', fontWeight: 700 }}
+                tick={{ fontSize: 12, fill: '#1F4E80', fontWeight: 700 }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 domain={[0, 5]}
                 ticks={[0, 1, 2, 3, 4, 5]}
-                tick={{ fontSize: 12, fill: '#64748B', fontWeight: 700 }}
+                tick={{ fontSize: 12, fill: '#1E293B', fontWeight: 700 }}
               />
               <Tooltip
                 formatter={(value, name) => {
@@ -85,7 +85,8 @@ export default function MoodChart({ byMood = [], daily = [] }) {
                 }}
                 contentStyle={{
                   borderRadius: '16px',
-                  borderColor: '#D0E4F5',
+                  borderColor: '#C5DDF2',
+                  color: '#1E293B',
                   fontSize: '12px',
                   fontWeight: 600
                 }}
@@ -115,15 +116,15 @@ export default function MoodChart({ byMood = [], daily = [] }) {
       <div className="bg-white rounded-3xl border border-frost-border p-6 shadow-soft flex flex-col justify-between">
         <div>
           <div className="mb-4">
-            <h3 className="text-base font-extrabold text-ink">
+            <h2 className="text-base font-extrabold text-ink">
               Distribusi Mood Mingguan
-            </h3>
+            </h2>
             <p className="text-xs text-ink-soft">
               Proporsi suasana hati yang tercatat selama 7 hari terakhir
             </p>
           </div>
 
-          <div className="h-48 w-full">
+          <div className="h-48 min-h-[192px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={byMood}
@@ -134,7 +135,7 @@ export default function MoodChart({ byMood = [], daily = [] }) {
                 <XAxis
                   type="number"
                   allowDecimals={false}
-                  tick={{ fontSize: 12, fill: '#64748B', fontWeight: 600 }}
+                  tick={{ fontSize: 12, fill: '#1E293B', fontWeight: 600 }}
                 />
                 <YAxis
                   type="category"
@@ -146,7 +147,8 @@ export default function MoodChart({ byMood = [], daily = [] }) {
                   formatter={(value) => [`${value} kali`, 'Frekuensi']}
                   contentStyle={{
                     borderRadius: '16px',
-                    borderColor: '#D0E4F5',
+                    borderColor: '#C5DDF2',
+                    color: '#1E293B',
                     fontSize: '12px',
                     fontWeight: 600
                   }}

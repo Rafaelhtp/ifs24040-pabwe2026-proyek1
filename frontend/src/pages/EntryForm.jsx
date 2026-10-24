@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Calendar, ArrowLeft, CheckCircle2, BookOpen, PenLine, Save } from 'lucide-react';
 import { getEntryById, createEntry, updateEntry } from '../api/entryApi';
 import useMoods from '../hooks/useMoods';
+import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';
 import MoodPicker from '../components/MoodPicker';
 import EnergySlider from '../components/EnergySlider';
@@ -19,6 +20,7 @@ import { isValidDate } from '../utils/validators';
 export default function EntryForm() {
   const { id } = useParams();
   const isEditMode = Boolean(id);
+  usePageTitle(isEditMode ? 'Edit Catatan Jurnal' : 'Tulis Jurnal Harian');
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { moods, loading: moodsLoading, error: moodsError, refetch: refetchMoods } = useMoods();

@@ -6,6 +6,7 @@ import { getEntries, deleteEntry } from '../api/entryApi';
 import useMoods from '../hooks/useMoods';
 import useDebounce from '../hooks/useDebounce';
 import useFetch from '../hooks/useFetch';
+import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';
 import EntryCard from '../components/EntryCard';
 import Pagination from '../components/Pagination';
@@ -16,6 +17,7 @@ import EmptyState from '../components/EmptyState';
 import { useToast } from '../components/Toast';
 
 export default function Journal() {
+  usePageTitle('Jurnal Harian');
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { showToast } = useToast();

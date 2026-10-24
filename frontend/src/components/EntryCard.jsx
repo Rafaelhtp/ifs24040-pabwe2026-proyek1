@@ -62,8 +62,11 @@ export default function EntryCard({ entry, onDelete, compact = false }) {
             <img
               src={imageUrl}
               alt={`Foto jurnal tanggal ${entry.entry_date}`}
-              className="w-full h-48 object-cover hover:scale-102 transition-transform duration-300"
+              width="400"
+              height="192"
               loading="lazy"
+              decoding="async"
+              className="w-full h-48 object-cover hover:scale-102 transition-transform duration-300"
             />
           </div>
         )}

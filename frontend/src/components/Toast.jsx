@@ -28,32 +28,34 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div
+        role="status"
         aria-live="polite"
+        aria-atomic="true"
         className="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0 pointer-events-none"
       >
         {toasts.map((toast) => {
           const isError = toast.type === 'error';
           const isInfo = toast.type === 'info';
 
-          const styleClass = isError
-            ? 'bg-rose-600 text-white border-rose-700'
-            : isInfo
-            ? 'bg-denim text-white border-denim-dark'
-            : 'bg-pistachio text-ink border-pistachio-dark';
+          let styleClass = 'bg-pistachio text-ink border-pistachio-dark';
+          if (isError) {
+            styleClass = 'bg-rose-700 text-white border-rose-800';
+          } else if (isInfo) {
+            styleClass = 'bg-denim text-white border-denim-dark';
+          }
 
           return (
             <div
               key={toast.id}
-              role="status"
               className={`pointer-events-auto flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl shadow-soft border ${styleClass} transition-all duration-200`}
             >
               <div className="flex items-center gap-2.5 text-sm font-bold">
                 {isError ? (
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
                 ) : isInfo ? (
-                  <Info className="w-4 h-4 shrink-0" />
+                  <Info className="w-4 h-4 shrink-0" aria-hidden="true" />
                 ) : (
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
                 )}
                 <span>{toast.message}</span>
               </div>
@@ -61,9 +63,9 @@ export function ToastProvider({ children }) {
                 type="button"
                 onClick={() => removeToast(toast.id)}
                 aria-label="Tutup notifikasi"
-                className="opacity-80 hover:opacity-100 p-1 rounded-lg"
+                className="opacity-90 hover:opacity-100 p-1.5 min-w-[28px] min-h-[28px] inline-flex items-center justify-center rounded-lg"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           );

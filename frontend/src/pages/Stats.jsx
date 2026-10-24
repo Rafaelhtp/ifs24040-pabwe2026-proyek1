@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { CalendarCheck2, Zap, PenLine } from 'lucide-react';
 import { getWeeklyStats } from '../api/statsApi';
 import useFetch from '../hooks/useFetch';
+import usePageTitle from '../hooks/usePageTitle';
 import MoodBlob from '../components/MoodBlob';
 import StatCard from '../components/StatCard';
 import MoodChart from '../components/MoodChart';
@@ -12,6 +13,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 
 export default function Stats() {
+  usePageTitle('Statistik Mingguan');
   const navigate = useNavigate();
 
   const fetchStats = useCallback(() => getWeeklyStats(), []);

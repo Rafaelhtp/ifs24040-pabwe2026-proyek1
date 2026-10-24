@@ -26,23 +26,23 @@ export default function Navbar() {
     logout();
     setMobileMenuOpen(false);
     showToast('Anda telah keluar dari akun', 'info');
-    navigate('/login');
+    navigate('/auth/login');
   };
 
   const navLinkClass = ({ isActive }) =>
-    `inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm font-bold transition-all ${
+    `inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm font-bold transition-all min-h-[36px] ${
       isActive
         ? 'bg-denim text-white shadow-xs'
         : 'text-ink-soft hover:text-denim-dark hover:bg-frost'
     }`;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-frost-border shadow-soft">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-frost-border shadow-soft">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-3">
         {/* Brand Moodify */}
         <Link
           to={isAuthenticated ? '/dashboard' : '/songs'}
-          className="flex items-center gap-2.5 group shrink-0"
+          className="flex items-center gap-2.5 group shrink-0 py-1"
           onClick={() => setMobileMenuOpen(false)}
         >
           <MoodBlob moodName="senang" color="#5798D7" size="sm" />
@@ -61,26 +61,26 @@ export default function Navbar() {
           {isAuthenticated && (
             <>
               <NavLink to="/dashboard" className={navLinkClass}>
-                <LayoutDashboard className="w-4 h-4" />
+                <LayoutDashboard className="w-4 h-4" aria-hidden="true" />
                 <span>Dashboard</span>
               </NavLink>
               <NavLink to="/journal" className={navLinkClass}>
-                <BookOpen className="w-4 h-4" />
+                <BookOpen className="w-4 h-4" aria-hidden="true" />
                 <span>Jurnal</span>
               </NavLink>
               <NavLink to="/stats" className={navLinkClass}>
-                <BarChart3 className="w-4 h-4" />
+                <BarChart3 className="w-4 h-4" aria-hidden="true" />
                 <span>Statistik</span>
               </NavLink>
             </>
           )}
           <NavLink to="/songs" className={navLinkClass}>
-            <Music className="w-4 h-4" />
+            <Music className="w-4 h-4" aria-hidden="true" />
             <span>Lagu</span>
           </NavLink>
           {isAuthenticated && (
             <NavLink to="/moods" className={navLinkClass}>
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" aria-hidden="true" />
               <span>Mood</span>
             </NavLink>
           )}
@@ -92,9 +92,9 @@ export default function Navbar() {
             <>
               <Link
                 to="/journal/new"
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-denim hover:bg-denim-dark text-white text-xs font-extrabold shadow-xs transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-denim hover:bg-denim-dark text-white text-xs font-extrabold shadow-xs transition-all min-h-[36px]"
               >
-                <PenLine className="w-3.5 h-3.5" />
+                <PenLine className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Tulis Jurnal</span>
               </Link>
 
@@ -111,9 +111,10 @@ export default function Navbar() {
                   type="button"
                   onClick={handleLogout}
                   title="Keluar dari akun"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-frost-border text-ink-soft hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 text-xs font-bold transition-colors"
+                  aria-label="Keluar dari akun"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-frost-border text-ink-soft hover:text-rose-700 hover:border-rose-200 hover:bg-rose-50 text-xs font-bold transition-colors min-h-[36px]"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Logout</span>
                 </button>
               </div>
@@ -121,14 +122,14 @@ export default function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Link
-                to="/login"
-                className="px-4 py-2 rounded-2xl text-sm font-bold text-denim-dark hover:bg-frost transition-colors"
+                to="/auth/login"
+                className="px-4 py-2 rounded-2xl text-sm font-bold text-denim-dark hover:bg-frost transition-colors min-h-[36px] inline-flex items-center"
               >
                 Masuk
               </Link>
               <Link
-                to="/register"
-                className="px-4 py-2.5 rounded-2xl bg-denim hover:bg-denim-dark text-white text-sm font-bold shadow-xs transition-colors"
+                to="/auth/register"
+                className="px-4 py-2.5 rounded-2xl bg-denim hover:bg-denim-dark text-white text-sm font-bold shadow-xs transition-colors min-h-[36px] inline-flex items-center"
               >
                 Daftar
               </Link>
@@ -142,9 +143,9 @@ export default function Navbar() {
             <Link
               to="/journal/new"
               onClick={() => setMobileMenuOpen(false)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-denim hover:bg-denim-dark text-white text-xs font-extrabold shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-denim hover:bg-denim-dark text-white text-xs font-extrabold shadow-xs min-h-[36px]"
             >
-              <PenLine className="w-3.5 h-3.5" />
+              <PenLine className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Tulis Jurnal</span>
             </Link>
           )}
@@ -153,9 +154,13 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-expanded={mobileMenuOpen}
             aria-label="Buka atau tutup menu navigasi"
-            className="p-2.5 rounded-2xl border border-frost-border text-ink hover:bg-frost"
+            className="p-2.5 rounded-2xl border border-frost-border text-ink hover:bg-frost min-w-[40px] min-h-[40px] inline-flex items-center justify-center"
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5" aria-hidden="true" />
+            ) : (
+              <Menu className="w-5 h-5" aria-hidden="true" />
+            )}
           </button>
         </div>
       </div>
@@ -163,7 +168,7 @@ export default function Navbar() {
       {/* Panel Menu Mobile */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-frost-border px-4 pt-3 pb-5 space-y-3 shadow-soft-lg">
-          <div className="flex flex-col space-y-1">
+          <nav aria-label="Menu Mobile" className="flex flex-col space-y-1">
             {isAuthenticated && (
               <>
                 <NavLink
@@ -171,7 +176,7 @@ export default function Navbar() {
                   className={navLinkClass}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <LayoutDashboard className="w-4 h-4" />
+                  <LayoutDashboard className="w-4 h-4" aria-hidden="true" />
                   <span>Dashboard</span>
                 </NavLink>
                 <NavLink
@@ -179,7 +184,7 @@ export default function Navbar() {
                   className={navLinkClass}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <BookOpen className="w-4 h-4" />
+                  <BookOpen className="w-4 h-4" aria-hidden="true" />
                   <span>Jurnal</span>
                 </NavLink>
                 <NavLink
@@ -187,7 +192,7 @@ export default function Navbar() {
                   className={navLinkClass}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <BarChart3 className="w-4 h-4" />
+                  <BarChart3 className="w-4 h-4" aria-hidden="true" />
                   <span>Statistik</span>
                 </NavLink>
               </>
@@ -197,7 +202,7 @@ export default function Navbar() {
               className={navLinkClass}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <Music className="w-4 h-4" />
+              <Music className="w-4 h-4" aria-hidden="true" />
               <span>Lagu</span>
             </NavLink>
             {isAuthenticated && (
@@ -206,11 +211,11 @@ export default function Navbar() {
                 className={navLinkClass}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-4 h-4" aria-hidden="true" />
                 <span>Mood</span>
               </NavLink>
             )}
-          </div>
+          </nav>
 
           <div className="pt-3 border-t border-frost-border flex items-center justify-between">
             {isAuthenticated ? (
@@ -222,23 +227,23 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-rose-50 text-rose-700 text-xs font-bold"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-rose-50 text-rose-700 text-xs font-bold min-h-[36px]"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Logout</span>
                 </button>
               </>
             ) : (
               <div className="flex items-center gap-2 w-full">
                 <Link
-                  to="/login"
+                  to="/auth/login"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex-1 text-center py-2.5 rounded-2xl border border-frost-border text-sm font-bold text-ink"
                 >
                   Masuk
                 </Link>
                 <Link
-                  to="/register"
+                  to="/auth/register"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex-1 text-center py-2.5 rounded-2xl bg-denim text-white text-sm font-bold"
                 >

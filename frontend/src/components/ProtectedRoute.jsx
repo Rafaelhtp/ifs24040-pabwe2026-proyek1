@@ -8,13 +8,12 @@ export default function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
-  // Tampilkan indikator loading selama pengecekan token awal agar tidak berkedip ke halaman login
   if (loading) {
     return <Loading text="Memeriksa sesi pengguna..." fullScreen />;
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
   return children;

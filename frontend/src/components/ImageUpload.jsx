@@ -98,6 +98,10 @@ export default function ImageUpload({
             <img
               src={displayImage}
               alt="Pratinjau foto unggahan"
+              width="112"
+              height="112"
+              loading="lazy"
+              decoding="async"
               className="w-28 h-28 object-cover rounded-2xl border border-frost-border shadow-xs shrink-0"
             />
             <div className="flex flex-col gap-2 text-center sm:text-left">

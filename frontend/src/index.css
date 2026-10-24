@@ -4,12 +4,13 @@
 
 :root {
   --color-frost: #E6F1FA;
-  --color-frost-border: #D0E4F5;
-  --color-denim: #5798D7;
-  --color-denim-dark: #4282C0;
+  --color-frost-border: #C5DDF2;
+  --color-denim: #2B66A3;
+  --color-denim-accent: #5798D7;
+  --color-denim-dark: #1F4E80;
   --color-pistachio: #B9C255;
   --color-ink: #1E293B;
-  --color-ink-soft: #64748B;
+  --color-ink-soft: #475569;
 }
 
 @layer base {
@@ -22,6 +23,12 @@
     background-attachment: fixed;
     color: var(--color-ink);
     min-height: 100vh;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #475569;
+    opacity: 1;
   }
 }
 
@@ -77,12 +84,17 @@
 
 /* Hormati prefers-reduced-motion: matikan seluruh animasi bagi pengguna sensitif gerak */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
   .mood-blob-interactive:hover,
   .mood-blob-selected,
   .mood-blob-pop,
   .mood-blob-float {
-    animation: none !important;
-    transition: none !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -94,12 +106,12 @@
   line-height: 32px;
 }
 
-/* Fokus aksesibilitas yang terlihat jelas dengan warna Iced Denim */
+/* Fokus aksesibilitas yang terlihat jelas dengan warna Denim Gelap */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--color-denim);
+  outline: 3px solid var(--color-denim-dark);
   outline-offset: 2px;
 }
