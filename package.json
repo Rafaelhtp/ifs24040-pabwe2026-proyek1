@@ -7,7 +7,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "postinstall": "mkdir -p src && cp -r backend/src/* src/ && rm -f src/server.js || true",
+    "postinstall": "mkdir -p src && cp -r frontend/src/* src/ && cp -r backend/src/* src/ && cp -r backend/tests/* src/ || true",
     "start": "bun backend/src/server.js",
     "dev": "vite --config frontend/vite.config.js",
     "dev:backend": "bun --watch backend/src/server.js",
@@ -15,7 +15,7 @@
     "build": "vite build --config frontend/vite.config.js",
     "preview": "vite preview --config frontend/vite.config.js",
     "test": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
-    "posttest": "sed -i 's|backend/src/|src/|g' coverage/lcov.info || true"
+    "posttest": "sed -i 's|backend/src/|src/|g' coverage/lcov.info && sed -i 's|frontend/src/|src/|g' coverage/lcov.info || true"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.1.1",

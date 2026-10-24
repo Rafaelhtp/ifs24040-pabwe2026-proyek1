@@ -2,13 +2,16 @@
 import fs from 'node:fs';
 import { defineConfig } from 'vitest/config';
 
-// Sinkronkan backend/src ke src/ setiap kali Vitest dijalankan agar selalu konsisten di Jenkins
-try {
-  fs.rmSync('./src', { recursive: true, force: true });
-  fs.cpSync('./backend/src', './src', { recursive: true });
-  fs.rmSync('./src/server.js', { force: true });
-} catch {
-  // Abaikan jika gagal menyalin pada environment read-only
+// Sinkronkan ke src/ bila belum dibuat oleh postinstall di CI/Jenkins
+if (!fs.existsSync('./src/app.js')) {
+  try {
+    fs.mkdirSync('./src', { recursive: true });
+    fs.cpSync('./frontend/src', './src', { recursive: true });
+    fs.cpSync('./backend/src', './src', { recursive: true });
+    fs.cpSync('./backend/tests', './src', { recursive: true });
+  } catch {
+    // Abaikan jika gagal menyalin pada environment read-only
+  }
 }
 
 const hasRootSrc = fs.existsSync('./src/app.js');
@@ -24,7 +27,7 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       reportsDirectory: './coverage',
       include: hasRootSrc ? ['src/**/*.js'] : ['backend/src/**/*.js'],
-      exclude: ['**/server.js']
+      exclude: ['**/server.js', '**/*.test.js', '**/*.test.jsx']
     }
   }
 });
