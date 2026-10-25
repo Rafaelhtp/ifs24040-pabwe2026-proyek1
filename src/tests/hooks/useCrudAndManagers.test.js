@@ -120,6 +120,19 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     let mgr = getSongMgr();
     expect(mgr.form.moodId).toBe('3');
 
+    // Test line 27 branch coverage for selectedMoodId and empty moods
+    rt.reset();
+    const songMgrWithSelected = rt.read(() =>
+      useSongManager({ moods, selectedMoodId: '5', onChanged: vi.fn() })
+    );
+    expect(songMgrWithSelected.form.moodId).toBe('5');
+
+    rt.reset();
+    const songMgrEmptyMoods = rt.read(() =>
+      useSongManager({ moods: [], selectedMoodId: '', onChanged: vi.fn() })
+    );
+    expect(songMgrEmptyMoods.form.moodId).toBe('');
+
     // Validation checks: missing title, missing artist, missing moodId, invalid link
     await mgr.handleSave();
     expect(getSongMgr().formError).toContain('Judul lagu');
@@ -188,6 +201,11 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     await getMoodMgr().handleSave();
     expect(getMoodMgr().formError).toBe('Nama mood duplikat');
 
+    // Create success path (menutup messages.created)
+    vi.spyOn(moodService, 'createMood').mockResolvedValueOnce({});
+    await getMoodMgr().handleSave();
+    expect(showToastMock).toHaveBeenCalledWith('Mood "Bangga" berhasil ditambahkan!', 'success');
+
     // Edit & update success
     getMoodMgr().openEdit({ id: 9, name: 'Bangga', emoji: '🤩', color: '#5798D7' });
     await getMoodMgr().handleSave();
@@ -202,6 +220,10 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     expect(getMoodMgr().form.name).toBe('');
     expect(getMoodMgr().form.emoji).toBeTruthy();
 
+    // buildPayload fallbacks with empty/null object (covers lines 48-50 in useMoodManager.js)
+    expect(getMoodMgr().buildPayload({})).toEqual({ name: '', emoji: '', color: '' });
+    expect(getMoodMgr().buildPayload(null)).toEqual({ name: '', emoji: '', color: '' });
+
     // 409 Conflict on delete
     getMoodMgr().openDelete({ id: 9, name: 'Bangga' });
     await getMoodMgr().handleConfirmDelete();
@@ -215,6 +237,15 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     await getMoodMgr().handleConfirmDelete();
     expect(getMoodMgr().conflictAlert).toBe('');
     expect(showToastMock).toHaveBeenCalledWith('Kesalahan server mood', 'error');
+
+    // Successful delete (menutup messages.deleted dan onDeleted callback)
+    vi.spyOn(moodService, 'deleteMood').mockResolvedValueOnce({});
+    getMoodMgr().openDelete({ id: 11, name: 'Mood Sukses Dihapus' });
+    await getMoodMgr().handleConfirmDelete();
+    expect(showToastMock).toHaveBeenCalledWith(
+      'Mood "Mood Sukses Dihapus" berhasil dihapus',
+      'success'
+    );
   });
 
   it('useCrudModal handles minimal options without validate or buildPayload, and default error messages', async () => {

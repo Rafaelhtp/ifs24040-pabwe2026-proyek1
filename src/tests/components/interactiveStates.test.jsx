@@ -115,6 +115,36 @@ describe('Page and Component Data/Error/Empty Branch Coverage', () => {
     };
     expect(renderInRouter(<Dashboard />)).toContain('Jurnal Harianmu Masih Kosong');
 
+    // Dashboard saat recentEntries kosong tapi stats.top_mood ada (menutup baris 59-63)
+    mockState.fetchResult = {
+      data: {
+        stats: {
+          total_entries_7d: 2,
+          avg_energy_7d: 4.0,
+          top_mood: { id: 2, name: 'Tenang', color: '#60A5FA', count: 2 },
+          by_mood: [],
+          daily: []
+        },
+        recentEntries: []
+      },
+      loading: false,
+      error: null,
+      refetch: vi.fn()
+    };
+    expect(renderInRouter(<Dashboard />)).toContain('Tenang');
+
+    // Dashboard saat stats & recentEntries bernilai null (menutup baris 47 & 54)
+    mockState.fetchResult = {
+      data: {
+        stats: null,
+        recentEntries: null
+      },
+      loading: false,
+      error: null,
+      refetch: vi.fn()
+    };
+    expect(renderInRouter(<Dashboard />)).toContain('Jurnal Harianmu Masih Kosong');
+
     mockState.fetchResult = {
       data: {
         stats: {

@@ -93,6 +93,7 @@ export default function useMoodManager({ onChanged }) {
     moodToDelete: crud.itemToDelete,
     conflictAlert,
     clearConflictAlert: () => setConflictAlert(''),
-    handleConfirmDelete: handleConfirmDeleteWithReset
+    handleConfirmDelete: handleConfirmDeleteWithReset,
+    buildPayload
   };
 }

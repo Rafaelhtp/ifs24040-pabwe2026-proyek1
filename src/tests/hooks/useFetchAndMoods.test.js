@@ -120,6 +120,17 @@ describe('useFetch, useMoods, useRandomSong, and useDeleteEntry hooks', () => {
     expect(
       rt.read(() => useFetch(emptyErrorFetcher, [], { immediate: false })).error.message
     ).toBeTruthy();
+
+    // Default arguments without deps and without options: useFetch(fetcher)
+    rt.reset();
+    const defaultArgsFetcher = vi.fn().mockResolvedValue({ data: 'item' }); // result.meta is undefined
+    state = rt.render(() => useFetch(defaultArgsFetcher));
+    await Promise.resolve();
+    state = rt.read(() => useFetch(defaultArgsFetcher));
+    expect(state.data).toBe('item');
+    expect(state.meta).toBeNull();
+    state.setData('manual-override');
+    expect(rt.read(() => useFetch(defaultArgsFetcher)).data).toBe('manual-override');
   });
 
   it('useMoods returns moods array or empty fallback array', async () => {

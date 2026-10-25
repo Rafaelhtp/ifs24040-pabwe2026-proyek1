@@ -139,4 +139,12 @@ describe('apiClient interceptors & handleApiError', () => {
       statusCode: 500
     });
   });
+
+  it('covers baseURL ternary when VITE_API_URL ends with /api', async () => {
+    vi.resetModules();
+    import.meta.env.VITE_API_URL = 'http://localhost:5000/api';
+    const clientModule = await import('../../services/client');
+    expect(clientModule.default.defaults.baseURL).toBe('http://localhost:5000/api');
+    delete import.meta.env.VITE_API_URL;
+  });
 });

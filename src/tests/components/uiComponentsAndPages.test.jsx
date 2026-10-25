@@ -116,6 +116,15 @@ describe('UI components and pages SSR coverage', () => {
   });
 
   it('renders common, form, layout, mood, song, and entry components across states', () => {
+    // Default props coverage for Loading, EmptyState, Pagination, MoodConflictAlert, SongFilterBar
+    expect(renderToStaticMarkup(<Loading />)).toContain('Memuat data...');
+    expect(renderToStaticMarkup(<EmptyState />)).toContain('Belum ada data');
+    expect(renderToStaticMarkup(<EmptyState actionLabel="Tambah" />)).not.toContain('button');
+    expect(renderToStaticMarkup(<EmptyState onAction={vi.fn()} />)).not.toContain('button');
+    expect(renderToStaticMarkup(<Pagination />)).toBe('');
+    expect(renderToStaticMarkup(<MoodConflictAlert message={null} />)).toBe('');
+    expect(renderToStaticMarkup(<SongFilterBar />)).toContain('Semua Mood');
+
     expect(renderToStaticMarkup(<Loading fullScreen />)).toContain('Memuat');
     expect(renderToStaticMarkup(<Loading fullScreen={false} />)).toContain('Memuat');
     expect(
@@ -325,6 +334,22 @@ describe('UI components and pages SSR coverage', () => {
         />
       )
     ).toContain('Simpan Perubahan');
+
+    // SongFormModal saat tambah lagu baru (editingSong = null, submitting = false)
+    expect(
+      renderToStaticMarkup(
+        <SongFormModal
+          isOpen
+          onClose={vi.fn()}
+          editingSong={null}
+          form={{ title: 'Baru', artist: 'Artis', moodId: '', link: '' }}
+          onFieldChange={vi.fn()}
+          formError=""
+          isSubmitting={false}
+          onSubmit={vi.fn()}
+        />
+      )
+    ).toContain('Tambah Lagu Baru');
 
     expect(wrap(<EntryCard entry={entry} onDelete={vi.fn()} />)).toContain('Catatan hari ini');
     // EntryCard saat mood_name bernilai null (menutup baris 31 EntryCard.jsx)

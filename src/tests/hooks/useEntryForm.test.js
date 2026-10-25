@@ -151,6 +151,32 @@ describe('useEntryForm hook', () => {
     expect(navigateMock).toHaveBeenCalledWith(ROUTES.JOURNAL_NEW);
     rt.cleanups.forEach((fn) => fn());
 
+    // Load entry with null note & null image_path (lines 51-52 falsy branches)
+    rt.reset();
+    vi.spyOn(entryService, 'getEntryById').mockResolvedValueOnce({
+      data: {
+        id: 15,
+        entry_date: '2026-04-22',
+        mood_id: 1,
+        energy_level: 3,
+        note: null,
+        image_path: null
+      }
+    });
+    rt.render(() => useEntryForm({ id: '15', moods }));
+    await Promise.resolve();
+    await Promise.resolve();
+    const readNulls = () => rt.read(() => useEntryForm({ id: '15', moods }));
+    expect(readNulls().note).toBe('');
+    expect(readNulls().existingImagePath).toBeNull();
+
+    // Update success dengan fallback saat selectedMood ADA (lines 127-128 truthy branches)
+    vi.spyOn(entryService, 'updateEntry').mockResolvedValueOnce({});
+    readNulls().setMoodId(1);
+    await readNulls().handleSubmitEntry({ preventDefault: vi.fn() });
+    expect(readNulls().savedSuccessEntry.mood_name).toBe('Senang');
+    expect(readNulls().savedSuccessEntry.color).toBe('#FACC15');
+
     // Load error in edit mode tanpa userMessage (lines 56-57 fallback)
     rt.reset();
     vi.spyOn(entryService, 'getEntryById').mockRejectedValueOnce({});

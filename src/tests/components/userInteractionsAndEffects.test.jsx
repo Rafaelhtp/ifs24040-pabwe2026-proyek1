@@ -49,6 +49,7 @@ const hookRuntime = {
 
 const navigateMock = vi.fn();
 let mockParams = { id: undefined };
+let mockLocation = { pathname: '/dashboard', state: null };
 
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal();
@@ -103,7 +104,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
   return {
     ...actual,
     useNavigate: () => navigateMock,
-    useLocation: () => ({ pathname: '/dashboard', state: null }),
+    useLocation: () => mockLocation,
     useParams: () => mockParams,
     useSearchParams: () => [new URLSearchParams(), vi.fn()]
   };
@@ -442,8 +443,10 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     getLoginInputs()[0].props.onChange({ target: { value: 'user@moodify.com' } });
     await submitLogin();
 
+    mockLocation = { pathname: '/login', state: { from: { pathname: '/journal/new' } } };
+    loginTree = hookRuntime.render(() => Login(), 'login');
     vi.spyOn(authService, 'loginUser')
-      .mockResolvedValueOnce({ data: { user: {}, token: 't1' } })
+      .mockResolvedValueOnce({ data: { user: { name: 'Budi' }, token: 't1' } })
       .mockRejectedValueOnce({})
       .mockResolvedValueOnce({ data: { user: {}, token: 't2' } })
       .mockRejectedValueOnce({});
@@ -453,6 +456,8 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
       (n) => n.type === 'button' && n.props?.type === 'button'
     )[0];
     await demoBtn.props.onClick();
+    expect(navigateMock).toHaveBeenCalledWith('/journal/new', { replace: true });
+    mockLocation = { pathname: '/dashboard', state: null };
     await demoBtn.props.onClick();
 
     getLoginInputs()[1].props.onChange({ target: { value: 'password123' } });
@@ -727,8 +732,21 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     moodButtons[0].props.onKeyDown({ key: 'ArrowLeft', preventDefault: vi.fn() });
     moodButtons[0].props.onKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() });
     moodButtons[0].props.onKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() });
+    moodButtons[0].props.onKeyDown({ key: 'Escape', preventDefault: vi.fn() });
+
+    // Uji MoodPicker tanpa onSelect (menutup onSelect?. falsy)
+    const noSelectPicker = MoodPicker({ moods: [{ id: 1, name: 'Senang' }] });
+    collectNodes(noSelectPicker, (n) => n.type === 'button')[0].props.onClick();
+    collectNodes(noSelectPicker, (n) => n.type === 'button')[0].props.onKeyDown({
+      key: 'ArrowRight',
+      preventDefault: vi.fn()
+    });
+
     // Uji MoodPicker kosong (menutup baris 8 if (!moods.length) return)
     const emptyPicker = MoodPicker({ moods: [], selectedMoodId: null, onSelect: vi.fn() });
+    collectNodes(emptyPicker, (n) => typeof n.props?.onKeyDown === 'function').forEach((f) =>
+      f.props.onKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() })
+    );
     expect(emptyPicker).toBeDefined();
 
     const sliderTree = EnergySlider({ value: 3, onChange: vi.fn() });
@@ -763,6 +781,17 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
       onSearchChange: vi.fn()
     });
     collectNodes(songFilterTree, (n) => typeof n.props?.onClick === 'function').forEach((b) =>
+      b.props.onClick()
+    );
+    // Uji SongFilterBar saat isActive bernilai false (menutup baris 41 SongFilterBar.jsx)
+    const songFilterTreeInactive = SongFilterBar({
+      moods: [{ id: 1, name: 'Senang', color: '#FACC15' }],
+      selectedMoodId: '',
+      onSelectMood: vi.fn(),
+      searchQuery: '',
+      onSearchChange: vi.fn()
+    });
+    collectNodes(songFilterTreeInactive, (n) => typeof n.props?.onClick === 'function').forEach((b) =>
       b.props.onClick()
     );
     collectNodes(songFilterTree, (n) => typeof n.props?.onChange === 'function').forEach((i) =>
@@ -900,6 +929,32 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     const dashFullTree = hookRuntime.render(() => Dashboard(), 'dash-full');
     expect(dashFullTree).toBeDefined();
 
+    // Dashboard: recentEntries kosong tapi stats.top_mood ada (menutup baris 54 & 59-63)
+    hookRuntime.getScope('dash-topmood').slots[0] = {
+      stats: {
+        total_entries_7d: 3,
+        avg_energy_7d: 3.5,
+        top_mood: { id: 2, name: 'Tenang', color: '#60A5FA' },
+        by_mood: [],
+        daily: []
+      },
+      recentEntries: null
+    };
+    hookRuntime.getScope('dash-topmood').slots[2] = false;
+    hookRuntime.getScope('dash-topmood').slots[3] = null;
+    const dashTopMoodTree = hookRuntime.render(() => Dashboard(), 'dash-topmood');
+    expect(dashTopMoodTree).toBeDefined();
+
+    // Dashboard: fetchDashboardData saat getEntries mengembalikan data null (menutup baris 32)
+    vi.spyOn(entryService, 'getEntries').mockResolvedValueOnce({});
+    vi.spyOn(statsService, 'getWeeklyStats').mockResolvedValueOnce({
+      data: { total_entries_7d: 1, avg_energy_7d: 4, top_mood: null, by_mood: [], daily: [] }
+    });
+    hookRuntime.render(() => Dashboard(), 'dash-fetch-null');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+
     // Render ulang Journal, Songs, Moods setelah data dimuat & jalankan callback-nya
     vi.spyOn(entryService, 'getEntries').mockResolvedValue({
       data: [{ id: 1, mood_id: 1, mood_name: 'Senang', entry_date: '2026-04-21', energy_level: 4 }],
@@ -957,6 +1012,38 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     hookRuntime.getScope('songs').slots[11] = { id: 2, title: 'Lagu 2' };
     hookRuntime.getScope('songs').slots[18] = { id: 1, title: 'Lagu 1' };
     await songConfirmBtn?.props.onConfirm?.();
+
+    // Songs: randomLoading=true (menutup baris 106 "Mengacak...")
+    hookRuntime.getScope('songs').slots[12] = true;
+    let songsTreeLoading = hookRuntime.render(() => Songs(), 'songs');
+    expect(
+      collectNodes(songsTreeLoading, (n) => n.type === 'span').some(
+        (s) => s.props?.children === 'Mengacak...'
+      )
+    ).toBe(true);
+
+    // Songs: empty song list with isAuthenticated=true vs false (menutup baris 67-68)
+    hookRuntime.getScope('songs').slots[7] = []; // songs = []
+    hookRuntime.getScope('songs').slots[9] = false; // loading = false
+    hookRuntime.getScope('songs').slots[10] = null; // error = null
+    hookRuntime.getScope('songs').slots[12] = false;
+    hookRuntime.getScope('auth').slots[0] = { id: 1, name: 'User' }; // isAuthenticated = true
+    hookRuntime.getScope('auth').slots[1] = 'jwt';
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    let songsAuthEmpty = hookRuntime.render(() => Songs(), 'songs');
+    expect(
+      collectNodes(songsAuthEmpty, (n) => n.props?.actionLabel === 'Tambah Lagu Baru').length
+    ).toBe(1);
+
+    hookRuntime.getScope('auth').slots[0] = null; // isAuthenticated = false
+    hookRuntime.getScope('auth').slots[1] = null;
+    hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
+    let songsGuestEmpty = hookRuntime.render(() => Songs(), 'songs');
+    const guestEmptyNode = collectNodes(
+      songsGuestEmpty,
+      (n) => n.props?.title === 'Belum Ada Lagu Ditemukan'
+    )[0];
+    expect(guestEmptyNode?.props?.actionLabel).toBeUndefined();
 
     // Moods: onDelete -> moodToDelete message
     let moodsTree = hookRuntime.render(() => Moods(), 'moods');
@@ -1035,7 +1122,12 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
         { mood_id: 1, name: 'Senang', count: 2, color: '#FACC15' },
         { mood_id: 2, name: 'Tenang', count: 0, color: null }
       ],
-      daily: [{ date: '2026-04-21', count: 2, avg_energy: 4 }]
+      daily: [
+        { date: '2026-04-21', count: 2, avg_energy: 4 },
+        { date: '2026-04-22', count: 0, avg_energy: 0 },
+        { date: '2026-04-23', count: null, avg_energy: null },
+        { date: '2026-04-24', count: undefined, avg_energy: undefined }
+      ]
     });
     const tooltips = collectNodes(chartTree, (n) => typeof n.props?.formatter === 'function');
     expect(tooltips[0].props.formatter(2, 'count')[0]).toBe('2 entri');
