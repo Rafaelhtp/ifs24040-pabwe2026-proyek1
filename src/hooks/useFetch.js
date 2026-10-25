@@ -25,6 +25,7 @@ export default function useFetch(fetcher, deps = [], options = {}) {
       if (result?.meta) {
         setMeta(result.meta);
       }
+      setLoading(false);
       return result;
     } catch (err) {
       setError({
@@ -32,9 +33,8 @@ export default function useFetch(fetcher, deps = [], options = {}) {
         isNetworkError: Boolean(err?.isNetworkError),
         statusCode: err?.statusCode
       });
-      return null;
-    } finally {
       setLoading(false);
+      return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps); // NOSONAR

@@ -5,7 +5,6 @@ import MoodBlob from './MoodBlob';
 
 export default function MoodPicker({ moods = [], selectedMoodId, onSelect }) {
   const handleKeyDown = (event, index) => {
-    if (!moods.length) return;
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
       event.preventDefault();
       const next = moods[(index + 1) % moods.length];
@@ -31,7 +30,6 @@ export default function MoodPicker({ moods = [], selectedMoodId, onSelect }) {
 
       <fieldset
         aria-label="Pilih suasana hati"
-        onKeyDown={(event) => handleKeyDown(event, 0)}
         className="grid grid-cols-3 sm:grid-cols-4 gap-3 m-0 p-0 border-0"
       >
         {moods.map((mood, idx) => {

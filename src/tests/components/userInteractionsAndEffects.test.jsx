@@ -447,8 +447,10 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     loginTree = hookRuntime.render(() => Login(), 'login');
     vi.spyOn(authService, 'loginUser')
       .mockResolvedValueOnce({ data: { user: { name: 'Budi' }, token: 't1' } })
+      .mockResolvedValueOnce({ data: { user: {}, token: 't-anon' } })
       .mockRejectedValueOnce({})
-      .mockResolvedValueOnce({ data: { user: {}, token: 't2' } })
+      .mockResolvedValueOnce({ data: { user: { name: 'Budi' }, token: 't2' } })
+      .mockResolvedValueOnce({ data: { user: {}, token: 't3' } })
       .mockRejectedValueOnce({});
 
     const demoBtn = collectNodes(
@@ -459,8 +461,10 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     expect(navigateMock).toHaveBeenCalledWith('/journal/new', { replace: true });
     mockLocation = { pathname: '/dashboard', state: null };
     await demoBtn.props.onClick();
+    await demoBtn.props.onClick();
 
     getLoginInputs()[1].props.onChange({ target: { value: 'password123' } });
+    await submitLogin();
     await submitLogin();
     await submitLogin();
     // Render ulang Login saat formError terisi, submitting=true, dan demoLoading=true
@@ -772,6 +776,19 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     collectNodes(entryFilterTree, (n) => typeof n.props?.onChange === 'function').forEach((i) =>
       i.props.onChange({ target: { value: '2026-04-21' } })
     );
+
+    // EntryFilterBar saat moodIdParam kosong, filter non-aktif, dan klik mood saat isActive = false
+    const entryFilterTreeInactive = EntryFilterBar({
+      moods: [{ id: 2, name: 'Sedih', color: '#60A5FA' }],
+      moodIdParam: '',
+      hasActiveFilter: false,
+      onFilterChange: vi.fn()
+    });
+    collectNodes(entryFilterTreeInactive, (n) => typeof n.props?.onClick === 'function').forEach((b) =>
+      b.props.onClick()
+    );
+    const entryFilterDefault = EntryFilterBar({});
+    expect(entryFilterDefault).toBeDefined();
 
     const songFilterTree = SongFilterBar({
       moods: [{ id: 1, name: 'Senang', color: '#FACC15' }],
