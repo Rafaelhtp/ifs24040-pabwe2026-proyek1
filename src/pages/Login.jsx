@@ -7,6 +7,7 @@ import { useToast } from '../components/common/Toast';
 import MoodBlob from '../components/mood/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
 import { isValidEmail, isValidPassword } from '../utils/validators';
+import { ROUTES } from '../constants/routes';
 
 export default function Login() {
   usePageTitle('Masuk Akun');
@@ -22,10 +23,10 @@ export default function Login() {
   const [formError, setFormError] = useState('');
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
 
-  const destination = location.state?.from?.pathname || '/dashboard';
+  const destination = location.state?.from?.pathname || ROUTES.DASHBOARD;
 
   // Login langsung dalam 1 klik menggunakan akun demo
   const handleInstantDemoLogin = async () => {
@@ -209,7 +210,7 @@ export default function Login() {
 
           <p className="text-center text-xs font-medium text-ink-soft mt-6">
             <span>Belum memiliki akun? </span>
-            <Link to="/auth/register" className="font-extrabold text-denim-dark hover:underline">
+            <Link to={ROUTES.REGISTER} className="font-extrabold text-denim-dark hover:underline">
               Daftar akun baru
             </Link>
           </p>

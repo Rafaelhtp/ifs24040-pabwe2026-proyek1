@@ -1,12 +1,20 @@
 // Konfigurasi Axios client beserta interceptor token JWT dan penanganan error global tanpa full reload SPA
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/imageUrl';
+import { normalizeBaseUrl } from '../utils/imageUrl';
 import { API_TIMEOUT_MS, UNAUTHORIZED_EVENT } from '../constants/config';
 import { MESSAGES } from '../constants/messages';
+import { API_ROUTES } from '../constants/routes';
 import { getToken, clearToken } from './tokenStorage';
 
+const DEFAULT_API_URL = 'http://localhost:5000';
+const rawApiUrl = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
+const cleanApiUrl = normalizeBaseUrl(rawApiUrl);
+const baseURL = cleanApiUrl.endsWith('/api') ? cleanApiUrl : `${cleanApiUrl}/api`;
+
+export const generateClientRequestId = () => Math.random().toString(36).substring(2, 15);
+
 const apiClient = axios.create({
-  baseURL: API_BASE_URL ? `${API_BASE_URL}/api` : '/api',
+  baseURL,
   timeout: API_TIMEOUT_MS
 });
 
@@ -58,7 +66,8 @@ apiClient.interceptors.response.use(
 
     const { status, data, config } = error.response;
     const reqUrl = config?.url || '';
-    const isAuthEndpoint = reqUrl.includes('/auth/login') || reqUrl.includes('/auth/register');
+    const isAuthEndpoint =
+      reqUrl.includes(API_ROUTES.AUTH_LOGIN) || reqUrl.includes(API_ROUTES.AUTH_REGISTER);
 
     if (status === 401 && !isAuthEndpoint) {
       handleUnauthorized();

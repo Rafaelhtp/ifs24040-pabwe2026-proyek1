@@ -7,6 +7,7 @@ import { useToast } from '../components/common/Toast';
 import MoodBlob from '../components/mood/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
 import { isValidEmail, isValidPassword } from '../utils/validators';
+import { ROUTES } from '../constants/routes';
 
 export default function Register() {
   usePageTitle('Daftar Akun Baru');
@@ -22,7 +23,7 @@ export default function Register() {
   const [formError, setFormError] = useState('');
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
 
   const handleUserRegister = async (event) => {
@@ -50,7 +51,7 @@ export default function Register() {
     try {
       const user = await register(name.trim(), email.trim(), password);
       showToast(`Akun berhasil dibuat! Selamat datang, ${user?.name || 'Pengguna'}!`, 'success');
-      navigate('/dashboard', { replace: true });
+      navigate(ROUTES.DASHBOARD, { replace: true });
     } catch (err) {
       const msg = err?.userMessage || 'Gagal mendaftarkan akun.';
       setFormError(msg);
@@ -205,7 +206,7 @@ export default function Register() {
 
           <p className="text-center text-xs font-medium text-ink-soft mt-6">
             <span>Sudah punya akun? </span>
-            <Link to="/auth/login" className="font-extrabold text-denim-dark hover:underline">
+            <Link to={ROUTES.LOGIN} className="font-extrabold text-denim-dark hover:underline">
               Masuk di sini
             </Link>
           </p>

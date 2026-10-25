@@ -14,6 +14,7 @@ import EntryCard from '../components/entries/EntryCard';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
+import { ROUTES } from '../constants/routes';
 
 export default function Dashboard() {
   usePageTitle('Dashboard');
@@ -88,7 +89,7 @@ export default function Dashboard() {
         </div>
 
         <Link
-          to="/journal/new"
+          to={ROUTES.JOURNAL_NEW}
           className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-pistachio hover:bg-pistachio-dark text-ink text-sm font-extrabold shadow-soft transition-transform hover:scale-[1.02] shrink-0"
         >
           <PenLine className="w-4 h-4" />
@@ -154,14 +155,14 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-3">
                 <Link
-                  to="/stats"
+                  to={ROUTES.STATS}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white border border-frost-border text-denim-dark hover:bg-frost text-xs font-extrabold transition-colors"
                 >
                   <BarChart3 className="w-3.5 h-3.5" />
                   <span>Lihat Grafik Statistik</span>
                 </Link>
                 <Link
-                  to="/journal"
+                  to={ROUTES.JOURNAL}
                   className="inline-flex items-center gap-1 text-xs font-extrabold text-denim-dark hover:underline"
                 >
                   <span>Lihat semua</span>
@@ -184,7 +185,7 @@ export default function Dashboard() {
           title="Jurnal Harianmu Masih Kosong"
           description="Yuk mulai tulis catatan suasana hati pertamamu hari ini dan dapatkan rekomendasi soundtrack lagu yang pas!"
           actionLabel="Tulis Jurnal Pertama"
-          onAction={() => navigate('/journal/new')}
+          onAction={() => navigate(ROUTES.JOURNAL_NEW)}
         />
       )}
     </div>

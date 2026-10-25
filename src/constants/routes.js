@@ -1,4 +1,4 @@
-// Konstanta rute navigasi aplikasi Moodify (tanpa magic string di komponen/halaman)
+// Konstanta rute navigasi aplikasi dan endpoint API Moodify (tanpa magic string di komponen/service)
 
 export const ROUTES = {
   HOME: '/',
@@ -17,11 +17,22 @@ export const ROUTES = {
   MOODS: '/moods'
 };
 
+export const API_ROUTES = {
+  AUTH_LOGIN: '/auth/login',
+  AUTH_REGISTER: '/auth/register',
+  AUTH_ME: '/auth/me',
+  ENTRIES: '/entries',
+  MOODS: '/moods',
+  SONGS: '/songs',
+  SONGS_RANDOM: '/songs/random',
+  STATS_WEEKLY: '/stats/weekly'
+};
+
 /**
  * Membentuk path halaman edit jurnal berdasarkan ID entri.
  * @param {number|string} id - ID entri jurnal
  * @returns {string} Path rute edit jurnal
  */
 export function buildJournalEditRoute(id) {
-  return `/journal/${id}/edit`;
+  return `${ROUTES.JOURNAL}/${id}/edit`;
 }

@@ -1,6 +1,7 @@
 // Service pemanggilan API untuk Lagu & Rekomendasi Playlist (/api/songs/*)
 import apiClient, { handleApiError } from './client';
 import { cleanQueryParams } from '../utils/params';
+import { API_ROUTES } from '../constants/routes';
 
 const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
 
@@ -11,7 +12,7 @@ const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
  */
 export async function getSongs(params = {}) {
   const response = await apiClient
-    .get('/songs', {
+    .get(API_ROUTES.SONGS, {
       params: cleanQueryParams(params)
     })
     .catch(handleApiError);
@@ -25,7 +26,7 @@ export async function getSongs(params = {}) {
  */
 export async function getRandomSong(moodId) {
   const response = await apiClient
-    .get('/songs/random', {
+    .get(API_ROUTES.SONGS_RANDOM, {
       params: cleanQueryParams({ mood_id: moodId })
     })
     .catch(handleApiError);
@@ -39,7 +40,7 @@ export async function getRandomSong(moodId) {
  */
 export async function createSong(formData) {
   const response = await apiClient
-    .post('/songs', formData, {
+    .post(API_ROUTES.SONGS, formData, {
       headers: MULTIPART_HEADERS
     })
     .catch(handleApiError);
@@ -54,7 +55,7 @@ export async function createSong(formData) {
  */
 export async function updateSong(id, formData) {
   const response = await apiClient
-    .put(`/songs/${id}`, formData, {
+    .put(`${API_ROUTES.SONGS}/${id}`, formData, {
       headers: MULTIPART_HEADERS
     })
     .catch(handleApiError);
@@ -67,6 +68,6 @@ export async function updateSong(id, formData) {
  * @returns {Promise<object>} Respons JSON konfirmasi penghapusan lagu
  */
 export async function deleteSong(id) {
-  const response = await apiClient.delete(`/songs/${id}`).catch(handleApiError);
+  const response = await apiClient.delete(`${API_ROUTES.SONGS}/${id}`).catch(handleApiError);
   return response?.data;
 }

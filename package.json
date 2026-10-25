@@ -1,38 +1,27 @@
 {
-  "name": "moodify-monorepo",
+  "name": "ifs24040-pabwe2026-proyek1",
   "version": "1.0.0",
   "private": true,
-  "description": "Aplikasi Moodify Fullstack (Backend REST API + Frontend React Vite)",
+  "type": "module",
+  "description": "Aplikasi Frontend Moodify (React 18 + Vite + Tailwind CSS)",
   "engines": {
     "node": ">=22.0.0"
   },
   "scripts": {
-    "postinstall": "mkdir -p src && cp -r frontend/src/* src/ && cp -r backend/src/* src/ && cp -r backend/tests/* src/ && cp -r frontend/tests/* src/ || true",
-    "start": "bun backend/src/server.js",
-    "dev": "vite --config frontend/vite.config.js",
-    "dev:backend": "bun --watch backend/src/server.js",
-    "dev:frontend": "vite --config frontend/vite.config.js",
-    "build": "vite build --config frontend/vite.config.js",
-    "preview": "vite preview --config frontend/vite.config.js",
-    "test": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
-    "posttest": "sed -i 's|backend/src/|src/|g' coverage/lcov.info && sed -i 's|frontend/src/|src/|g' coverage/lcov.info || true"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run --coverage"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.1.1",
     "axios": "^1.7.9",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "express-validator": "^7.2.1",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.468.0",
-    "multer": "^2.0.0",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
-    "recharts": "^2.15.0",
-    "uuid": "^11.1.0"
+    "recharts": "^2.15.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

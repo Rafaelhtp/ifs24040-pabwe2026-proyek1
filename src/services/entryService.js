@@ -1,6 +1,7 @@
 // Service pemanggilan API untuk Entri Jurnal Harian (/api/entries/*)
 import apiClient, { handleApiError } from './client';
 import { cleanQueryParams } from '../utils/params';
+import { API_ROUTES } from '../constants/routes';
 
 const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
 
@@ -11,7 +12,7 @@ const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
  */
 export async function getEntries(params = {}) {
   const response = await apiClient
-    .get('/entries', {
+    .get(API_ROUTES.ENTRIES, {
       params: cleanQueryParams(params)
     })
     .catch(handleApiError);
@@ -24,7 +25,7 @@ export async function getEntries(params = {}) {
  * @returns {Promise<object>} Respons JSON berisi detail entri jurnal
  */
 export async function getEntryById(id) {
-  const response = await apiClient.get(`/entries/${id}`).catch(handleApiError);
+  const response = await apiClient.get(`${API_ROUTES.ENTRIES}/${id}`).catch(handleApiError);
   return response?.data;
 }
 
@@ -35,7 +36,7 @@ export async function getEntryById(id) {
  */
 export async function createEntry(formData) {
   const response = await apiClient
-    .post('/entries', formData, {
+    .post(API_ROUTES.ENTRIES, formData, {
       headers: MULTIPART_HEADERS
     })
     .catch(handleApiError);
@@ -50,7 +51,7 @@ export async function createEntry(formData) {
  */
 export async function updateEntry(id, formData) {
   const response = await apiClient
-    .put(`/entries/${id}`, formData, {
+    .put(`${API_ROUTES.ENTRIES}/${id}`, formData, {
       headers: MULTIPART_HEADERS
     })
     .catch(handleApiError);
@@ -63,6 +64,6 @@ export async function updateEntry(id, formData) {
  * @returns {Promise<object>} Respons JSON konfirmasi penghapusan
  */
 export async function deleteEntry(id) {
-  const response = await apiClient.delete(`/entries/${id}`).catch(handleApiError);
+  const response = await apiClient.delete(`${API_ROUTES.ENTRIES}/${id}`).catch(handleApiError);
   return response?.data;
 }

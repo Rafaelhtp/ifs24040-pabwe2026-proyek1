@@ -4,14 +4,6 @@ build/
 .env
 .env.local
 .env.*.local
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
-uploads/*
-!uploads/.gitkeep
-backend/uploads/*
-!backend/uploads/.gitkeep
 coverage/
 .trivy-cache/
 trivy-results.sarif

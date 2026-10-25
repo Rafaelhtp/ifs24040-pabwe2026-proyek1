@@ -11,6 +11,7 @@ import MoodChart from '../components/mood/MoodChart';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
+import { ROUTES } from '../constants/routes';
 
 export default function Stats() {
   usePageTitle('Statistik Mingguan');
@@ -45,7 +46,7 @@ export default function Stats() {
           </p>
         </div>
         <Link
-          to="/journal/new"
+          to={ROUTES.JOURNAL_NEW}
           className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-denim hover:bg-denim-dark text-white text-sm font-extrabold shadow-soft transition-all"
         >
           <PenLine className="w-4 h-4" />
@@ -114,7 +115,7 @@ export default function Stats() {
           title="Belum Ada Data Statistik Mingguan"
           description="Catat suasana hatimu selama beberapa hari ke depan untuk melihat grafik tren energi dan proporsi mood di halaman ini."
           actionLabel="Tulis Jurnal Sekarang"
-          onAction={() => navigate('/journal/new')}
+          onAction={() => navigate(ROUTES.JOURNAL_NEW)}
         />
       ) : (
         <MoodChart byMood={byMood} daily={daily} />
