@@ -28,6 +28,9 @@ describe('validators utils', () => {
     expect(isValidHexColor('#abcdef')).toBe(true);
     expect(isValidHexColor('5798D7')).toBe(false);
     expect(isValidHexColor('#12345')).toBe(false);
+    expect(isValidHexColor(null)).toBe(false);
+    expect(isValidHexColor(undefined)).toBe(false);
+    expect(isValidHexColor('')).toBe(false);
   });
 
   it('validates optional URLs', () => {

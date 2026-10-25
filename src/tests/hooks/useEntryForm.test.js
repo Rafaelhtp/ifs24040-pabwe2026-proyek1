@@ -83,19 +83,24 @@ describe('useEntryForm hook', () => {
     await readCreate().handleSubmitEntry({ preventDefault: vi.fn() });
     expect(readCreate().formError).toContain('suasana hati');
 
-    // Invalid energy level
+    // Invalid energy level (< 1 dan > 5)
     readCreate().setMoodId(1);
+    readCreate().setEnergyLevel(0);
+    await readCreate().handleSubmitEntry({ preventDefault: vi.fn() });
+    expect(readCreate().formError).toContain('antara 1 sampai 5');
+
     readCreate().setEnergyLevel(9);
     await readCreate().handleSubmitEntry({ preventDefault: vi.fn() });
     expect(readCreate().formError).toContain('antara 1 sampai 5');
 
-    // Create success with fallback savedSuccessEntry
+    // Create success dengan fallback saat selectedMood tidak ditemukan (lines 127-128)
+    readCreate().setMoodId(999);
     vi.spyOn(entryService, 'createEntry').mockResolvedValueOnce({});
     readCreate().setEnergyLevel(4);
     readCreate().setNote('Hari produktif');
     await readCreate().handleSubmitEntry({ preventDefault: vi.fn() });
     expect(entryService.createEntry).toHaveBeenCalled();
-    expect(readCreate().savedSuccessEntry.mood_name).toBe('Senang');
+    expect(readCreate().savedSuccessEntry.mood_name).toBe('Mood');
 
     // Reset for new entry
     readCreate().handleResetForNew();
@@ -129,7 +134,12 @@ describe('useEntryForm hook', () => {
     await readEdit().handleSubmitEntry({ preventDefault: vi.fn() });
     expect(entryService.updateEntry).toHaveBeenCalled();
 
-    // Update failure
+    // Update failure dengan pesan default (line 133 fallback)
+    vi.spyOn(entryService, 'updateEntry').mockRejectedValueOnce({});
+    await readEdit().handleSubmitEntry({ preventDefault: vi.fn() });
+    expect(readEdit().formError).toBe('Gagal menyimpan catatan jurnal.');
+
+    // Update failure dengan userMessage
     vi.spyOn(entryService, 'updateEntry').mockRejectedValueOnce({
       userMessage: 'Gagal simpan'
     });
@@ -141,17 +151,14 @@ describe('useEntryForm hook', () => {
     expect(navigateMock).toHaveBeenCalledWith(ROUTES.JOURNAL_NEW);
     rt.cleanups.forEach((fn) => fn());
 
-    // Load error in edit mode
+    // Load error in edit mode tanpa userMessage (lines 56-57 fallback)
     rt.reset();
-    vi.spyOn(entryService, 'getEntryById').mockRejectedValueOnce({
-      userMessage: 'Tidak ditemukan',
-      isNetworkError: false
-    });
+    vi.spyOn(entryService, 'getEntryById').mockRejectedValueOnce({});
     rt.render(() => useEntryForm({ id: '404', moods }));
     await Promise.resolve();
     await Promise.resolve();
     expect(rt.read(() => useEntryForm({ id: '404', moods })).loadError.message).toBe(
-      'Tidak ditemukan'
+      'Entri jurnal tidak ditemukan'
     );
   });
 });

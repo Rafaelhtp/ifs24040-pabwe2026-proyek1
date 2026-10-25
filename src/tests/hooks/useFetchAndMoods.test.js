@@ -103,6 +103,23 @@ describe('useFetch, useMoods, useRandomSong, and useDeleteEntry hooks', () => {
       isNetworkError: true,
       statusCode: 503
     });
+
+    // Error handling dengan err.message saja dan tanpa pesan (menutup baris 31-36 useFetch.js)
+    rt.reset();
+    const errorInstanceFetcher = vi.fn().mockRejectedValue(new Error('Error instance native'));
+    state = rt.render(() => useFetch(errorInstanceFetcher, [], { immediate: false }));
+    await state.refetch();
+    expect(
+      rt.read(() => useFetch(errorInstanceFetcher, [], { immediate: false })).error.message
+    ).toBe('Error instance native');
+
+    rt.reset();
+    const emptyErrorFetcher = vi.fn().mockRejectedValue({});
+    state = rt.render(() => useFetch(emptyErrorFetcher, [], { immediate: false }));
+    await state.refetch();
+    expect(
+      rt.read(() => useFetch(emptyErrorFetcher, [], { immediate: false })).error.message
+    ).toBeTruthy();
   });
 
   it('useMoods returns moods array or empty fallback array', async () => {
@@ -142,6 +159,17 @@ describe('useFetch, useMoods, useRandomSong, and useDeleteEntry hooks', () => {
     state = rt.read(() => useRandomSong(2));
     expect(state.randomSong).toBeNull();
     expect(showToastMock).toHaveBeenCalledWith('Belum ada lagu', 'error');
+
+    // res.data null fallback (menutup baris 20 useRandomSong.js)
+    vi.spyOn(songService, 'getRandomSong').mockResolvedValueOnce({ data: null });
+    await state.handlePickRandomSong();
+    state = rt.read(() => useRandomSong(2));
+    expect(state.randomSong).toBeNull();
+
+    // error tanpa userMessage fallback (menutup baris 23 useRandomSong.js)
+    vi.spyOn(songService, 'getRandomSong').mockRejectedValueOnce({});
+    await state.handlePickRandomSong();
+    expect(showToastMock).toHaveBeenCalledWith('Belum ada lagu untuk mood ini', 'error');
   });
 
   it('useDeleteEntry handles early return, successful deletion, and failure toast', async () => {

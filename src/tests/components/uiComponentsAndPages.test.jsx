@@ -79,6 +79,11 @@ describe('UI components and pages SSR coverage', () => {
       expect(html).toContain('<svg');
     });
 
+    // Uji MoodBlob dengan size unknown, color null, dan moodName null (menutup baris 63-67 MoodBlob.jsx)
+    expect(renderToStaticMarkup(<MoodBlob moodName={null} color={null} size="unknown-size" />)).toContain(
+      '<svg'
+    );
+
     const moods = [
       { id: 1, name: 'Senang', emoji: '😊', color: '#FACC15' },
       { id: 2, name: 'Tenang', emoji: '😌', color: '#60A5FA' }
@@ -90,11 +95,24 @@ describe('UI components and pages SSR coverage', () => {
     expect(
       renderToStaticMarkup(
         <MoodChart
-          byMood={[{ mood_id: 1, name: 'Senang', count: 3, color: '#FACC15' }]}
+          byMood={[
+            { mood_id: 1, name: 'Senang', count: 3, color: '#FACC15' },
+            { mood_id: 2, name: 'Tenang', count: 0, color: null }
+          ]}
           daily={[{ date: '2026-04-21', count: 2, avg_energy: 4.5 }]}
         />
       )
     ).toContain('Tren Harian');
+
+    // MoodChart saat totalMoodCount = 0 (menutup baris 168 MoodChart.jsx)
+    expect(
+      renderToStaticMarkup(
+        <MoodChart
+          byMood={[{ mood_id: 1, name: 'Senang', count: 0, color: null }]}
+          daily={[]}
+        />
+      )
+    ).toContain('Distribusi');
   });
 
   it('renders common, form, layout, mood, song, and entry components across states', () => {
@@ -147,14 +165,34 @@ describe('UI components and pages SSR coverage', () => {
         `${lvl}/5`
       );
     });
+    // EnergySlider fallback saat level tidak ditemukan (menutup baris 19-20)
+    expect(renderToStaticMarkup(<EnergySlider value={99} onChange={vi.fn()} />)).toContain(
+      'Cukup Stabil'
+    );
 
     expect(renderToStaticMarkup(<FormAlert id="err" message="" />)).toBe('');
     expect(renderToStaticMarkup(<FormAlert id="err" message="Ada error" />)).toContain('Ada error');
+
+    // TextField dengan Icon & describedBy (menutup baris 31 TextField.jsx)
+    const DummyIcon = (props) => <span {...props}>icon-svg</span>;
     expect(
       renderToStaticMarkup(
-        <TextField id="tf" label="Nama" value="A" onChange={vi.fn()} required hasError />
+        <TextField
+          id="tf"
+          label="Nama"
+          value="A"
+          onChange={vi.fn()}
+          required
+          hasError
+          icon={DummyIcon}
+          describedBy="helper-text"
+        />
       )
-    ).toContain('Nama');
+    ).toContain('icon-svg');
+    // TextField tanpa icon dan tanpa label (menguji inputPadding px-3.5)
+    expect(renderToStaticMarkup(<TextField id="tf-plain" onChange={vi.fn()} />)).toContain(
+      'id="tf-plain"'
+    );
     expect(
       renderToStaticMarkup(
         <ImageUpload existingImagePath="uploads/pic.png" onFileSelect={vi.fn()} errorText="Err" />
@@ -216,6 +254,16 @@ describe('UI components and pages SSR coverage', () => {
     expect(renderToStaticMarkup(<RandomSongBanner song={song} onClose={vi.fn()} />)).toContain(
       'Putar di YouTube'
     );
+    // RandomSongBanner dengan link non-youtube (menutup baris 33 RandomSongBanner.jsx)
+    expect(
+      renderToStaticMarkup(
+        <RandomSongBanner
+          song={{ ...song, link: 'https://spotify.com/track/123' }}
+          onClose={vi.fn()}
+        />
+      )
+    ).toContain('Buka lagu');
+
     expect(
       renderToStaticMarkup(<SongCard song={song} canManage onEdit={vi.fn()} onDelete={vi.fn()} />)
     ).toContain('Monokrom');
@@ -224,6 +272,16 @@ describe('UI components and pages SSR coverage', () => {
         <SongCard song={{ ...song, cover_path: null, link: '' }} canManage={false} />
       )
     ).toContain('Tanpa tautan eksternal');
+    // SongCard dengan link spotify dan color null (menutup baris 10 & 64 SongCard.jsx)
+    expect(
+      renderToStaticMarkup(
+        <SongCard
+          song={{ ...song, color: null, link: 'https://spotify.com/track/123' }}
+          canManage={false}
+        />
+      )
+    ).toContain('Buka lagu');
+
     expect(
       renderToStaticMarkup(
         <SongFilterBar
@@ -251,7 +309,28 @@ describe('UI components and pages SSR coverage', () => {
       )
     ).toContain('Menyimpan...');
 
+    // SongFormModal saat editingSong ada dan tidak submitting (menutup baris 24-25 SongFormModal.jsx)
+    expect(
+      renderToStaticMarkup(
+        <SongFormModal
+          isOpen
+          onClose={vi.fn()}
+          editingSong={song}
+          form={{ title: 'A', artist: 'B', moodId: '1', link: '' }}
+          onFieldChange={vi.fn()}
+          formError=""
+          isSubmitting={false}
+          moods={[mood]}
+          onSubmit={vi.fn()}
+        />
+      )
+    ).toContain('Simpan Perubahan');
+
     expect(wrap(<EntryCard entry={entry} onDelete={vi.fn()} />)).toContain('Catatan hari ini');
+    // EntryCard saat mood_name bernilai null (menutup baris 31 EntryCard.jsx)
+    expect(
+      wrap(<EntryCard entry={{ ...entry, mood_name: null }} onDelete={vi.fn()} />)
+    ).toContain('Mood');
     expect(
       wrap(<EntryCard entry={{ ...entry, energy_level: 2, note: '', image_path: null }} compact />)
     ).toContain('Tidak ada catatan tertulis');

@@ -146,17 +146,25 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     // Edit form mapping & delete error fallback
     getSongMgr().openEdit({ id: 5, title: 'A', artist: 'B', mood_id: 3, link: '' });
     expect(getSongMgr().editingSong.id).toBe(5);
+    // toForm fallback when properties are omitted (lines 36-38)
+    getSongMgr().openEdit({});
+    expect(getSongMgr().form.title).toBe('');
+    expect(getSongMgr().form.artist).toBe('');
+    expect(getSongMgr().form.moodId).toBe('');
+
     getSongMgr().openDelete({ id: 5, title: 'A' });
     await getSongMgr().handleConfirmDelete();
     expect(showToastMock).toHaveBeenCalledWith('Gagal menghapus lagu', 'error');
   });
 
-  it('useMoodManager validates mood fields and handles 409 conflict on delete', async () => {
+  it('useMoodManager validates mood fields, supports fallbacks, and handles non-409 and 409 delete errors', async () => {
     vi.spyOn(moodService, 'createMood').mockRejectedValueOnce({
       userMessage: 'Nama mood duplikat'
     });
     vi.spyOn(moodService, 'updateMood').mockResolvedValueOnce({});
-    vi.spyOn(moodService, 'deleteMood').mockRejectedValueOnce({ statusCode: 409 });
+    vi.spyOn(moodService, 'deleteMood')
+      .mockRejectedValueOnce({ statusCode: 409 })
+      .mockRejectedValueOnce({ statusCode: 500, userMessage: 'Kesalahan server mood' });
 
     const getMoodMgr = () => rt.read(() => useMoodManager({ onChanged: vi.fn() }));
     let mgr = getMoodMgr();
@@ -189,6 +197,11 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
       color: '#5798D7'
     });
 
+    // toForm fallbacks with empty/null object
+    getMoodMgr().openEdit({});
+    expect(getMoodMgr().form.name).toBe('');
+    expect(getMoodMgr().form.emoji).toBeTruthy();
+
     // 409 Conflict on delete
     getMoodMgr().openDelete({ id: 9, name: 'Bangga' });
     await getMoodMgr().handleConfirmDelete();
@@ -196,5 +209,37 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
 
     getMoodMgr().clearConflictAlert();
     expect(getMoodMgr().conflictAlert).toBe('');
+
+    // Non-409 delete error (menutup baris 63 useMoodManager.js: return false)
+    getMoodMgr().openDelete({ id: 10, name: 'Mood Lain' });
+    await getMoodMgr().handleConfirmDelete();
+    expect(getMoodMgr().conflictAlert).toBe('');
+    expect(showToastMock).toHaveBeenCalledWith('Kesalahan server mood', 'error');
+  });
+
+  it('useCrudModal handles minimal options without validate or buildPayload, and default error messages', async () => {
+    const create = vi.fn().mockRejectedValueOnce({});
+    const remove = vi.fn().mockRejectedValueOnce({});
+
+    const getMinCrud = () =>
+      rt.read(() =>
+        useCrudModal({
+          emptyForm: { val: '' },
+          create,
+          remove
+        })
+      );
+
+    let minCrud = getMinCrud();
+    minCrud.openAdd();
+    minCrud = getMinCrud();
+    // Save tanpa validate & buildPayload (covers lines 95, 101, 115)
+    await minCrud.handleSave();
+    expect(getMinCrud().formError).toBe('Gagal menyimpan data.');
+
+    // Delete tanpa onDeleteError & tanpa userMessage (covers line 137)
+    getMinCrud().openDelete({ id: 99 });
+    await getMinCrud().handleConfirmDelete();
+    expect(showToastMock).toHaveBeenCalledWith('Gagal menghapus data', 'error');
   });
 });

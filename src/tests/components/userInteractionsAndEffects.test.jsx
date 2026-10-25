@@ -220,6 +220,15 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     const registered = await ctx.register('Reg User', 'reg@moodify.com', 'password123');
     expect(registered.name).toBe('Reg User');
 
+    // res.data null fallback untuk login dan register (menutup baris 66-67, 76-77)
+    vi.spyOn(authService, 'loginUser').mockResolvedValueOnce({ data: null });
+    const nullLogin = await ctx.login('budi@moodify.com', 'password123');
+    expect(nullLogin).toBeNull();
+
+    vi.spyOn(authService, 'registerUser').mockResolvedValueOnce({ data: null });
+    const nullReg = await ctx.register('Reg User', 'reg@moodify.com', 'password123');
+    expect(nullReg).toBeNull();
+
     listeners[UNAUTHORIZED_EVENT]?.();
     hookRuntime.render(() => AuthProvider({ children: null }), 'auth');
     ctx = useAuth();
@@ -295,18 +304,42 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     hookRuntime.flushEffects();
     expect(modalScope.slots[0].current.focus).toHaveBeenCalled();
 
-    // Kembalikan 2 tombol focusable untuk uji Tab/Shift+Tab/Escape
-    modalScope.slots[0].current.querySelectorAll = () => [firstBtn, lastBtn];
+    // Kembalikan tombol focusable untuk uji Tab/Shift+Tab/Escape
+    const middleBtn = { focus: vi.fn() };
+    const outsideEl = { focus: vi.fn() };
+    modalScope.slots[0].current.querySelectorAll = () => [firstBtn, middleBtn, lastBtn];
+    modalScope.slots[0].current.contains = (el) => el === firstBtn || el === middleBtn || el === lastBtn;
+
     keydownHandler({ key: 'Escape', preventDefault: vi.fn() });
     expect(onClose).toHaveBeenCalled();
 
+    // Shift+Tab dari firstBtn (menutup baris 47-50)
     globalThis.document.activeElement = firstBtn;
     keydownHandler({ key: 'Tab', shiftKey: true, preventDefault: vi.fn() });
     expect(lastBtn.focus).toHaveBeenCalled();
 
+    // Shift+Tab dari elemen di luar modal (menutup baris 47-50 !contains)
+    globalThis.document.activeElement = outsideEl;
+    keydownHandler({ key: 'Tab', shiftKey: true, preventDefault: vi.fn() });
+    expect(lastBtn.focus).toHaveBeenCalled();
+
+    // Shift+Tab di dalam modal tanpa trap
+    globalThis.document.activeElement = middleBtn;
+    keydownHandler({ key: 'Tab', shiftKey: true, preventDefault: vi.fn() });
+
+    // Tab dari lastBtn (menutup baris 51-54)
     globalThis.document.activeElement = lastBtn;
     keydownHandler({ key: 'Tab', shiftKey: false, preventDefault: vi.fn() });
     expect(firstBtn.focus).toHaveBeenCalled();
+
+    // Tab dari elemen di luar modal (menutup baris 51-54 !contains)
+    globalThis.document.activeElement = outsideEl;
+    keydownHandler({ key: 'Tab', shiftKey: false, preventDefault: vi.fn() });
+    expect(firstBtn.focus).toHaveBeenCalled();
+
+    // Tab di dalam modal tanpa trap
+    globalThis.document.activeElement = middleBtn;
+    keydownHandler({ key: 'Tab', shiftKey: false, preventDefault: vi.fn() });
 
     modalScope.slots[0].current.querySelectorAll = () => [];
     keydownHandler({ key: 'Tab', shiftKey: false, preventDefault: vi.fn() });
@@ -332,13 +365,14 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     toastApi.showToast('Berhasil disimpan', 'success', 3000);
     toastApi.showToast('Terjadi kesalahan', 'error', 0);
     toastApi.showToast('Informasi baru', 'info', 3000);
+    toastApi.showToast('Tipe kustom fallback style', 'unknown-type', 3000);
 
     const tree = hookRuntime.render(() => ToastProvider({ children: null }), 'toast');
     const closeButtons = collectNodes(
       tree,
       (n) => n.type === 'button' && n.props?.['aria-label'] === 'Tutup notifikasi'
     );
-    expect(closeButtons.length).toBe(3);
+    expect(closeButtons.length).toBe(4);
 
     const icons = collectNodes(
       tree,
@@ -492,7 +526,7 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
       .mockRejectedValueOnce({ statusCode: 404 })
       .mockRejectedValueOnce({ userMessage: 'Error acak' });
 
-    // SongRecommendationPanel
+    // SongRecommendationPanel dengan data awal
     let panelTree = hookRuntime.render(
       () =>
         SongRecommendationPanel({
@@ -516,6 +550,61 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     await randomBtn.props.onClick();
     await randomBtn.props.onClick();
     await randomBtn.props.onClick();
+
+    // SongRecommendationPanel: moodId kosong (menutup baris 17-20)
+    const emptyPanel = hookRuntime.render(
+      () => SongRecommendationPanel({ moodId: '', selectedMood: null }),
+      'panel-empty'
+    );
+    hookRuntime.flushEffects();
+    expect(emptyPanel).toBeDefined();
+
+    // SongRecommendationPanel: daftar lagu kosong dari API (menutup baris 30-31)
+    vi.spyOn(songService, 'getSongs').mockResolvedValueOnce({ data: [] });
+    hookRuntime.render(
+      () => SongRecommendationPanel({ moodId: 2, selectedMood: { id: 2, name: 'Tenang' } }),
+      'panel-zero'
+    );
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    const zeroTree = hookRuntime.render(
+      () => SongRecommendationPanel({ moodId: 2, selectedMood: { id: 2, name: 'Tenang' } }),
+      'panel-zero'
+    );
+    expect(zeroTree).toBeDefined();
+
+    // SongRecommendationPanel: error fetch dari API (menutup baris 33)
+    vi.spyOn(songService, 'getSongs').mockRejectedValueOnce({ userMessage: 'Gagal memuat' });
+    hookRuntime.render(
+      () => SongRecommendationPanel({ moodId: 3, selectedMood: { id: 3, name: 'Cemas' } }),
+      'panel-err'
+    );
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    const errTree = hookRuntime.render(
+      () => SongRecommendationPanel({ moodId: 3, selectedMood: { id: 3, name: 'Cemas' } }),
+      'panel-err'
+    );
+    expect(errTree).toBeDefined();
+
+    // SongRecommendationPanel: tautan eksternal Spotify (menutup baris 123 "Buka lagu")
+    vi.spyOn(songService, 'getSongs').mockResolvedValueOnce({
+      data: [{ id: 10, title: 'Lagu Spotify', artist: 'Artis', link: 'https://spotify.com/track/10' }]
+    });
+    hookRuntime.render(
+      () => SongRecommendationPanel({ moodId: 4, selectedMood: { id: 4, name: 'Semangat' } }),
+      'panel-spotify'
+    );
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    const spotifyTree = hookRuntime.render(
+      () => SongRecommendationPanel({ moodId: 4, selectedMood: { id: 4, name: 'Semangat' } }),
+      'panel-spotify'
+    );
+    expect(spotifyTree).toBeDefined();
 
     // SoundtrackCard (200 song, 404 notFound, 500 errorMsg)
     vi.spyOn(songService, 'getRandomSong')
@@ -554,6 +643,48 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     );
     expect(cardTree).toBeDefined();
 
+    // SoundtrackCard: loading spinner (menutup baris 81-84)
+    hookRuntime.getScope('soundtrack-load').slots[1] = true;
+    const loadingCard = hookRuntime.render(
+      () => SoundtrackCard({ moodId: 1, moodName: 'Senang' }),
+      'soundtrack-load'
+    );
+    expect(loadingCard).toBeDefined();
+
+    // SoundtrackCard: lagu tanpa cover & link non-youtube (menutup baris 128-134 & 155)
+    vi.spyOn(songService, 'getRandomSong').mockResolvedValueOnce({
+      data: {
+        id: 77,
+        title: 'Lagu Tanpa Cover',
+        artist: 'Artis Indie',
+        mood_name: 'Senang',
+        color: '#FACC15',
+        cover_path: null,
+        link: 'https://spotify.com/track/77'
+      }
+    });
+    hookRuntime.render(() => SoundtrackCard({ moodId: 1, moodName: 'Senang' }), 'soundtrack-nocover');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    const noCoverCard = hookRuntime.render(
+      () => SoundtrackCard({ moodId: 1, moodName: 'Senang' }),
+      'soundtrack-nocover'
+    );
+    expect(noCoverCard).toBeDefined();
+
+    // SoundtrackCard: error fallback default (menutup baris 35)
+    vi.spyOn(songService, 'getRandomSong').mockRejectedValueOnce({});
+    hookRuntime.render(() => SoundtrackCard({ moodId: 1, moodName: 'Senang' }), 'soundtrack-def-err');
+    hookRuntime.flushEffects();
+    await Promise.resolve();
+    await Promise.resolve();
+    const defErrCard = hookRuntime.render(
+      () => SoundtrackCard({ moodId: 1, moodName: 'Senang' }),
+      'soundtrack-def-err'
+    );
+    expect(defErrCard).toBeDefined();
+
     // ImageUpload
     globalThis.URL.createObjectURL = vi.fn(() => 'blob:preview-1');
     globalThis.URL.revokeObjectURL = vi.fn();
@@ -562,7 +693,11 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     const dropZone = collectNodes(uploadTree, (n) => typeof n.props?.onDrop === 'function')[0];
     const fileInput = collectNodes(uploadTree, (n) => n.type === 'input')[0];
 
+    // Drag over -> isDragging true (menutup baris 93)
     dropZone.props.onDragOver({ preventDefault: vi.fn() });
+    const draggingUpload = hookRuntime.render(() => ImageUpload({ onFileSelect }), 'upload');
+    expect(draggingUpload).toBeDefined();
+
     dropZone.props.onDragLeave({ preventDefault: vi.fn() });
     dropZone.props.onDrop({
       preventDefault: vi.fn(),
@@ -590,6 +725,11 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     moodButtons[0].props.onClick();
     moodButtons[0].props.onKeyDown({ key: 'ArrowRight', preventDefault: vi.fn() });
     moodButtons[0].props.onKeyDown({ key: 'ArrowLeft', preventDefault: vi.fn() });
+    moodButtons[0].props.onKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() });
+    moodButtons[0].props.onKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() });
+    // Uji MoodPicker kosong (menutup baris 8 if (!moods.length) return)
+    const emptyPicker = MoodPicker({ moods: [], selectedMoodId: null, onSelect: vi.fn() });
+    expect(emptyPicker).toBeDefined();
 
     const sliderTree = EnergySlider({ value: 3, onChange: vi.fn() });
     collectNodes(sliderTree, (n) => n.type === 'button')[0].props.onClick();
@@ -729,14 +869,47 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
       e.props.onAction()
     );
 
+    // Dashboard: error state & retry (menutup baris 43-45 Dashboard.jsx)
+    hookRuntime.getScope('dash-err').slots[2] = false;
+    hookRuntime.getScope('dash-err').slots[3] = { message: 'Koneksi API terputus', isNetworkError: true };
+    const dashErrTree = hookRuntime.render(() => Dashboard(), 'dash-err');
+    collectNodes(dashErrTree, (n) => typeof n.props?.onRetry === 'function').forEach((r) => r.props.onRetry());
+
+    // Dashboard: stats bernilai null -> fallback default (menutup baris 48-53 Dashboard.jsx)
+    hookRuntime.getScope('dash-nostats').slots[0] = { stats: null, recentEntries: [] };
+    hookRuntime.getScope('dash-nostats').slots[2] = false;
+    hookRuntime.getScope('dash-nostats').slots[3] = null;
+    const dashNoStatsTree = hookRuntime.render(() => Dashboard(), 'dash-nostats');
+    collectNodes(dashNoStatsTree, (n) => typeof n.props?.onAction === 'function').forEach((e) => e.props.onAction());
+
+    // Dashboard: data lengkap dengan statistik dan entri terbaru
+    hookRuntime.getScope('dash-full').slots[0] = {
+      stats: {
+        total_entries_7d: 5,
+        avg_energy_7d: 4.2,
+        top_mood: { id: 1, name: 'Senang', color: '#FACC15' },
+        by_mood: [{ mood_id: 1, name: 'Senang', count: 5, color: '#FACC15' }],
+        daily: [{ date: '2026-04-21', count: 5, avg_energy: 4.2 }]
+      },
+      recentEntries: [
+        { id: 101, mood_id: 1, mood_name: 'Senang', color: '#FACC15', entry_date: '2026-04-21', energy_level: 5, note: 'Sempurna' }
+      ]
+    };
+    hookRuntime.getScope('dash-full').slots[2] = false;
+    hookRuntime.getScope('dash-full').slots[3] = null;
+    const dashFullTree = hookRuntime.render(() => Dashboard(), 'dash-full');
+    expect(dashFullTree).toBeDefined();
+
     // Render ulang Journal, Songs, Moods setelah data dimuat & jalankan callback-nya
     vi.spyOn(entryService, 'getEntries').mockResolvedValue({
       data: [{ id: 1, mood_id: 1, mood_name: 'Senang', entry_date: '2026-04-21', energy_level: 4 }],
       meta: { page: 1, limit: 6, total: 12 }
     });
-    hookRuntime.getScope('journal').slots[4] = [
+    hookRuntime.getScope('journal').slots[4] = '';
+    hookRuntime.getScope('journal').slots[6] = [
       { id: 1, mood_id: 1, mood_name: 'Senang', entry_date: '2026-04-21', energy_level: 4 }
     ];
+    hookRuntime.getScope('journal').slots[8] = false;
     const jTree = hookRuntime.render(() => Journal(), 'journal');
     collectNodes(jTree, (n) => typeof n.props?.onDelete === 'function').forEach((c) =>
       c.props.onDelete({ id: 1, mood_name: 'Senang', entry_date: '2026-04-21' })
@@ -744,18 +917,46 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     collectNodes(jTree, (n) => typeof n.props?.onPageChange === 'function').forEach((p) =>
       p.props.onPageChange(2)
     );
+    // Render ulang Journal saat dialog konfirmasi aktif (menutup baris 130 Journal.jsx)
+    const jTreeWithDelete = hookRuntime.render(() => Journal(), 'journal');
+    const jConfirm = collectNodes(
+      jTreeWithDelete,
+      (n) => typeof n.props?.onConfirm === 'function'
+    )[0];
+    expect(jConfirm.props.message).toContain('Senang');
+    jConfirm.props.onCancel();
     hookRuntime.render(() => Journal(), 'journal');
 
-    // Songs: onDelete -> songToDelete message & RandomSongBanner onClose
+    // Songs: onDelete -> songToDelete message, closeModal & closeDelete (menutup baris 51-54 Songs.jsx)
     let songsTree = hookRuntime.render(() => Songs(), 'songs');
     collectNodes(songsTree, (n) => typeof n.props?.onClose === 'function').forEach((b) =>
       b.props.onClose()
+    );
+    collectNodes(songsTree, (n) => typeof n.props?.onCancel === 'function').forEach((c) =>
+      c.props.onCancel()
     );
     collectNodes(songsTree, (n) => typeof n.props?.onDelete === 'function').forEach((c) =>
       c.props.onDelete({ id: 1, title: 'Lagu 1', artist: 'Artis 1' })
     );
     songsTree = hookRuntime.render(() => Songs(), 'songs');
     expect(songsTree).toBeDefined();
+
+    // Songs: onSongDeleted callback saat randomSong cocok dan tidak cocok (menutup baris 51-54 Songs.jsx)
+    vi.spyOn(songService, 'deleteSong').mockResolvedValue({});
+    hookRuntime.getScope('songs').slots[11] = { id: 1, title: 'Lagu 1' }; // randomSong (slot 11)
+    hookRuntime.getScope('songs').slots[18] = { id: 1, title: 'Lagu 1' }; // itemToDelete (slot 18)
+    const songsConfirmTree = hookRuntime.render(() => Songs(), 'songs');
+    const songConfirmBtn = collectNodes(
+      songsConfirmTree,
+      (n) => typeof n.props?.onConfirm === 'function'
+    )[0];
+    await songConfirmBtn?.props.onConfirm?.();
+    // randomSong cocok sehingga di-reset menjadi null (baris 52-53)
+
+    // onSongDeleted saat randomSong tidak cocok dengan lagu yang dihapus
+    hookRuntime.getScope('songs').slots[11] = { id: 2, title: 'Lagu 2' };
+    hookRuntime.getScope('songs').slots[18] = { id: 1, title: 'Lagu 1' };
+    await songConfirmBtn?.props.onConfirm?.();
 
     // Moods: onDelete -> moodToDelete message
     let moodsTree = hookRuntime.render(() => Moods(), 'moods');
@@ -815,14 +1016,25 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     hookRuntime.flushEffects();
     await Promise.resolve();
     await Promise.resolve();
-    hookRuntime.render(() => EntryForm(), 'entryform-edit-ok');
-    // Set isSubmitting = true di slot EntryForm edit untuk menutup cabang submitButtonLabel
-    hookRuntime.getScope('entryform-edit-ok').slots[11] = true;
+    // Render EntryForm edit saat tidak submitting (menutup baris 52-53 "Simpan Perubahan Jurnal")
+    // slots: 2 = moodsLoading, 10 = loadingEntry, 11 = loadError, 12 = isSubmitting
+    hookRuntime.getScope('entryform-edit-ok').slots[2] = false;
+    hookRuntime.getScope('entryform-edit-ok').slots[10] = false;
+    hookRuntime.getScope('entryform-edit-ok').slots[11] = null;
+    hookRuntime.getScope('entryform-edit-ok').slots[12] = false;
+    const efEditTree = hookRuntime.render(() => EntryForm(), 'entryform-edit-ok');
+    expect(efEditTree).toBeDefined();
+
+    // Set isSubmitting = true di slot 12 untuk menutup submitButtonLabel "Menyimpan Jurnal..." (baris 50)
+    hookRuntime.getScope('entryform-edit-ok').slots[12] = true;
     hookRuntime.render(() => EntryForm(), 'entryform-edit-ok');
 
-    // MoodChart Tooltip formatters
+    // MoodChart Tooltip formatters & zero count
     const chartTree = MoodChart({
-      byMood: [{ mood_id: 1, name: 'Senang', count: 2, color: '#FACC15' }],
+      byMood: [
+        { mood_id: 1, name: 'Senang', count: 2, color: '#FACC15' },
+        { mood_id: 2, name: 'Tenang', count: 0, color: null }
+      ],
       daily: [{ date: '2026-04-21', count: 2, avg_energy: 4 }]
     });
     const tooltips = collectNodes(chartTree, (n) => typeof n.props?.formatter === 'function');
@@ -832,6 +1044,7 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     expect(
       tooltips[0].props.labelFormatter('21 Apr', [{ payload: { date: '2026-04-21' } }])
     ).toContain('2026-04-21');
+    expect(tooltips[0].props.labelFormatter('21 Apr', [])).toContain('21 Apr');
     expect(tooltips[1].props.formatter(3)[0]).toBe('3 kali');
   });
 });

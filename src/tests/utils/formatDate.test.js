@@ -12,6 +12,7 @@ describe('formatDate utils & constants', () => {
     expect(formatDateLong('2026-04-21')).toContain('April 2026');
     expect(formatDateLong('')).toBe('-');
     expect(formatDateLong(null)).toBe('-');
+    expect(formatDateLong('hello')).toBe('hello');
     expect(formatDateLong('not-a-date')).toBe('not-a-date');
     expect(formatDateLong('2026-13-01')).toContain('2026');
     expect(formatDateLong('abcd-ef-gh')).toBe('abcd-ef-gh');
