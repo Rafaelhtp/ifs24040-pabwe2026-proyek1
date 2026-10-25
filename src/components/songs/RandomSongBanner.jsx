@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ExternalLink } from 'lucide-react';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from '../moods/MoodBlob';
 import { getSongLinkLabel } from '../../utils/songUtils';
 
 export default function RandomSongBanner({ song, onClose }) {

@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Pencil, Trash2 } from 'lucide-react';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from './MoodBlob';
 
 export default function MoodCard({ mood, onEdit, onDelete }) {
   return (

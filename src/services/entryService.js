@@ -3,8 +3,6 @@ import apiClient, { handleApiError } from './client';
 import { cleanQueryParams } from '../utils/params';
 import { API_ROUTES } from '../constants/routes';
 
-const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
-
 /**
  * Mengambil daftar entri jurnal milik pengguna dengan filter dan paginasi.
  * @param {Record<string, unknown>} [params] - Parameter filter (mood_id, from, to, q, page, limit)
@@ -36,9 +34,7 @@ export async function getEntryById(id) {
  */
 export async function createEntry(formData) {
   const response = await apiClient
-    .post(API_ROUTES.ENTRIES, formData, {
-      headers: MULTIPART_HEADERS
-    })
+    .post(API_ROUTES.ENTRIES, formData)
     .catch(handleApiError);
   return response?.data;
 }
@@ -51,9 +47,7 @@ export async function createEntry(formData) {
  */
 export async function updateEntry(id, formData) {
   const response = await apiClient
-    .put(`${API_ROUTES.ENTRIES}/${id}`, formData, {
-      headers: MULTIPART_HEADERS
-    })
+    .put(`${API_ROUTES.ENTRIES}/${id}`, formData)
     .catch(handleApiError);
   return response?.data;
 }

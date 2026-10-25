@@ -18,7 +18,10 @@ export default function useSongManager({
   moods = [],
   selectedMoodId = '',
   onChanged,
-  onSongDeleted
+  onSongDeleted,
+  notify,
+  onSuccess,
+  onError
 }) {
   const emptyForm = useCallback(
     () => ({
@@ -68,7 +71,10 @@ export default function useSongManager({
       deleteError: 'Gagal menghapus lagu'
     },
     onChanged,
-    onDeleted: onSongDeleted
+    onDeleted: onSongDeleted,
+    notify,
+    onSuccess,
+    onError
   });
 
   return {

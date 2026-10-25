@@ -1,7 +1,7 @@
 // Komponen dapat digunakan kembali (reusable) untuk memfilter berdasarkan Mood
 import React from 'react';
 import PropTypes from 'prop-types';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from '../moods/MoodBlob';
 
 export default function MoodFilter({
   moods = [],

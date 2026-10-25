@@ -1,15 +1,19 @@
 // Custom hook untuk mengelola dialog konfirmasi dan eksekusi penghapusan entri jurnal
 import { useState, useCallback } from 'react';
 import { deleteEntry } from '../services/entryService';
-import { useToast } from '../components/common/Toast';
 
 /**
  * Mengelola state entri yang akan dihapus beserta status loading penghapusan.
- * @param {function} [onDeleted] - Callback setelah entri berhasil dihapus
+ * @param {function|object} [configOrOnDeleted] - Callback onDeleted atau objek opsi { onDeleted, onSuccess, onError }
  * @returns {object} State dan handler penghapusan entri jurnal
  */
-export default function useDeleteEntry(onDeleted) {
-  const { showToast } = useToast();
+export default function useDeleteEntry(configOrOnDeleted) {
+  const config =
+    typeof configOrOnDeleted === 'function'
+      ? { onDeleted: configOrOnDeleted }
+      : configOrOnDeleted || {};
+  const { onDeleted, onSuccess, onError } = config;
+
   const [entryToDelete, setEntryToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -18,15 +22,15 @@ export default function useDeleteEntry(onDeleted) {
     setIsDeleting(true);
     try {
       await deleteEntry(entryToDelete?.id);
-      showToast('Catatan jurnal berhasil dihapus', 'success');
+      if (onSuccess) onSuccess('Catatan jurnal berhasil dihapus');
       setEntryToDelete(null);
       if (onDeleted) onDeleted();
     } catch (err) {
-      showToast(err?.userMessage || 'Gagal menghapus entri jurnal', 'error');
+      if (onError) onError(err?.userMessage || 'Gagal menghapus entri jurnal');
     } finally {
       setIsDeleting(false);
     }
-  }, [entryToDelete, onDeleted, showToast]);
+  }, [entryToDelete, onDeleted, onSuccess, onError]);
 
   return {
     entryToDelete,

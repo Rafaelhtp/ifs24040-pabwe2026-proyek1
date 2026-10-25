@@ -3,10 +3,6 @@ import { renderHook, act } from '@testing-library/react';
 
 const showToastMock = vi.fn();
 
-vi.mock('../../components/common/Toast', () => ({
-  useToast: () => ({ showToast: showToastMock })
-}));
-
 vi.mock('../../services/songService', () => ({
   createSong: vi.fn(),
   updateSong: vi.fn(),
@@ -56,7 +52,8 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
         update,
         remove,
         onChanged,
-        onDeleted
+        onDeleted,
+        notify: showToastMock
       })
     );
 
@@ -124,7 +121,7 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
 
     const moods = [{ id: 3, name: 'Tenang' }];
     const { result } = renderHook(() =>
-      useSongManager({ moods, selectedMoodId: '', onChanged: vi.fn() })
+      useSongManager({ moods, selectedMoodId: '', onChanged: vi.fn(), notify: showToastMock })
     );
 
     expect(result.current.form.moodId).toBe('3');
@@ -212,7 +209,9 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
       .mockRejectedValueOnce({ statusCode: 409 })
       .mockRejectedValueOnce({ statusCode: 500, userMessage: 'Kesalahan server mood' });
 
-    const { result } = renderHook(() => useMoodManager({ onChanged: vi.fn() }));
+    const { result } = renderHook(() =>
+      useMoodManager({ onChanged: vi.fn(), notify: showToastMock })
+    );
 
     // Validation checks
     await act(async () => {
@@ -324,7 +323,8 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
       useCrudModal({
         emptyForm: { val: '' },
         create,
-        remove
+        remove,
+        notify: showToastMock
       })
     );
 

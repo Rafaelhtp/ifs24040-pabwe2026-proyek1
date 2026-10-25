@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home } from 'lucide-react';
-import MoodBlob from '../components/mood/MoodBlob';
+import MoodBlob from '../components/moods/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
 import { ROUTES } from '../constants/routes';
 import { COLORS } from '../constants/colors';

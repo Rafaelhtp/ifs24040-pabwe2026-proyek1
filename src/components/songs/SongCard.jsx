@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from '../moods/MoodBlob';
 import { getImageUrl } from '../../utils/imageUrl';
 import { hasValidSongLink, getSongLinkLabel } from '../../utils/songUtils';
 import { DEFAULT_ACCENT_COLOR } from '../../constants/config';

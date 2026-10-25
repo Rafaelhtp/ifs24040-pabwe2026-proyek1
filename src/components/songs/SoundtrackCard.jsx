@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Disc3, Shuffle, ExternalLink, Music2 } from 'lucide-react';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from '../moods/MoodBlob';
 import { getImageUrl } from '../../utils/imageUrl';
 import { ROUTES } from '../../constants/routes';
 import { DEFAULT_ACCENT_COLOR } from '../../constants/config';

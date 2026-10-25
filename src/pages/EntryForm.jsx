@@ -5,8 +5,9 @@ import { Calendar, ArrowLeft, Save } from 'lucide-react';
 import useMoods from '../hooks/useMoods';
 import usePageTitle from '../hooks/usePageTitle';
 import useEntryForm from '../hooks/useEntryForm';
-import MoodBlob from '../components/mood/MoodBlob';
-import MoodPicker from '../components/mood/MoodPicker';
+import { useToast } from '../components/common/Toast';
+import MoodBlob from '../components/moods/MoodBlob';
+import MoodPicker from '../components/moods/MoodPicker';
 import EnergySlider from '../components/form/EnergySlider';
 import ImageUpload from '../components/form/ImageUpload';
 import FormAlert from '../components/form/FormAlert';
@@ -19,8 +20,33 @@ import { ROUTES } from '../constants/routes';
 export default function EntryForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { moods, loading: moodsLoading, error: moodsError, refetch: refetchMoods } = useMoods();
-  const form = useEntryForm({ id, moods });
+
+  const handleSuccess = (_entry, isEdit) => {
+    showToast(
+      isEdit ? 'Catatan jurnal berhasil diperbarui!' : 'Catatan jurnal baru berhasil disimpan!',
+      'success'
+    );
+  };
+
+  const handleError = (msg) => {
+    showToast(msg, 'error');
+  };
+
+  const handleReset = () => {
+    if (id) {
+      navigate(ROUTES.JOURNAL_NEW);
+    }
+  };
+
+  const form = useEntryForm({
+    id,
+    moods,
+    onSuccess: handleSuccess,
+    onError: handleError,
+    onReset: handleReset
+  });
 
   usePageTitle(form.isEditMode ? 'Edit Catatan Jurnal' : 'Tulis Jurnal Harian');
 

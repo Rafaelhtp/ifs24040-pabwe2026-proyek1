@@ -19,7 +19,7 @@ vi.mock('../../utils/imageUrl', () => ({
   getImageUrl: vi.fn((path) => (path ? `http://localhost:5000/${path}` : null))
 }));
 
-import SoundtrackCard from '../../components/entries/SoundtrackCard';
+import SoundtrackCard from '../../components/songs/SoundtrackCard';
 import SongRecommendationPanel from '../../components/entries/SongRecommendationPanel';
 import EnergySlider from '../../components/form/EnergySlider';
 import * as songService from '../../services/songService';

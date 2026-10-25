@@ -11,7 +11,7 @@ import useCrudModal from './useCrudModal';
  * @param {function} options.onChanged - Callback refresh daftar mood setelah mutasi
  * @returns {object} State dan handler manajemen kategori mood
  */
-export default function useMoodManager({ onChanged }) {
+export default function useMoodManager({ onChanged, notify, onSuccess, onError } = {}) {
   const [conflictAlert, setConflictAlert] = useState('');
 
   const emptyForm = useCallback(
@@ -52,12 +52,12 @@ export default function useMoodManager({ onChanged }) {
     []
   );
 
-  const handleDeleteError = useCallback((err, targetMood, showToast) => {
+  const handleDeleteError = useCallback((err, targetMood, emitError) => {
     if (err?.statusCode === 409) {
       setConflictAlert(
         `Mood "${targetMood?.name}" masih dipakai oleh entri jurnal dan tidak dapat dihapus.`
       );
-      showToast('Mood masih dipakai oleh entri jurnal', 'error');
+      if (emitError) emitError('Mood masih dipakai oleh entri jurnal');
       return true;
     }
     return false;
@@ -79,7 +79,10 @@ export default function useMoodManager({ onChanged }) {
       deleteError: 'Gagal menghapus mood'
     },
     onChanged,
-    onDeleteError: handleDeleteError
+    onDeleteError: handleDeleteError,
+    notify,
+    onSuccess,
+    onError
   });
 
   const handleConfirmDeleteWithReset = async () => {

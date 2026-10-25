@@ -18,6 +18,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
+import { useToast } from '../components/common/Toast';
 import { ROUTES } from '../constants/routes';
 import { DEBOUNCE_DELAY_MS } from '../constants/config';
 import { COLORS } from '../constants/colors';
@@ -25,6 +26,7 @@ import { COLORS } from '../constants/colors';
 export default function Songs() {
   usePageTitle('Koleksi Lagu & Playlist');
   const { isAuthenticated } = useAuth();
+  const { showToast } = useToast();
   const { moods } = useMoods();
 
   const [selectedMoodId, setSelectedMoodId] = useState('');
@@ -47,6 +49,7 @@ export default function Songs() {
   const songManager = useSongManager({
     moods,
     selectedMoodId,
+    notify: showToast,
     onChanged: refetch,
     onSongDeleted: (deleted) => {
       if (randomSong?.id === deleted?.id) {

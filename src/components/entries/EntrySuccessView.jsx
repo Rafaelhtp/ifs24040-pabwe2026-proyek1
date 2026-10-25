@@ -3,8 +3,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, BookOpen, PenLine } from 'lucide-react';
-import MoodBlob from '../mood/MoodBlob';
-import SoundtrackCard from './SoundtrackCard';
+import MoodBlob from '../moods/MoodBlob';
+import SoundtrackCard from '../songs/SoundtrackCard';
 import { formatDateLong } from '../../utils/formatDate';
 import { ROUTES } from '../../constants/routes';
 

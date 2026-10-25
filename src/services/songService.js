@@ -3,8 +3,6 @@ import apiClient, { handleApiError } from './client';
 import { cleanQueryParams } from '../utils/params';
 import { API_ROUTES } from '../constants/routes';
 
-const MULTIPART_HEADERS = { 'Content-Type': 'multipart/form-data' };
-
 /**
  * Mengambil daftar lagu rekomendasi berdasarkan filter mood dan kata kunci pencarian.
  * @param {Record<string, unknown>} [params] - Parameter filter (mood_id, q)
@@ -40,9 +38,7 @@ export async function getRandomSong(moodId) {
  */
 export async function createSong(formData) {
   const response = await apiClient
-    .post(API_ROUTES.SONGS, formData, {
-      headers: MULTIPART_HEADERS
-    })
+    .post(API_ROUTES.SONGS, formData)
     .catch(handleApiError);
   return response?.data;
 }
@@ -55,9 +51,7 @@ export async function createSong(formData) {
  */
 export async function updateSong(id, formData) {
   const response = await apiClient
-    .put(`${API_ROUTES.SONGS}/${id}`, formData, {
-      headers: MULTIPART_HEADERS
-    })
+    .put(`${API_ROUTES.SONGS}/${id}`, formData)
     .catch(handleApiError);
   return response?.data;
 }

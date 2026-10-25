@@ -1,6 +1,5 @@
 // Custom hook generik untuk mengelola siklus CRUD berbasis Modal (tambah, edit, validasi, hapus)
 import { useState, useCallback } from 'react';
-import { useToast } from '../components/common/Toast';
 
 /**
  * Mengelola state modal form tambah/edit, validasi, penyimpanan, serta dialog konfirmasi hapus.
@@ -12,10 +11,13 @@ import { useToast } from '../components/common/Toast';
  * @param {function} config.create - Fungsi service API untuk membuat data baru
  * @param {function} config.update - Fungsi service API untuk memperbarui data (menerima id dan payload)
  * @param {function} config.remove - Fungsi service API untuk menghapus data (menerima id)
- * @param {object} config.messages - Konfigurasi teks/fungsi pesan toast sukses dan gagal
+ * @param {object} config.messages - Konfigurasi teks/fungsi pesan sukses dan gagal
  * @param {function} [config.onChanged] - Callback setelah berhasil simpan atau hapus (misal refetch)
  * @param {function} [config.onDeleted] - Callback tambahan saat item tertentu berhasil dihapus
  * @param {function} [config.onDeleteError] - Callback khusus saat gagal menghapus (misal konflik 409)
+ * @param {function} [config.notify] - Handler notifikasi dari UI layer (message, type)
+ * @param {function} [config.onSuccess] - Callback sukses
+ * @param {function} [config.onError] - Callback gagal
  * @returns {object} State dan handler CRUD modal
  */
 export default function useCrudModal({
@@ -29,9 +31,26 @@ export default function useCrudModal({
   messages = {},
   onChanged,
   onDeleted,
-  onDeleteError
+  onDeleteError,
+  notify,
+  onSuccess,
+  onError
 }) {
-  const { showToast } = useToast();
+  const emitSuccess = useCallback(
+    (msg) => {
+      if (onSuccess) onSuccess(msg);
+      if (notify) notify(msg, 'success');
+    },
+    [onSuccess, notify]
+  );
+
+  const emitError = useCallback(
+    (msg) => {
+      if (onError) onError(msg);
+      if (notify) notify(msg, 'error');
+    },
+    [onError, notify]
+  );
 
   const resolveEmptyForm = useCallback(
     () => (typeof emptyForm === 'function' ? emptyForm() : { ...emptyForm }),
@@ -104,17 +123,17 @@ export default function useCrudModal({
     try {
       if (editingItem) {
         await update(editingItem.id, payload);
-        showToast(resolveMessage(messages?.updated, form, 'Data berhasil diperbarui!'), 'success');
+        emitSuccess(resolveMessage(messages?.updated, form, 'Data berhasil diperbarui!'));
       } else {
         await create(payload);
-        showToast(resolveMessage(messages?.created, form, 'Data berhasil ditambahkan!'), 'success');
+        emitSuccess(resolveMessage(messages?.created, form, 'Data berhasil ditambahkan!'));
       }
       setModalOpen(false);
       if (onChanged) onChanged();
     } catch (err) {
       const msg = err?.userMessage || messages?.saveError || 'Gagal menyimpan data.';
       setFormError(msg);
-      showToast(msg, 'error');
+      emitError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -127,14 +146,14 @@ export default function useCrudModal({
 
     try {
       await remove(target.id);
-      showToast(resolveMessage(messages?.deleted, target, 'Data berhasil dihapus'), 'success');
+      emitSuccess(resolveMessage(messages?.deleted, target, 'Data berhasil dihapus'));
       if (onDeleted) onDeleted(target);
       setItemToDelete(null);
       if (onChanged) onChanged();
     } catch (err) {
-      const handled = onDeleteError ? onDeleteError(err, target, showToast) : false;
+      const handled = onDeleteError ? onDeleteError(err, target, emitError) : false;
       if (!handled) {
-        showToast(err?.userMessage || messages?.deleteError || 'Gagal menghapus data', 'error');
+        emitError(err?.userMessage || messages?.deleteError || 'Gagal menghapus data');
       }
       setItemToDelete(null);
     } finally {

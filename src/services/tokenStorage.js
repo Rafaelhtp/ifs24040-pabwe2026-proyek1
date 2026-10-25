@@ -1,4 +1,4 @@
-// Catatan: Di lingkungan produksi tingkat lanjut, token sebaiknya disimpan di HttpOnly Cookie oleh backend untuk mencegah XSS. Namun untuk keperluan aplikasi ini, localStorage digunakan agar sesi tetap aktif.
+// CATATAN: localStorage digunakan karena backend berada di domain terpisah (cross-origin). Di produksi, HttpOnly Cookie lebih disarankan.
 import { TOKEN_STORAGE_KEY } from '../constants/config';
 
 /**

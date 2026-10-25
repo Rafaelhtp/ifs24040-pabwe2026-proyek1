@@ -1,12 +1,9 @@
 // Custom hook untuk mengelola state formulir catatan jurnal (mode tambah baru maupun edit)
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getEntryById, createEntry, updateEntry } from '../services/entryService';
-import { useToast } from '../components/common/Toast';
 import { getTodayDateString } from '../utils/formatDate';
 import { isValidDate } from '../utils/validators';
 import { buildEntryFormData } from '../utils/formData';
-import { ROUTES } from '../constants/routes';
 import { DEFAULT_ACCENT_COLOR } from '../constants/config';
 
 /**
@@ -14,12 +11,13 @@ import { DEFAULT_ACCENT_COLOR } from '../constants/config';
  * @param {object} options - Parameter konfigurasi
  * @param {string|undefined} options.id - ID entri dari parameter URL
  * @param {Array} options.moods - Daftar mood untuk mencocokkan detail mood terpilih
+ * @param {function} [options.onSuccess] - Callback saat berhasil menyimpan
+ * @param {function} [options.onError] - Callback saat gagal menyimpan
+ * @param {function} [options.onReset] - Callback saat form di-reset untuk entri baru
  * @returns {object} State formulir entri jurnal dan handler aksi
  */
-export default function useEntryForm({ id, moods = [] }) {
+export default function useEntryForm({ id, moods = [], onSuccess, onError, onReset }) {
   const isEditMode = Boolean(id);
-  const navigate = useNavigate();
-  const { showToast } = useToast();
 
   const [entryDate, setEntryDate] = useState(getTodayDateString());
   const [moodId, setMoodId] = useState('');
@@ -81,8 +79,8 @@ export default function useEntryForm({ id, moods = [] }) {
     setNote('');
     setImageFile(null);
     setExistingImagePath(null);
-    if (isEditMode) {
-      navigate(ROUTES.JOURNAL_NEW);
+    if (onReset) {
+      onReset();
     }
   };
 
@@ -116,23 +114,26 @@ export default function useEntryForm({ id, moods = [] }) {
       let res;
       if (isEditMode) {
         res = await updateEntry(id, formData);
-        showToast('Catatan jurnal berhasil diperbarui!', 'success');
       } else {
         res = await createEntry(formData);
-        showToast('Catatan jurnal baru berhasil disimpan!', 'success');
       }
-      setSavedSuccessEntry(
+      const successData =
         res?.data || {
           mood_id: Number(moodId),
           mood_name: selectedMood?.name || 'Mood',
           color: selectedMood?.color || DEFAULT_ACCENT_COLOR,
           entry_date: entryDate
-        }
-      );
+        };
+      setSavedSuccessEntry(successData);
+      if (onSuccess) {
+        onSuccess(successData, isEditMode);
+      }
     } catch (err) {
       const msg = err?.userMessage || 'Gagal menyimpan catatan jurnal.';
       setFormError(msg);
-      showToast(msg, 'error');
+      if (onError) {
+        onError(msg, err);
+      }
     } finally {
       setIsSubmitting(false);
     }

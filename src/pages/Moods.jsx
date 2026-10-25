@@ -11,12 +11,14 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
+import { useToast } from '../components/common/Toast';
 import { DEFAULT_ACCENT_COLOR } from '../constants/config';
 
 export default function Moods() {
   usePageTitle('Kelola Kategori Mood');
+  const { showToast } = useToast();
   const { moods, loading, error, refetch } = useMoods();
-  const moodManager = useMoodManager({ onChanged: refetch });
+  const moodManager = useMoodManager({ onChanged: refetch, notify: showToast });
 
   const renderMoodGrid = () => {
     if (loading) return <Loading text="Memuat kategori mood..." />;

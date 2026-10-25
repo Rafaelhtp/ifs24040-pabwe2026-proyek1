@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Shuffle, ExternalLink, Disc3 } from 'lucide-react';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from '../moods/MoodBlob';
 import useSongRecommendation from '../../hooks/useSongRecommendation';
 import useRandomSong from '../../hooks/useRandomSong';
 import { getSongLinkLabel } from '../../utils/songUtils';

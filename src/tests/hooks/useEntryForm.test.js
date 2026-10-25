@@ -1,27 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 
-const navigateMock = vi.fn();
-const showToastMock = vi.fn();
-
-vi.mock('react-router-dom', () => ({
-  useNavigate: () => navigateMock
-}));
-
-vi.mock('../../components/common/Toast', () => ({
-  useToast: () => ({ showToast: showToastMock })
-}));
-
 import useEntryForm from '../../hooks/useEntryForm';
 import * as entryService from '../../services/entryService';
-import { ROUTES } from '../../constants/routes';
 
 describe('useEntryForm hook', () => {
   const moods = [{ id: 1, name: 'Senang', color: '#FACC15' }];
 
   beforeEach(() => {
-    navigateMock.mockReset();
-    showToastMock.mockReset();
     vi.restoreAllMocks();
   });
 
@@ -130,11 +116,15 @@ describe('useEntryForm hook', () => {
     });
     expect(result.current.formError).toBe('Gagal simpan');
 
-    // Reset in edit mode navigates to JOURNAL_NEW
+    // Reset in edit mode
+    const onResetMock = vi.fn();
+    const { result: resetResult } = renderHook(() =>
+      useEntryForm({ id: '12', moods, onReset: onResetMock })
+    );
     act(() => {
-      result.current.handleResetForNew();
+      resetResult.current.handleResetForNew();
     });
-    expect(navigateMock).toHaveBeenCalledWith(ROUTES.JOURNAL_NEW);
+    expect(onResetMock).toHaveBeenCalled();
 
     // Load entry with null note & null image_path
     vi.spyOn(entryService, 'getEntryById').mockResolvedValueOnce({

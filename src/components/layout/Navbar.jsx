@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from '../moods/MoodBlob';
 import { ROUTES } from '../../constants/routes';
 import { DEFAULT_ACCENT_COLOR } from '../../constants/config';
 import { MESSAGES } from '../../constants/messages';

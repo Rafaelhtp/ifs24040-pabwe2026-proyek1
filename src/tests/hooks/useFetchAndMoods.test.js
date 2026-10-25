@@ -3,10 +3,6 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 
 const showToastMock = vi.fn();
 
-vi.mock('../../components/common/Toast', () => ({
-  useToast: () => ({ showToast: showToastMock })
-}));
-
 import useFetch from '../../hooks/useFetch';
 import useMoods from '../../hooks/useMoods';
 import useRandomSong from '../../hooks/useRandomSong';
@@ -160,7 +156,13 @@ describe('useFetch, useMoods, useRandomSong, and useDeleteEntry hooks', () => {
 
   it('useDeleteEntry handles early return, successful deletion, and failure toast', async () => {
     const onDeleted = vi.fn();
-    const { result } = renderHook(() => useDeleteEntry(onDeleted));
+    const { result } = renderHook(() =>
+      useDeleteEntry({
+        onDeleted,
+        onSuccess: (msg) => showToastMock(msg, 'success'),
+        onError: (msg) => showToastMock(msg, 'error')
+      })
+    );
 
     // Early return when entryToDelete is null
     await act(async () => {

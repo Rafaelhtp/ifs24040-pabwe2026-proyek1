@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Calendar, Zap, Pencil, Trash2 } from 'lucide-react';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from '../moods/MoodBlob';
 import { formatDateLong } from '../../utils/formatDate';
 import { getImageUrl } from '../../utils/imageUrl';
 import { buildJournalEditRoute } from '../../constants/routes';

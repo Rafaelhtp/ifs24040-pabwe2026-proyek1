@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import Modal from '../common/Modal';
 import FormAlert from '../form/FormAlert';
 import TextField from '../form/TextField';
-import MoodBlob from '../mood/MoodBlob';
+import MoodBlob from './MoodBlob';
 import { EMOJI_PRESETS, DEFAULT_ACCENT_COLOR } from '../../constants/config';
 
 export default function MoodFormModal({

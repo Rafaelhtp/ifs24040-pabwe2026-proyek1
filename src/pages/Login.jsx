@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { LogIn, Sparkles, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/common/Toast';
-import MoodBlob from '../components/mood/MoodBlob';
+import MoodBlob from '../components/moods/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
 import { isValidEmail, isValidPassword } from '../utils/validators';
 import { ROUTES } from '../constants/routes';

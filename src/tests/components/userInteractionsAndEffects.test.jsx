@@ -11,7 +11,7 @@ import Navbar from '../../components/layout/Navbar';
 import Login from '../../pages/Login';
 import Register from '../../pages/Register';
 import ImageUpload from '../../components/form/ImageUpload';
-import MoodPicker from '../../components/mood/MoodPicker';
+import MoodPicker from '../../components/moods/MoodPicker';
 import MoodConflictAlert from '../../components/moods/MoodConflictAlert';
 import * as authService from '../../services/authService';
 import { setToken, clearToken } from '../../services/tokenStorage';

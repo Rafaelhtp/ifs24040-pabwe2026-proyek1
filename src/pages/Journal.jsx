@@ -15,12 +15,14 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
+import { useToast } from '../components/common/Toast';
 import { ROUTES } from '../constants/routes';
 import { JOURNAL_PAGE_SIZE, DEFAULT_ACCENT_COLOR } from '../constants/config';
 
 export default function Journal() {
   usePageTitle('Jurnal Harian');
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { moods } = useMoods();
   const filters = useJournalFilters();
 
@@ -38,7 +40,11 @@ export default function Journal() {
   );
 
   const { data: entries, meta, loading, error, refetch } = useFetch(fetchEntries, [fetchEntries]);
-  const deleteManager = useDeleteEntry(refetch);
+  const deleteManager = useDeleteEntry({
+    onDeleted: refetch,
+    onSuccess: (msg) => showToast(msg, 'success'),
+    onError: (msg) => showToast(msg, 'error')
+  });
 
   const renderContent = () => {
     if (loading) return <Loading text="Memuat daftar jurnal..." />;
