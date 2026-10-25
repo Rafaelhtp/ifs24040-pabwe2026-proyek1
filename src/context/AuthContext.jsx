@@ -5,7 +5,7 @@ import { loginUser, registerUser, getCurrentUser } from '../services/authService
 import { getToken, setToken as saveStoredToken, clearToken } from '../services/tokenStorage';
 import { UNAUTHORIZED_EVENT } from '../constants/config';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

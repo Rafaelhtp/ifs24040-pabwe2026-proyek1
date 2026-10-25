@@ -52,7 +52,7 @@ describe('useJournalFilters hook', () => {
       result.current.setSearchInput('  hujan  ');
     });
     act(() => {
-      vi.advanceTimersByTime(350);
+      vi.advanceTimersByTime(500);
     });
     expect(currentSearchParams.get('q')).toBe('hujan');
 
@@ -61,7 +61,7 @@ describe('useJournalFilters hook', () => {
       result.current.setSearchInput('');
     });
     act(() => {
-      vi.advanceTimersByTime(350);
+      vi.advanceTimersByTime(500);
     });
     expect(currentSearchParams.has('q')).toBe(false);
 

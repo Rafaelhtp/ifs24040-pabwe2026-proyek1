@@ -7,6 +7,21 @@ vi.mock('../../components/common/Toast', () => ({
   useToast: () => ({ showToast: showToastMock })
 }));
 
+vi.mock('../../services/songService', () => ({
+  createSong: vi.fn(),
+  updateSong: vi.fn(),
+  deleteSong: vi.fn(),
+  getSongs: vi.fn(),
+  getRandomSong: vi.fn()
+}));
+
+vi.mock('../../services/moodService', () => ({
+  createMood: vi.fn(),
+  updateMood: vi.fn(),
+  deleteMood: vi.fn(),
+  getMoods: vi.fn()
+}));
+
 import useCrudModal from '../../hooks/useCrudModal';
 import useSongManager from '../../hooks/useSongManager';
 import useMoodManager from '../../hooks/useMoodManager';
@@ -16,7 +31,13 @@ import * as moodService from '../../services/moodService';
 describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
   beforeEach(() => {
     showToastMock.mockReset();
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.mocked(songService.createSong).mockResolvedValue({ data: { id: 1 } });
+    vi.mocked(songService.updateSong).mockResolvedValue({ data: { id: 1 } });
+    vi.mocked(songService.deleteSong).mockResolvedValue({});
+    vi.mocked(moodService.createMood).mockResolvedValue({});
+    vi.mocked(moodService.updateMood).mockResolvedValue({});
+    vi.mocked(moodService.deleteMood).mockResolvedValue({});
   });
 
   it('useCrudModal supports object emptyForm, open/close/save/delete, and custom error callbacks', async () => {

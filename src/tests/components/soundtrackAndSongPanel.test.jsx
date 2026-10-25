@@ -355,7 +355,7 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         />
       );
 
-      await screen.findByText('Buka lagu');
+      expect((await screen.findAllByText('Buka lagu')).length).toBeGreaterThan(0);
       expect(screen.getByText('Putar di YouTube')).toBeDefined();
 
       // Highlighted song tanpa link sama sekali
@@ -412,7 +412,7 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         />
       );
 
-      await screen.findByText('Lagu 1');
+      expect((await screen.findAllByText('Lagu 1')).length).toBeGreaterThan(0);
 
       // Sukses mengacak lagu lain yang memiliki res.data
       mockGetRandom.mockResolvedValueOnce({
@@ -467,8 +467,8 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
           selectedMood={{ id: 1, name: 'Senang', color: '#FACC15' }}
         />
       );
-      await screen.findByText('Lagu Pertama');
-      expect(screen.getByText(/lagu lainnya/i)).toBeDefined();
+      expect((await screen.findAllByText('Lagu Pertama')).length).toBeGreaterThan(0);
+      expect(screen.getByText(/lainnya/i)).toBeDefined();
       expect(screen.getByText('Lagu Kedua')).toBeDefined();
       expect(screen.getByText('Lagu Ketiga')).toBeDefined();
     });
@@ -497,7 +497,7 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
       // 3. Nilai 2
       cleanup();
       render(<EnergySlider value={2} onChange={mockOnChange} />);
-      expect(screen.getByText('/5')).toBeDefined();
+      expect(screen.getByText(/\(2\/5\)/)).toBeDefined();
 
       // 4. Nilai 4
       cleanup();

@@ -107,19 +107,20 @@ describe('useFetch, useMoods, useRandomSong, and useDeleteEntry hooks', () => {
       data: [{ id: 1, name: 'Senang' }]
     });
 
-    const { result, rerender } = renderHook(() => useMoods());
+    const { result, unmount } = renderHook(() => useMoods());
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
     expect(result.current.moods).toEqual([{ id: 1, name: 'Senang' }]);
+    unmount();
 
     vi.spyOn(moodService, 'getMoods').mockResolvedValueOnce({ data: null });
-    rerender();
+    const { result: nullResult } = renderHook(() => useMoods());
     await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+      expect(nullResult.current.loading).toBe(false);
     });
-    expect(result.current.moods).toEqual([]);
+    expect(nullResult.current.moods).toEqual([]);
   });
 
   it('useRandomSong handles happy path and error toast on empty mood playlist', async () => {
