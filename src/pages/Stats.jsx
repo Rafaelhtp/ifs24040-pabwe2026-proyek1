@@ -12,6 +12,7 @@ import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
 import { ROUTES } from '../constants/routes';
+import { COLORS } from '../constants/colors';
 
 export default function Stats() {
   usePageTitle('Statistik Mingguan');
@@ -62,7 +63,7 @@ export default function Stats() {
           label="Total Entri (7 Hari)"
           value={`${totalEntries} Catatan`}
           subtitle="Rekaman jurnal dalam 7 hari terakhir"
-          accentColor="#5798D7"
+          accentColor={COLORS.DENIM_DEFAULT}
         />
 
         {/* 2. Rata-rata Energi dari 5.0 dengan Meteran Pistachio */}
@@ -75,7 +76,7 @@ export default function Stats() {
               ? `Tingkat energi rata-rata (${energyPct}%)`
               : 'Belum ada data energi minggu ini'
           }
-          accentColor="#B9C255"
+          accentColor={COLORS.ENERGY_LINE}
         >
           <div className="w-full h-3 rounded-full bg-frost overflow-hidden border border-frost-border">
             <div
@@ -87,12 +88,12 @@ export default function Stats() {
 
         {/* 3. Top Mood dengan MoodBlob Besar dan Jumlahnya */}
         <div
-          style={{ borderBottomColor: topMood?.color || '#5798D7' }}
+          style={{ borderBottomColor: topMood?.color || COLORS.DENIM_DEFAULT }}
           className="bg-white rounded-3xl border border-frost-border border-b-4 p-5 shadow-soft flex items-center gap-4"
         >
           <MoodBlob
             moodName={topMood?.name || 'tenang'}
-            color={topMood?.color || '#5798D7'}
+            color={topMood?.color || COLORS.DENIM_DEFAULT}
             size="lg"
           />
           <div className="min-w-0">
@@ -111,7 +112,7 @@ export default function Stats() {
       {totalEntries === 0 ? (
         <EmptyState
           moodName="tenang"
-          moodColor="#5798D7"
+          moodColor={COLORS.DENIM_DEFAULT}
           title="Belum Ada Data Statistik Mingguan"
           description="Catat suasana hatimu selama beberapa hari ke depan untuk melihat grafik tren energi dan proporsi mood di halaman ini."
           actionLabel="Tulis Jurnal Sekarang"

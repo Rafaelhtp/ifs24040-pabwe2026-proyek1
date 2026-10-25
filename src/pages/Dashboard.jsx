@@ -15,6 +15,7 @@ import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
 import { ROUTES } from '../constants/routes';
+import { COLORS } from '../constants/colors';
 
 export default function Dashboard() {
   usePageTitle('Dashboard');
@@ -60,17 +61,17 @@ export default function Dashboard() {
   const activeSoundtrackMoodName =
     latestEntry?.mood_name || stats.top_mood?.name || 'Hari Ini';
   const activeSoundtrackMoodColor =
-    latestEntry?.color || stats.top_mood?.color || '#5798D7';
+    latestEntry?.color || stats.top_mood?.color || COLORS.DENIM_DEFAULT;
 
   return (
     <div className="space-y-8">
       {/* Hero Banner Sapaan */}
-      <section className="bg-gradient-to-r from-denim via-denim-dark to-[#3875B2] rounded-3xl p-6 sm:p-8 text-white shadow-soft-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      <section className="bg-gradient-to-r from-denim via-denim-dark to-denim-rich rounded-3xl p-6 sm:p-8 text-white shadow-soft-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex w-18 h-18 rounded-3xl bg-white/15 backdrop-blur-xs items-center justify-center shrink-0">
             <MoodBlob
               moodName={stats.top_mood?.name || 'senang'}
-              color={stats.top_mood?.color || '#FACC15'}
+              color={stats.top_mood?.color || COLORS.PRESET.YELLOW}
               size="md"
               className="mood-blob-float"
             />
@@ -104,7 +105,7 @@ export default function Dashboard() {
           label="Entri 7 Hari Terakhir"
           value={`${stats.total_entries_7d} Jurnal`}
           subtitle="Catatan dalam sepekan terakhir"
-          accentColor="#5798D7"
+          accentColor={COLORS.DENIM_DEFAULT}
         />
 
         <StatCard
@@ -112,14 +113,14 @@ export default function Dashboard() {
           label="Rata-rata Energi (7 Hari)"
           value={stats.total_entries_7d > 0 ? `${stats.avg_energy_7d} / 5.0` : '-'}
           subtitle="Indikator baterai harianmu"
-          accentColor="#B9C255"
+          accentColor={COLORS.ENERGY_LINE}
         />
 
         <StatCard
           icon={
             <MoodBlob
               moodName={stats.top_mood?.name || 'tenang'}
-              color={stats.top_mood?.color || '#5798D7'}
+              color={stats.top_mood?.color || COLORS.DENIM_DEFAULT}
               size="sm"
             />
           }
@@ -130,7 +131,7 @@ export default function Dashboard() {
               ? `Muncul ${stats.top_mood.count} kali minggu ini`
               : 'Mulai tulis jurnal pertamamu'
           }
-          accentColor={stats.top_mood?.color || '#5798D7'}
+          accentColor={stats.top_mood?.color || COLORS.DENIM_DEFAULT}
         />
       </section>
 
@@ -181,7 +182,7 @@ export default function Dashboard() {
       ) : (
         <EmptyState
           moodName="senang"
-          moodColor="#FACC15"
+          moodColor={COLORS.PRESET.YELLOW}
           title="Jurnal Harianmu Masih Kosong"
           description="Yuk mulai tulis catatan suasana hati pertamamu hari ini dan dapatkan rekomendasi soundtrack lagu yang pas!"
           actionLabel="Tulis Jurnal Pertama"

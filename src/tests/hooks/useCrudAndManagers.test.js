@@ -1,33 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-const rt = {
-  slots: [],
-  cursor: 0,
-  reset() {
-    this.slots = [];
-    this.cursor = 0;
-  },
-  read(fn) {
-    this.cursor = 0;
-    return fn();
-  }
-};
+import { renderHook, act } from '@testing-library/react';
 
 const showToastMock = vi.fn();
-
-vi.mock('react', () => ({
-  useState: (initial) => {
-    const idx = rt.cursor++;
-    if (!(idx in rt.slots)) {
-      rt.slots[idx] = typeof initial === 'function' ? initial() : initial;
-    }
-    const setState = (val) => {
-      rt.slots[idx] = typeof val === 'function' ? val(rt.slots[idx]) : val;
-    };
-    return [rt.slots[idx], setState];
-  },
-  useCallback: (cb) => cb
-}));
 
 vi.mock('../../components/common/Toast', () => ({
   useToast: () => ({ showToast: showToastMock })
@@ -41,7 +15,6 @@ import * as moodService from '../../services/moodService';
 
 describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
   beforeEach(() => {
-    rt.reset();
     showToastMock.mockReset();
     vi.restoreAllMocks();
   });
@@ -53,58 +26,73 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     const onChanged = vi.fn();
     const onDeleted = vi.fn();
 
-    const getHook = () =>
-      rt.read(() =>
-        useCrudModal({
-          emptyForm: { name: '' },
-          toForm: (item) => ({ name: item.name }),
-          validate: (f) => (!f.name ? 'Wajib diisi' : null),
-          create,
-          update,
-          remove,
-          onChanged,
-          onDeleted
-        })
-      );
+    const { result } = renderHook(() =>
+      useCrudModal({
+        emptyForm: { name: '' },
+        toForm: (item) => ({ name: item.name }),
+        validate: (f) => (!f.name ? 'Wajib diisi' : null),
+        create,
+        update,
+        remove,
+        onChanged,
+        onDeleted
+      })
+    );
 
-    let crud = getHook();
-    crud.openAdd();
-    crud = getHook();
-    expect(crud.modalOpen).toBe(true);
+    act(() => {
+      result.current.openAdd();
+    });
+    expect(result.current.modalOpen).toBe(true);
 
     // Validation failure
-    await crud.handleSave({ preventDefault: vi.fn() });
-    crud = getHook();
-    expect(crud.formError).toBe('Wajib diisi');
+    await act(async () => {
+      await result.current.handleSave({ preventDefault: vi.fn() });
+    });
+    expect(result.current.formError).toBe('Wajib diisi');
 
     // Create success
-    crud.updateField('name', 'Item Baru');
-    crud = getHook();
-    await crud.handleSave();
+    act(() => {
+      result.current.updateField('name', 'Item Baru');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
     expect(create).toHaveBeenCalledWith({ name: 'Item Baru' });
     expect(onChanged).toHaveBeenCalled();
 
     // Edit & update success
-    crud.openEdit({ id: 7, name: 'Lama' });
-    crud = getHook();
-    crud.updateField('name', 'Diperbarui');
-    crud = getHook();
-    await crud.handleSave();
+    act(() => {
+      result.current.openEdit({ id: 7, name: 'Lama' });
+    });
+    act(() => {
+      result.current.updateField('name', 'Diperbarui');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
     expect(update).toHaveBeenCalledWith(7, { name: 'Diperbarui' });
 
     // Close modal & delete lifecycle
-    crud.closeModal();
-    crud = getHook();
-    await crud.handleConfirmDelete(); // no-op when itemToDelete is null
-    crud.openDelete({ id: 7, name: 'Diperbarui' });
-    crud = getHook();
-    crud.closeDelete();
-    crud = getHook();
-    expect(crud.itemToDelete).toBeNull();
+    act(() => {
+      result.current.closeModal();
+    });
+    await act(async () => {
+      await result.current.handleConfirmDelete(); // no-op when itemToDelete is null
+    });
+    act(() => {
+      result.current.openDelete({ id: 7, name: 'Diperbarui' });
+    });
+    act(() => {
+      result.current.closeDelete();
+    });
+    expect(result.current.itemToDelete).toBeNull();
 
-    crud.openDelete({ id: 7, name: 'Diperbarui' });
-    crud = getHook();
-    await crud.handleConfirmDelete();
+    act(() => {
+      result.current.openDelete({ id: 7, name: 'Diperbarui' });
+    });
+    await act(async () => {
+      await result.current.handleConfirmDelete();
+    });
     expect(remove).toHaveBeenCalledWith(7);
     expect(onDeleted).toHaveBeenCalledWith({ id: 7, name: 'Diperbarui' });
   });
@@ -114,59 +102,83 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     vi.spyOn(songService, 'deleteSong').mockRejectedValueOnce({});
 
     const moods = [{ id: 3, name: 'Tenang' }];
-    const getSongMgr = () =>
-      rt.read(() => useSongManager({ moods, selectedMoodId: '', onChanged: vi.fn() }));
+    const { result } = renderHook(() =>
+      useSongManager({ moods, selectedMoodId: '', onChanged: vi.fn() })
+    );
 
-    let mgr = getSongMgr();
-    expect(mgr.form.moodId).toBe('3');
+    expect(result.current.form.moodId).toBe('3');
 
-    // Test line 27 branch coverage for selectedMoodId and empty moods
-    rt.reset();
-    const songMgrWithSelected = rt.read(() =>
+    // Test branch coverage for selectedMoodId and empty moods
+    const { result: songMgrWithSelected } = renderHook(() =>
       useSongManager({ moods, selectedMoodId: '5', onChanged: vi.fn() })
     );
-    expect(songMgrWithSelected.form.moodId).toBe('5');
+    expect(songMgrWithSelected.current.form.moodId).toBe('5');
 
-    rt.reset();
-    const songMgrEmptyMoods = rt.read(() =>
+    const { result: songMgrEmptyMoods } = renderHook(() =>
       useSongManager({ moods: [], selectedMoodId: '', onChanged: vi.fn() })
     );
-    expect(songMgrEmptyMoods.form.moodId).toBe('');
+    expect(songMgrEmptyMoods.current.form.moodId).toBe('');
 
     // Validation checks: missing title, missing artist, missing moodId, invalid link
-    await mgr.handleSave();
-    expect(getSongMgr().formError).toContain('Judul lagu');
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toContain('Judul lagu');
 
-    mgr.updateField('title', 'Monokrom');
-    await getSongMgr().handleSave();
-    expect(getSongMgr().formError).toContain('Nama artis');
+    act(() => {
+      result.current.updateField('title', 'Monokrom');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toContain('Nama artis');
 
-    mgr.updateField('artist', 'Tulus');
-    mgr.updateField('moodId', '');
-    await getSongMgr().handleSave();
-    expect(getSongMgr().formError).toContain('Pilih mood');
+    act(() => {
+      result.current.updateField('artist', 'Tulus');
+      result.current.updateField('moodId', '');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toContain('Pilih mood');
 
-    mgr.updateField('moodId', '3');
-    mgr.updateField('link', 'ftp://invalid-link');
-    await getSongMgr().handleSave();
-    expect(getSongMgr().formError).toContain('URL yang valid');
+    act(() => {
+      result.current.updateField('moodId', '3');
+      result.current.updateField('link', 'ftp://invalid-link');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toContain('URL yang valid');
 
     // Valid create
-    mgr.updateField('link', 'https://open.spotify.com/track/1');
-    await getSongMgr().handleSave();
+    act(() => {
+      result.current.updateField('link', 'https://open.spotify.com/track/1');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
     expect(songService.createSong).toHaveBeenCalled();
 
     // Edit form mapping & delete error fallback
-    getSongMgr().openEdit({ id: 5, title: 'A', artist: 'B', mood_id: 3, link: '' });
-    expect(getSongMgr().editingSong.id).toBe(5);
-    // toForm fallback when properties are omitted (lines 36-38)
-    getSongMgr().openEdit({});
-    expect(getSongMgr().form.title).toBe('');
-    expect(getSongMgr().form.artist).toBe('');
-    expect(getSongMgr().form.moodId).toBe('');
+    act(() => {
+      result.current.openEdit({ id: 5, title: 'A', artist: 'B', mood_id: 3, link: '' });
+    });
+    expect(result.current.editingSong.id).toBe(5);
 
-    getSongMgr().openDelete({ id: 5, title: 'A' });
-    await getSongMgr().handleConfirmDelete();
+    act(() => {
+      result.current.openEdit({});
+    });
+    expect(result.current.form.title).toBe('');
+    expect(result.current.form.artist).toBe('');
+    expect(result.current.form.moodId).toBe('');
+
+    act(() => {
+      result.current.openDelete({ id: 5, title: 'A' });
+    });
+    await act(async () => {
+      await result.current.handleConfirmDelete();
+    });
     expect(showToastMock).toHaveBeenCalledWith('Gagal menghapus lagu', 'error');
   });
 
@@ -179,36 +191,55 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
       .mockRejectedValueOnce({ statusCode: 409 })
       .mockRejectedValueOnce({ statusCode: 500, userMessage: 'Kesalahan server mood' });
 
-    const getMoodMgr = () => rt.read(() => useMoodManager({ onChanged: vi.fn() }));
-    let mgr = getMoodMgr();
+    const { result } = renderHook(() => useMoodManager({ onChanged: vi.fn() }));
 
     // Validation checks
-    await mgr.handleSave();
-    expect(getMoodMgr().formError).toContain('Nama mood');
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toContain('Nama mood');
 
-    mgr.updateField('name', 'Bangga');
-    mgr.updateField('emoji', '   ');
-    await getMoodMgr().handleSave();
-    expect(getMoodMgr().formError).toContain('Emoji mood');
+    act(() => {
+      result.current.updateField('name', 'Bangga');
+      result.current.updateField('emoji', '   ');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toContain('Emoji mood');
 
-    mgr.updateField('emoji', '🤩');
-    mgr.updateField('color', 'bukan-hex');
-    await getMoodMgr().handleSave();
-    expect(getMoodMgr().formError).toContain('hex yang valid');
+    act(() => {
+      result.current.updateField('emoji', '🤩');
+      result.current.updateField('color', 'bukan-hex');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toContain('hex yang valid');
 
     // Save error path
-    mgr.updateField('color', '#5798D7');
-    await getMoodMgr().handleSave();
-    expect(getMoodMgr().formError).toBe('Nama mood duplikat');
+    act(() => {
+      result.current.updateField('color', '#5798D7');
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toBe('Nama mood duplikat');
 
-    // Create success path (menutup messages.created)
+    // Create success path
     vi.spyOn(moodService, 'createMood').mockResolvedValueOnce({});
-    await getMoodMgr().handleSave();
+    await act(async () => {
+      await result.current.handleSave();
+    });
     expect(showToastMock).toHaveBeenCalledWith('Mood "Bangga" berhasil ditambahkan!', 'success');
 
     // Edit & update success
-    getMoodMgr().openEdit({ id: 9, name: 'Bangga', emoji: '🤩', color: '#5798D7' });
-    await getMoodMgr().handleSave();
+    act(() => {
+      result.current.openEdit({ id: 9, name: 'Bangga', emoji: '🤩', color: '#5798D7' });
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
     expect(moodService.updateMood).toHaveBeenCalledWith(9, {
       name: 'Bangga',
       emoji: '🤩',
@@ -216,32 +247,48 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     });
 
     // toForm fallbacks with empty/null object
-    getMoodMgr().openEdit({});
-    expect(getMoodMgr().form.name).toBe('');
-    expect(getMoodMgr().form.emoji).toBeTruthy();
+    act(() => {
+      result.current.openEdit({});
+    });
+    expect(result.current.form.name).toBe('');
+    expect(result.current.form.emoji).toBeTruthy();
 
-    // buildPayload fallbacks with empty/null object (covers lines 48-50 in useMoodManager.js)
-    expect(getMoodMgr().buildPayload({})).toEqual({ name: '', emoji: '', color: '' });
-    expect(getMoodMgr().buildPayload(null)).toEqual({ name: '', emoji: '', color: '' });
+    // buildPayload fallbacks with empty/null object
+    expect(result.current.buildPayload({})).toEqual({ name: '', emoji: '', color: '' });
+    expect(result.current.buildPayload(null)).toEqual({ name: '', emoji: '', color: '' });
 
     // 409 Conflict on delete
-    getMoodMgr().openDelete({ id: 9, name: 'Bangga' });
-    await getMoodMgr().handleConfirmDelete();
-    expect(getMoodMgr().conflictAlert).toContain('masih dipakai');
+    act(() => {
+      result.current.openDelete({ id: 9, name: 'Bangga' });
+    });
+    await act(async () => {
+      await result.current.handleConfirmDelete();
+    });
+    expect(result.current.conflictAlert).toContain('masih dipakai');
 
-    getMoodMgr().clearConflictAlert();
-    expect(getMoodMgr().conflictAlert).toBe('');
+    act(() => {
+      result.current.clearConflictAlert();
+    });
+    expect(result.current.conflictAlert).toBe('');
 
-    // Non-409 delete error (menutup baris 63 useMoodManager.js: return false)
-    getMoodMgr().openDelete({ id: 10, name: 'Mood Lain' });
-    await getMoodMgr().handleConfirmDelete();
-    expect(getMoodMgr().conflictAlert).toBe('');
+    // Non-409 delete error
+    act(() => {
+      result.current.openDelete({ id: 10, name: 'Mood Lain' });
+    });
+    await act(async () => {
+      await result.current.handleConfirmDelete();
+    });
+    expect(result.current.conflictAlert).toBe('');
     expect(showToastMock).toHaveBeenCalledWith('Kesalahan server mood', 'error');
 
-    // Successful delete (menutup messages.deleted dan onDeleted callback)
+    // Successful delete
     vi.spyOn(moodService, 'deleteMood').mockResolvedValueOnce({});
-    getMoodMgr().openDelete({ id: 11, name: 'Mood Sukses Dihapus' });
-    await getMoodMgr().handleConfirmDelete();
+    act(() => {
+      result.current.openDelete({ id: 11, name: 'Mood Sukses Dihapus' });
+    });
+    await act(async () => {
+      await result.current.handleConfirmDelete();
+    });
     expect(showToastMock).toHaveBeenCalledWith(
       'Mood "Mood Sukses Dihapus" berhasil dihapus',
       'success'
@@ -252,25 +299,28 @@ describe('useCrudModal, useSongManager, and useMoodManager hooks', () => {
     const create = vi.fn().mockRejectedValueOnce({});
     const remove = vi.fn().mockRejectedValueOnce({});
 
-    const getMinCrud = () =>
-      rt.read(() =>
-        useCrudModal({
-          emptyForm: { val: '' },
-          create,
-          remove
-        })
-      );
+    const { result } = renderHook(() =>
+      useCrudModal({
+        emptyForm: { val: '' },
+        create,
+        remove
+      })
+    );
 
-    let minCrud = getMinCrud();
-    minCrud.openAdd();
-    minCrud = getMinCrud();
-    // Save tanpa validate & buildPayload (covers lines 95, 101, 115)
-    await minCrud.handleSave();
-    expect(getMinCrud().formError).toBe('Gagal menyimpan data.');
+    act(() => {
+      result.current.openAdd();
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.formError).toBe('Gagal menyimpan data.');
 
-    // Delete tanpa onDeleteError & tanpa userMessage (covers line 137)
-    getMinCrud().openDelete({ id: 99 });
-    await getMinCrud().handleConfirmDelete();
+    act(() => {
+      result.current.openDelete({ id: 99 });
+    });
+    await act(async () => {
+      await result.current.handleConfirmDelete();
+    });
     expect(showToastMock).toHaveBeenCalledWith('Gagal menghapus data', 'error');
   });
 });

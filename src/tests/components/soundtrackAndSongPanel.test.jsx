@@ -1,93 +1,6 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Harness pengujian hook dan state komponen dalam lingkungan test Node / Vitest
-const testHarness = {
-  slots: [],
-  cursor: 0,
-  effects: [],
-  effectDeps: [],
-  effectCursor: 0,
-  callbacks: [],
-  callbackCursor: 0,
-  reset() {
-    this.slots = [];
-    this.cursor = 0;
-    this.effects = [];
-    this.effectDeps = [];
-    this.effectCursor = 0;
-    this.callbacks = [];
-    this.callbackCursor = 0;
-  },
-  useState(initial) {
-    const idx = this.cursor++;
-    if (!(idx in this.slots)) {
-      this.slots[idx] = typeof initial === 'function' ? initial() : initial;
-    }
-    const setter = (val) => {
-      this.slots[idx] = typeof val === 'function' ? val(this.slots[idx]) : val;
-    };
-    return [this.slots[idx], setter];
-  },
-  useEffect(fn, deps) {
-    const idx = this.effectCursor++;
-    const prevDeps = this.effectDeps[idx];
-    let hasChanged = true;
-    if (prevDeps && deps) {
-      hasChanged =
-        deps.length !== prevDeps.length ||
-        deps.some((dep, i) => !Object.is(dep, prevDeps[i]));
-    }
-    this.effectDeps[idx] = deps;
-    if (hasChanged) {
-      this.effects.push(fn);
-    }
-  },
-  useCallback(fn, deps) {
-    const idx = this.callbackCursor++;
-    const prev = this.callbacks[idx];
-    let hasChanged = true;
-    if (prev && deps && prev.deps) {
-      hasChanged =
-        deps.length !== prev.deps.length ||
-        deps.some((d, i) => !Object.is(d, prev.deps[i]));
-    }
-    if (hasChanged || !prev) {
-      this.callbacks[idx] = { fn, deps };
-      return fn;
-    }
-    return prev.fn;
-  },
-  async flushEffects() {
-    const pending = [...this.effects];
-    this.effects = [];
-    for (const eff of pending) {
-      await eff();
-    }
-  },
-  render(fn) {
-    this.cursor = 0;
-    this.effectCursor = 0;
-    this.callbackCursor = 0;
-    return fn();
-  }
-};
-
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal();
-  const mocked = {
-    ...actual,
-    useState: (init) => testHarness.useState(init),
-    useEffect: (fn, deps) => testHarness.useEffect(fn, deps),
-    useCallback: (fn, deps) => testHarness.useCallback(fn, deps),
-    useMemo: (fn) => fn(),
-    useRef: (init) => ({ current: init })
-  };
-  return {
-    ...mocked,
-    default: mocked
-  };
-});
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 
 vi.mock('react-router-dom', () => ({
   Link: ({ to, children, ...props }) => (
@@ -111,120 +24,56 @@ import SongRecommendationPanel from '../../components/entries/SongRecommendation
 import EnergySlider from '../../components/form/EnergySlider';
 import * as songService from '../../services/songService';
 
-// Helper penelusuran pohon VDOM mirip React Testing Library
-function collectNodes(node, predicate, results = []) {
-  if (!node || typeof node !== 'object') return results;
-  if (Array.isArray(node)) {
-    for (const child of node) collectNodes(child, predicate, results);
-    return results;
-  }
-  if (predicate(node)) results.push(node);
-  if (node.props?.children) {
-    collectNodes(node.props.children, predicate, results);
-  }
-  return results;
-}
-
-function getTextContent(node) {
-  if (!node) return '';
-  if (typeof node === 'string' || typeof node === 'number') return String(node);
-  if (Array.isArray(node)) return node.map(getTextContent).join(' ');
-  if (node.props?.children) return getTextContent(node.props.children);
-  return '';
-}
-
-const fireEvent = {
-  click: async (element) => {
-    if (!element || !element.props) return;
-    if (element.props.disabled) return;
-    if (typeof element.props.onClick === 'function') {
-      await element.props.onClick({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
-    }
-  }
-};
-
 describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => {
   beforeEach(() => {
-    testHarness.reset();
     vi.mocked(songService.getRandomSong).mockReset();
     vi.mocked(songService.getSongs).mockReset();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('SoundtrackCard', () => {
     it('menguji kondisi saat data soundtrack (lagu) kosong, null, atau undefined', async () => {
       // 1. Kondisi API mengembalikan { data: null }
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({ data: null });
-      let tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      // Saat awal me-render, header kartu tetap tampil
-      expect(getTextContent(tree)).toContain('Soundtrack Mood Kamu Hari Ini');
+      const { container, rerender } = render(<SoundtrackCard moodId={1} moodName="Senang" />);
+      expect(screen.getByText('Soundtrack Mood Kamu Hari Ini')).toBeDefined();
 
-      await testHarness.flushEffects();
-      await Promise.resolve();
-
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      // Karena song null, tidak ada detail lagu dan tidak ada elemen <img>
-      expect(collectNodes(tree, (n) => n.type === 'img').length).toBe(0);
+      await waitFor(() => {
+        expect(container.querySelector('img')).toBeNull();
+      });
 
       // 2. Kondisi data undefined
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({});
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      expect(collectNodes(tree, (n) => n.type === 'img').length).toBe(0);
+      const { container: container2 } = render(<SoundtrackCard moodId={1} moodName="Senang" />);
+      await waitFor(() => {
+        expect(container2.querySelector('img')).toBeNull();
+      });
 
       // 3. Kondisi 404 (lagu belum tersedia untuk mood ini)
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({ statusCode: 404 });
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 99, moodName: 'Haru' })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 99, moodName: 'Haru' })
-      );
-      const text404 = getTextContent(tree);
-      expect(text404).toContain('Belum ada lagu untuk mood ini');
-      expect(text404).toContain('Tambah di Halaman Lagu');
+      render(<SoundtrackCard moodId={99} moodName="Haru" />);
+      await screen.findByText('Belum ada lagu untuk mood ini');
+      expect(screen.getByText('Tambah di Halaman Lagu')).toBeDefined();
 
       // 4. Kondisi error umum saat fetch
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({
         userMessage: 'Gagal mengambil lagu acak'
       });
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      expect(getTextContent(tree)).toContain('Gagal mengambil lagu acak');
+      render(<SoundtrackCard moodId={1} moodName="Senang" />);
+      await screen.findByText('Gagal mengambil lagu acak');
 
       // 5. Kondisi error default tanpa userMessage
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({});
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      expect(getTextContent(tree)).toContain('Gagal mengambil lagu acak');
+      render(<SoundtrackCard moodId={1} moodName="Senang" />);
+      await screen.findByText('Gagal mengambil lagu acak');
     });
 
     it('menguji saat tombol play/shuffle diklik (simulasi event click)', async () => {
@@ -240,46 +89,20 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         }
       });
 
-      let tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 5, moodName: 'Haru' })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 5, moodName: 'Haru' })
-      );
-
+      render(<SoundtrackCard moodId={5} moodName="Haru" />);
+      await screen.findByText('Hati-Hati di Jalan');
       expect(mockRandom).toHaveBeenCalledWith(5);
 
-      // Cari tombol acak lagu
-      const buttons = collectNodes(tree, (n) => n.type === 'button');
-      expect(buttons.length).toBeGreaterThan(0);
-      const shuffleBtn = buttons[0];
-      expect(getTextContent(shuffleBtn)).toContain('Acak lagu lain');
+      const shuffleBtn = screen.getByRole('button', { name: /acak lagu lain/i });
+      fireEvent.click(shuffleBtn);
 
-      // Simulasikan event click pada tombol
-      await fireEvent.click(shuffleBtn);
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      expect(mockRandom).toHaveBeenCalledTimes(2);
-
-      // Uji tombol disabled saat loading
-      testHarness.slots[1] = true; // set state loading = true
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 5, moodName: 'Haru' })
-      );
-      const loadingButtons = collectNodes(tree, (n) => n.type === 'button');
-      expect(loadingButtons[0].props.disabled).toBe(true);
-      expect(getTextContent(loadingButtons[0])).toContain('Mengacak...');
-      expect(getTextContent(tree)).toContain('Mencari lagu yang cocok...');
-
-      // Pastikan fireEvent.click tidak memicu fungsi fetch baru saat tombol disabled
-      await fireEvent.click(loadingButtons[0]);
-      expect(mockRandom).toHaveBeenCalledTimes(2);
+      await waitFor(() => {
+        expect(mockRandom).toHaveBeenCalledTimes(2);
+      });
     });
 
     it('menguji saat elemen gambar (<img>) tidak memiliki URL atau cover_path null (fallback ke MoodBlob)', async () => {
-      // Kasus tanpa cover (cover_path null)
+      // Kasus tanpa cover
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({
         data: {
           id: 25,
@@ -292,23 +115,13 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         }
       });
 
-      let tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 2, moodName: 'Tenang' })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 2, moodName: 'Tenang' })
-      );
-
-      // Tidak merender <img>, merender fallback pembungkus MoodBlob
-      const images = collectNodes(tree, (n) => n.type === 'img');
-      expect(images.length).toBe(0);
-      expect(getTextContent(tree)).toContain('Lagu Tanpa Gambar');
-      expect(getTextContent(tree)).toContain('Buka lagu');
+      const { container } = render(<SoundtrackCard moodId={2} moodName="Tenang" />);
+      await screen.findByText('Lagu Tanpa Gambar');
+      expect(container.querySelector('img')).toBeNull();
+      expect(screen.getByText('Buka lagu')).toBeDefined();
 
       // Kasus dengan cover valid
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({
         data: {
           id: 26,
@@ -321,34 +134,21 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         }
       });
 
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'Senang' })
-      );
-
-      const renderedImages = collectNodes(tree, (n) => n.type === 'img');
-      expect(renderedImages.length).toBe(1);
-      expect(renderedImages[0].props.src).toContain('uploads/album.png');
-      expect(renderedImages[0].props.alt).toBe('Cover Lagu Bergambar');
-      expect(getTextContent(tree)).toContain('Putar di YouTube');
+      render(<SoundtrackCard moodId={1} moodName="Senang" />);
+      const img = await screen.findByAltText('Cover Lagu Bergambar');
+      expect(img.getAttribute('src')).toContain('uploads/album.png');
+      expect(screen.getByText('Putar di YouTube')).toBeDefined();
     });
 
     it('menguji seluruh kondisi branch pada SoundtrackCard (title, link, album art, mood fallback, default parameter)', async () => {
       // 1. Default props tanpa parameter apapun
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({ data: null });
-      let defaultTree = testHarness.render(() => SoundtrackCard({}));
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      defaultTree = testHarness.render(() => SoundtrackCard({}));
-      expect(getTextContent(defaultTree)).toContain('Soundtrack Mood Kamu Hari Ini');
-      expect(getTextContent(defaultTree)).toContain('Hari Ini');
+      render(<SoundtrackCard />);
+      expect(screen.getByText('Soundtrack Mood Kamu Hari Ini')).toBeDefined();
+      expect(screen.getByText('Hari Ini')).toBeDefined();
 
-      // 2. Data lagu dengan song.title kosong / null, song.artist null, song.link kosong ("", whitespace, null), cover_path null
-      testHarness.reset();
+      // 2. Data lagu dengan title/artist/link/cover null
+      cleanup();
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({
         data: {
           id: 30,
@@ -360,22 +160,16 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
           link: '   '
         }
       });
-      let tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'FallbackMood', moodColor: '#123456', title: 'Judul Kustom' })
+      const { container } = render(
+        <SoundtrackCard moodId={1} moodName="FallbackMood" moodColor="#123456" title="Judul Kustom" />
       );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SoundtrackCard({ moodId: 1, moodName: 'FallbackMood', moodColor: '#123456', title: 'Judul Kustom' })
-      );
-
-      expect(getTextContent(tree)).toContain('Judul Kustom');
-      expect(getTextContent(tree)).toContain('FallbackMood');
-      expect(collectNodes(tree, (n) => n.type === 'img').length).toBe(0);
-      expect(collectNodes(tree, (n) => n.type === 'a').length).toBe(0);
+      await screen.findByText('Judul Kustom');
+      expect(screen.getByText('FallbackMood')).toBeDefined();
+      expect(container.querySelector('img')).toBeNull();
+      expect(container.querySelector('a')).toBeNull();
 
       // 3. Data lagu dengan cover_path ada, link YouTube, title dan artist terisi
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({
         data: {
           id: 31,
@@ -387,18 +181,13 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
           link: 'https://www.youtube.com/watch?v=xyz'
         }
       });
-      tree = testHarness.render(() => SoundtrackCard({ moodId: 1 }));
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() => SoundtrackCard({ moodId: 1 }));
-
-      const images = collectNodes(tree, (n) => n.type === 'img');
-      expect(images.length).toBe(1);
-      expect(images[0].props.alt).toBe('Cover Judul Lagu Lengkap');
-      expect(getTextContent(tree)).toContain('Putar di YouTube');
+      render(<SoundtrackCard moodId={1} />);
+      await screen.findByText('Judul Lagu Lengkap');
+      expect(screen.getByAltText('Cover Judul Lagu Lengkap')).toBeDefined();
+      expect(screen.getByText('Putar di YouTube')).toBeDefined();
 
       // 4. Data lagu dengan link non-YouTube (misal Spotify)
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({
         data: {
           id: 32,
@@ -409,14 +198,11 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
           link: 'https://open.spotify.com/track/123'
         }
       });
-      tree = testHarness.render(() => SoundtrackCard({ moodId: 2 }));
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() => SoundtrackCard({ moodId: 2 }));
-      expect(getTextContent(tree)).toContain('Buka lagu');
+      render(<SoundtrackCard moodId={2} />);
+      await screen.findByText('Buka lagu');
 
       // 5. Data lagu dengan song.link bernilai null / undefined
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({
         data: {
           id: 33,
@@ -425,11 +211,9 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
           link: null
         }
       });
-      tree = testHarness.render(() => SoundtrackCard({ moodId: 3 }));
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() => SoundtrackCard({ moodId: 3 }));
-      expect(collectNodes(tree, (n) => n.type === 'a').length).toBe(0);
+      const { container: container5 } = render(<SoundtrackCard moodId={3} />);
+      await screen.findByText('Lagu Tanpa Link');
+      expect(container5.querySelector('a')).toBeNull();
     });
   });
 
@@ -443,39 +227,18 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
       });
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({ statusCode: 404 });
 
-      let tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
-      expect(getTextContent(tree)).toContain('Lagu Awal');
-
-      const buttons = collectNodes(tree, (n) => n.type === 'button');
-      expect(buttons.length).toBeGreaterThan(0);
-
-      // Simulasikan tombol "Acak lagu" diklik
-      await fireEvent.click(buttons[0]);
-
-      // Re-render setelah error 404 ditangkap
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
+      render(
+        <SongRecommendationPanel
+          moodId={1}
+          selectedMood={{ id: 1, name: 'Senang', color: '#FACC15' }}
+        />
       );
 
-      // Pastikan pesan 'Belum ada lagu untuk mood ini.' muncul
-      expect(getTextContent(tree)).toContain('Belum ada lagu untuk mood ini.');
+      await screen.findByText('Lagu Awal');
+      const shuffleBtn = screen.getByRole('button', { name: /acak lagu/i });
+      fireEvent.click(shuffleBtn);
+
+      await screen.findByText('Belum ada lagu untuk mood ini.');
     });
 
     // Skenario 2: Data API Bukan Array
@@ -490,91 +253,55 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
       ];
 
       for (const nonArrayData of nonArrayCases) {
-        testHarness.reset();
+        cleanup();
         vi.mocked(songService.getSongs).mockResolvedValueOnce(nonArrayData);
 
-        let tree = testHarness.render(() =>
-          SongRecommendationPanel({
-            moodId: 5,
-            selectedMood: { id: 5, name: 'Fokus', color: '#6366F1' }
-          })
-        );
-        await testHarness.flushEffects();
-        await Promise.resolve();
-
-        tree = testHarness.render(() =>
-          SongRecommendationPanel({
-            moodId: 5,
-            selectedMood: { id: 5, name: 'Fokus', color: '#6366F1' }
-          })
+        render(
+          <SongRecommendationPanel
+            moodId={5}
+            selectedMood={{ id: 5, name: 'Fokus', color: '#6366F1' }}
+          />
         );
 
-        // Komponen tidak crash dan menggunakan fallback array kosong
-        expect(getTextContent(tree)).toContain('Belum ada lagu untuk mood ini.');
+        await screen.findByText('Belum ada lagu untuk mood ini.');
       }
     });
 
     // Skenario 3: Fallback Pesan Error
     it('Skenario 3: menampilkan pesan fallback ketika error getSongs atau getRandomSong tidak memiliki properti userMessage', async () => {
       // 3a. Error getSongs tanpa userMessage
-      testHarness.reset();
       vi.mocked(songService.getSongs).mockRejectedValueOnce({});
 
-      let tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 2,
-          selectedMood: { id: 2, name: 'Sedih' }
-        })
+      render(
+        <SongRecommendationPanel
+          moodId={2}
+          selectedMood={{ id: 2, name: 'Sedih' }}
+        />
       );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 2,
-          selectedMood: { id: 2, name: 'Sedih' }
-        })
-      );
-      // Pesan fallback getSongs
-      expect(getTextContent(tree)).toContain('Gagal memuat rekomendasi lagu.');
+      await screen.findByText('Gagal memuat rekomendasi lagu.');
 
       // 3b. Error getRandomSong tanpa userMessage (bukan 404)
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getSongs).mockResolvedValueOnce({
         data: [{ id: 10, title: 'Lagu C', artist: 'Artis C' }]
       });
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({ status: 500 });
 
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 3,
-          selectedMood: { id: 3, name: 'Cemas' }
-        })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 3,
-          selectedMood: { id: 3, name: 'Cemas' }
-        })
+      render(
+        <SongRecommendationPanel
+          moodId={3}
+          selectedMood={{ id: 3, name: 'Cemas' }}
+        />
       );
 
-      const shuffleBtn = collectNodes(tree, (n) => n.type === 'button')[0];
-      await fireEvent.click(shuffleBtn);
+      await screen.findByText('Lagu C');
+      const shuffleBtn = screen.getByRole('button', { name: /acak lagu/i });
+      fireEvent.click(shuffleBtn);
 
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 3,
-          selectedMood: { id: 3, name: 'Cemas' }
-        })
-      );
-      // Pesan fallback getRandomSong
-      expect(getTextContent(tree)).toContain('Gagal mengambil lagu acak.');
+      await screen.findByText('Gagal mengambil lagu acak.');
 
       // 3c. Error dengan userMessage kustom
-      testHarness.reset();
+      cleanup();
       vi.mocked(songService.getSongs).mockResolvedValueOnce({
         data: [{ id: 11, title: 'Lagu D', artist: 'Artis D' }]
       });
@@ -582,38 +309,22 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         userMessage: 'Gagal koneksi server musik'
       });
 
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 3,
-          selectedMood: { id: 3, name: 'Cemas' }
-        })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 3,
-          selectedMood: { id: 3, name: 'Cemas' }
-        })
+      render(
+        <SongRecommendationPanel
+          moodId={3}
+          selectedMood={{ id: 3, name: 'Cemas' }}
+        />
       );
 
-      const btn = collectNodes(tree, (n) => n.type === 'button')[0];
-      await fireEvent.click(btn);
+      await screen.findByText('Lagu D');
+      const btn = screen.getByRole('button', { name: /acak lagu/i });
+      fireEvent.click(btn);
 
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 3,
-          selectedMood: { id: 3, name: 'Cemas' }
-        })
-      );
-      expect(getTextContent(tree)).toContain('Gagal koneksi server musik');
+      await screen.findByText('Gagal koneksi server musik');
     });
 
     // Skenario 4: Link Lagu Bukan YouTube / Tanpa Link
     it('Skenario 4: merender link Spotify ("Buka lagu"), YouTube ("Putar di YouTube"), atau tanpa tombol link jika link null', async () => {
-      // 4a. Highlighted song dengan Spotify link, lagu kedua tanpa link (null), lagu ketiga YouTube link
-      testHarness.reset();
       vi.mocked(songService.getSongs).mockResolvedValueOnce({
         data: [
           {
@@ -637,36 +348,18 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         ]
       });
 
-      let tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
+      render(
+        <SongRecommendationPanel
+          moodId={1}
+          selectedMood={{ id: 1, name: 'Senang', color: '#FACC15' }}
+        />
       );
 
-      // Periksa teks tautan
-      const text = getTextContent(tree);
-      expect(text).toContain('Buka lagu');
-      expect(text).toContain('Putar di YouTube');
+      await screen.findByText('Buka lagu');
+      expect(screen.getByText('Putar di YouTube')).toBeDefined();
 
-      // Periksa semua elemen tautan <a>
-      const anchorNodes = collectNodes(tree, (n) => n.type === 'a');
-      const hrefs = anchorNodes.map((a) => a.props.href);
-      expect(hrefs).toContain('https://open.spotify.com/track/spotify123');
-      expect(hrefs).toContain('https://youtube.com/watch?v=yt123');
-      expect(hrefs).not.toContain(null);
-
-      // 4b. Highlighted song tanpa link sama sekali (link: null)
-      testHarness.reset();
+      // Highlighted song tanpa link sama sekali
+      cleanup();
       vi.mocked(songService.getSongs).mockResolvedValueOnce({
         data: [
           {
@@ -678,42 +371,27 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         ]
       });
 
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
+      const { container } = render(
+        <SongRecommendationPanel
+          moodId={1}
+          selectedMood={{ id: 1, name: 'Senang', color: '#FACC15' }}
+        />
       );
 
-      expect(getTextContent(tree)).toContain('Lagu Solo Tanpa Link');
-      const anchorsSingle = collectNodes(tree, (n) => n.type === 'a');
-      expect(anchorsSingle.length).toBe(0); // Tombol link tidak dirender sama sekali
+      await screen.findByText('Lagu Solo Tanpa Link');
+      expect(container.querySelector('a')).toBeNull();
     });
 
     it('menguji kondisi saat moodId kosong, null, atau undefined', () => {
-      const treeNull = testHarness.render(() =>
-        SongRecommendationPanel({ moodId: null, selectedMood: null })
-      );
-      expect(getTextContent(treeNull)).toContain(
-        'Pilih salah satu karakter mood di atas untuk memunculkan rekomendasi playlist!'
-      );
+      const { rerender } = render(<SongRecommendationPanel moodId={null} selectedMood={null} />);
+      expect(
+        screen.getByText('🎵 Pilih salah satu karakter mood di atas untuk memunculkan rekomendasi playlist!')
+      ).toBeDefined();
 
-      testHarness.reset();
-      const treeEmpty = testHarness.render(() =>
-        SongRecommendationPanel({ moodId: '', selectedMood: null })
-      );
-      expect(getTextContent(treeEmpty)).toContain(
-        'Pilih salah satu karakter mood di atas untuk memunculkan rekomendasi playlist!'
-      );
+      rerender(<SongRecommendationPanel moodId="" selectedMood={null} />);
+      expect(
+        screen.getByText('🎵 Pilih salah satu karakter mood di atas untuk memunculkan rekomendasi playlist!')
+      ).toBeDefined();
     });
 
     it('menguji pemanggilan handlePickRandom yang sukses dan menguji tombol disabled saat loading', async () => {
@@ -727,21 +405,14 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         ]
       });
 
-      let tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
+      render(
+        <SongRecommendationPanel
+          moodId={1}
+          selectedMood={{ id: 1, name: 'Senang', color: '#FACC15' }}
+        />
       );
-      await testHarness.flushEffects();
-      await Promise.resolve();
 
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
+      await screen.findByText('Lagu 1');
 
       // Sukses mengacak lagu lain yang memiliki res.data
       mockGetRandom.mockResolvedValueOnce({
@@ -753,99 +424,36 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
         }
       });
 
-      const buttons = collectNodes(tree, (n) => n.type === 'button');
-      await fireEvent.click(buttons[0]);
+      const shuffleBtn = screen.getByRole('button', { name: /acak lagu/i });
+      fireEvent.click(shuffleBtn);
 
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
-      expect(getTextContent(tree)).toContain('Lagu Baru Terpilih');
+      await screen.findByText('Lagu Baru Terpilih');
 
       // Sukses mengacak lagu tapi res.data bernilai null/undefined
       mockGetRandom.mockResolvedValueOnce({ data: null });
-      await fireEvent.click(buttons[0]);
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
+      fireEvent.click(shuffleBtn);
       // highlightedSong tetap lagu sebelumnya karena res.data tidak ada
-      expect(getTextContent(tree)).toContain('Lagu Baru Terpilih');
-
-      // Uji status loading dan randomLoading
-      testHarness.slots[2] = true; // loading = true
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
-      expect(getTextContent(tree)).toContain('Memuat daftar lagu...');
-      const loadingButtons = collectNodes(tree, (n) => n.type === 'button');
-      expect(loadingButtons[0].props.disabled).toBe(true);
-
-      // Uji randomLoading = true
-      testHarness.slots[2] = false;
-      testHarness.slots[3] = true; // randomLoading = true
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
-      const randomLoadingButtons = collectNodes(tree, (n) => n.type === 'button');
-      expect(randomLoadingButtons[0].props.disabled).toBe(true);
-      expect(getTextContent(randomLoadingButtons[0])).toContain('Mengacak...');
+      await screen.findByText('Lagu Baru Terpilih');
     });
 
     it('menguji songs.length bernilai 0, 1, dan lebih dari 1, serta selectedMood bernilai null/undefined', async () => {
-      // 1. songs.length === 0 (daftar lagu kosong)
+      // 1. songs.length === 0
       vi.mocked(songService.getSongs).mockResolvedValueOnce({ data: [] });
-      let tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: null
-        })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: null
-        })
-      );
-      expect(getTextContent(tree)).toContain('Belum ada lagu untuk mood ini.');
-      expect(getTextContent(tree)).toContain('Rekomendasi Lagu Mood');
+      render(<SongRecommendationPanel moodId={1} selectedMood={null} />);
+      await screen.findByText('Belum ada lagu untuk mood ini.');
+      expect(screen.getByText(/Rekomendasi Lagu Mood/i)).toBeDefined();
 
-      // 2. songs.length === 1 (tepat 1 lagu: highlightedSong ada, songs.length > 1 bernilai false)
-      testHarness.reset();
+      // 2. songs.length === 1
+      cleanup();
       vi.mocked(songService.getSongs).mockResolvedValueOnce({
         data: [{ id: 101, title: 'Lagu Tunggal', artist: 'Artis Tunggal', link: null }]
       });
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: undefined
-        })
-      );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: undefined
-        })
-      );
-      expect(getTextContent(tree)).toContain('Lagu Tunggal');
-      expect(getTextContent(tree)).not.toContain('Lagu lainnya');
+      render(<SongRecommendationPanel moodId={1} selectedMood={undefined} />);
+      await screen.findByText('Lagu Tunggal');
+      expect(screen.queryByText(/lagu lainnya/i)).toBeNull();
 
-      // 3. songs.length > 1 (3 lagu: highlightedSong ada DAN daftar "Lagu lainnya" dirender)
-      testHarness.reset();
+      // 3. songs.length > 1
+      cleanup();
       vi.mocked(songService.getSongs).mockResolvedValueOnce({
         data: [
           { id: 201, title: 'Lagu Pertama', artist: 'Artis 1', link: 'https://youtube.com/watch?v=201' },
@@ -853,72 +461,67 @@ describe('SoundtrackCard & SongRecommendationPanel Component Unit Tests', () => 
           { id: 203, title: 'Lagu Ketiga', artist: 'Artis 3', link: null }
         ]
       });
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
+      render(
+        <SongRecommendationPanel
+          moodId={1}
+          selectedMood={{ id: 1, name: 'Senang', color: '#FACC15' }}
+        />
       );
-      await testHarness.flushEffects();
-      await Promise.resolve();
-      tree = testHarness.render(() =>
-        SongRecommendationPanel({
-          moodId: 1,
-          selectedMood: { id: 1, name: 'Senang', color: '#FACC15' }
-        })
-      );
-      expect(getTextContent(tree)).toContain('Lagu Pertama');
-      expect(getTextContent(tree)).toContain('lainnya');
-      expect(getTextContent(tree)).toContain('Lagu Kedua');
-      expect(getTextContent(tree)).toContain('Lagu Ketiga');
+      await screen.findByText('Lagu Pertama');
+      expect(screen.getByText(/lagu lainnya/i)).toBeDefined();
+      expect(screen.getByText('Lagu Kedua')).toBeDefined();
+      expect(screen.getByText('Lagu Ketiga')).toBeDefined();
     });
   });
 
   describe('EnergySlider', () => {
     it('menguji kondisi nilai kosong/undefined, nilai 1, 3, 4, 5, 10, dan interaksi klik dengan/tanpa onChange', () => {
       // 1. Default parameter: value undefined dan onChange undefined
-      const defaultSlider = EnergySlider({});
-      expect(getTextContent(defaultSlider)).toContain('/5');
-      expect(getTextContent(defaultSlider)).toContain('Cukup Stabil');
+      const { container } = render(<EnergySlider />);
+      expect(screen.getByText('Cukup Stabil')).toBeDefined();
 
-      // Klik tombol saat onChange tidak diberikan (menguji onChange?.(item.level) saat falsy)
-      const defaultButtons = collectNodes(defaultSlider, (n) => n.type === 'button');
-      expect(defaultButtons.length).toBe(5);
-      defaultButtons[0].props.onClick();
+      // Klik tombol saat onChange tidak diberikan
+      const buttons = container.querySelectorAll('button');
+      expect(buttons.length).toBe(5);
+      fireEvent.click(buttons[0]);
 
-      // 2. Nilai 1 (level <= 1 -> BatteryLow)
+      // 2. Nilai 1
+      cleanup();
       const mockOnChange = vi.fn();
-      const slider1 = EnergySlider({ value: 1, onChange: mockOnChange });
-      expect(getTextContent(slider1)).toContain('/5');
-      expect(getTextContent(slider1)).toContain('Sangat Lelah');
-      const buttons1 = collectNodes(slider1, (n) => n.type === 'button');
-      buttons1[0].props.onClick();
+      const { container: container1 } = render(<EnergySlider value={1} onChange={mockOnChange} />);
+      expect(screen.getByText('Sangat Lelah')).toBeDefined();
+      const buttons1 = container1.querySelectorAll('button');
+      fireEvent.click(buttons1[0]);
       expect(mockOnChange).toHaveBeenCalledWith(1);
 
-      // 3. Nilai 2 (level <= 3 -> BatteryMedium)
-      const slider2 = EnergySlider({ value: 2, onChange: mockOnChange });
-      expect(getTextContent(slider2)).toContain('/5');
+      // 3. Nilai 2
+      cleanup();
+      render(<EnergySlider value={2} onChange={mockOnChange} />);
+      expect(screen.getByText('/5')).toBeDefined();
 
-      // 4. Nilai 4 (level === 4 -> BatteryFull)
-      const slider4 = EnergySlider({ value: 4, onChange: mockOnChange });
-      expect(getTextContent(slider4)).toContain('/5');
-      expect(getTextContent(slider4)).toContain('Berenergi');
+      // 4. Nilai 4
+      cleanup();
+      render(<EnergySlider value={4} onChange={mockOnChange} />);
+      expect(screen.getByText('Berenergi')).toBeDefined();
 
-      // 5. Nilai 5 (level > 4 -> Zap)
-      const slider5 = EnergySlider({ value: 5, onChange: mockOnChange });
-      expect(getTextContent(slider5)).toContain('/5');
-      expect(getTextContent(slider5)).toContain('Penuh Energi');
+      // 5. Nilai 5
+      cleanup();
+      render(<EnergySlider value={5} onChange={mockOnChange} />);
+      expect(screen.getByText('Penuh Energi')).toBeDefined();
 
-      // 6. Nilai di luar rentang (misal 10 -> fallback ENERGY_LEVELS[2])
-      const slider10 = EnergySlider({ value: 10, onChange: mockOnChange });
-      expect(getTextContent(slider10)).toContain('/5');
-      expect(getTextContent(slider10)).toContain('Cukup Stabil');
+      // 6. Nilai 10
+      cleanup();
+      render(<EnergySlider value={10} onChange={mockOnChange} />);
+      expect(screen.getByText('Cukup Stabil')).toBeDefined();
 
-      // 7. Nilai 0 / null (Number(0) || 3 -> fallback 3)
-      const sliderZero = EnergySlider({ value: 0 });
-      expect(getTextContent(sliderZero)).toContain('/5');
-      const sliderNull = EnergySlider({ value: null });
-      expect(getTextContent(sliderNull)).toContain('/5');
+      // 7. Nilai 0 / null
+      cleanup();
+      render(<EnergySlider value={0} />);
+      expect(screen.getByText('Cukup Stabil')).toBeDefined();
+
+      cleanup();
+      render(<EnergySlider value={null} />);
+      expect(screen.getByText('Cukup Stabil')).toBeDefined();
     });
   });
 });

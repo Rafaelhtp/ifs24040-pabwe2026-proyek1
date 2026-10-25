@@ -20,7 +20,9 @@ export default {
         denim: {
           DEFAULT: 'var(--color-denim)',
           dark: 'var(--color-denim-dark)',
-          light: '#EBF4FC'
+          light: '#EBF4FC',
+          deep: '#193F68',
+          rich: '#3875B2'
         },
         pistachio: {
           DEFAULT: 'var(--color-pistachio)',

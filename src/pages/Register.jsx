@@ -8,6 +8,7 @@ import MoodBlob from '../components/mood/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
 import { isValidEmail, isValidPassword } from '../utils/validators';
 import { ROUTES } from '../constants/routes';
+import { COLORS } from '../constants/colors';
 
 export default function Register() {
   usePageTitle('Daftar Akun Baru');
@@ -67,7 +68,7 @@ export default function Register() {
     <div className="min-h-[82vh] flex items-center justify-center py-6">
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 bg-white rounded-3xl border border-frost-border shadow-soft-lg overflow-hidden">
         {/* Panel Ilustrasi Kiri */}
-        <div className="md:col-span-5 bg-gradient-to-br from-denim via-denim-dark to-[#193F68] p-8 text-white flex flex-col justify-between">
+        <div className="md:col-span-5 bg-gradient-to-br from-denim via-denim-dark to-denim-deep p-8 text-white flex flex-col justify-between">
           <div>
             <span className="inline-block px-3 py-1 rounded-full bg-pistachio text-ink text-xs font-extrabold mb-4">
               ✨ Mulai Hari Ini
@@ -81,8 +82,8 @@ export default function Register() {
           </div>
 
           <div className="my-8 flex items-center justify-center gap-3">
-            <MoodBlob moodName="semangat" color="#F97316" size="lg" className="mood-blob-float" />
-            <MoodBlob moodName="senang" color="#FACC15" size="md" className="mood-blob-float" />
+            <MoodBlob moodName="semangat" color={COLORS.PRESET.ORANGE} size="lg" className="mood-blob-float" />
+            <MoodBlob moodName="senang" color={COLORS.PRESET.YELLOW} size="md" className="mood-blob-float" />
           </div>
 
           <p className="text-xs text-white/95">

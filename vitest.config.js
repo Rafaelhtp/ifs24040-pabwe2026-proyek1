@@ -22,7 +22,7 @@ export default defineConfig({
   test: {
     globals: true,
     include: ['src/**/*.test.{js,jsx}'],
-    environment: 'node',
+    environment: 'jsdom',
     fileParallelism: false,
     coverage: {
       provider: 'v8',

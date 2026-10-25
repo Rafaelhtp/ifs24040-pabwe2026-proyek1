@@ -8,6 +8,7 @@ import MoodBlob from '../components/mood/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
 import { isValidEmail, isValidPassword } from '../utils/validators';
 import { ROUTES } from '../constants/routes';
+import { COLORS } from '../constants/colors';
 
 export default function Login() {
   usePageTitle('Masuk Akun');
@@ -81,7 +82,7 @@ export default function Login() {
     <div className="min-h-[82vh] flex items-center justify-center py-6">
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 bg-white rounded-3xl border border-frost-border shadow-soft-lg overflow-hidden">
         {/* Panel Ilustrasi Kiri (Split-Screen Dekoratif) */}
-        <div className="md:col-span-5 bg-gradient-to-br from-denim via-denim-dark to-[#193F68] p-8 text-white flex flex-col justify-between relative overflow-hidden">
+        <div className="md:col-span-5 bg-gradient-to-br from-denim via-denim-dark to-denim-deep p-8 text-white flex flex-col justify-between relative overflow-hidden">
           <div className="relative z-10">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pistachio text-ink text-xs font-extrabold mb-4">
               <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
@@ -97,9 +98,9 @@ export default function Login() {
 
           {/* Dekorasi Karakter Blob Mengambang */}
           <div className="my-8 flex items-center justify-center gap-3 relative z-10">
-            <MoodBlob moodName="senang" color="#FACC15" size="lg" className="mood-blob-float" />
-            <MoodBlob moodName="tenang" color="#60A5FA" size="md" className="mood-blob-float" />
-            <MoodBlob moodName="semangat" color="#F97316" size="sm" className="mood-blob-float" />
+            <MoodBlob moodName="senang" color={COLORS.PRESET.YELLOW} size="lg" className="mood-blob-float" />
+            <MoodBlob moodName="tenang" color={COLORS.PRESET.BLUE} size="md" className="mood-blob-float" />
+            <MoodBlob moodName="semangat" color={COLORS.PRESET.ORANGE} size="sm" className="mood-blob-float" />
           </div>
 
           <p className="text-xs text-white font-medium relative z-10">
@@ -119,7 +120,7 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Tombol 1-Klik Masuk dengan Akun Demo (Pistachio dengan Teks Gelap #1E293B) */}
+          {/* Tombol 1-Klik Masuk dengan Akun Demo (Pistachio dengan Teks Gelap Ink) */}
           <div className="mb-6">
             <button
               type="button"

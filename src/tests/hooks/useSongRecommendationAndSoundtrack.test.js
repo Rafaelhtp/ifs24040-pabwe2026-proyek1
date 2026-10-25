@@ -1,79 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-const rt = {
-  slots: [],
-  cursor: 0,
-  effects: [],
-  reset() {
-    this.slots = [];
-    this.cursor = 0;
-    this.effects = [];
-  },
-  render(fn) {
-    this.cursor = 0;
-    this.effects = [];
-    const res = fn();
-    for (const eff of this.effects) {
-      eff();
-    }
-    return res;
-  },
-  read(fn) {
-    this.cursor = 0;
-    this.effects = [];
-    return fn();
-  }
-};
-
-vi.mock('react', () => ({
-  useState: (initial) => {
-    const idx = rt.cursor++;
-    if (!(idx in rt.slots)) {
-      rt.slots[idx] = typeof initial === 'function' ? initial() : initial;
-    }
-    const setState = (val) => {
-      rt.slots[idx] = typeof val === 'function' ? val(rt.slots[idx]) : val;
-    };
-    return [rt.slots[idx], setState];
-  },
-  useEffect: (cb) => {
-    rt.effects.push(cb);
-  },
-  useCallback: (cb) => cb
-}));
+import { renderHook, act, waitFor } from '@testing-library/react';
+import useSongRecommendation from '../../hooks/useSongRecommendation';
+import useRandomSong from '../../hooks/useRandomSong';
+import useSoundtrack from '../../hooks/useSoundtrack';
+import * as songService from '../../services/songService';
 
 vi.mock('../../services/songService', () => ({
   getSongs: vi.fn(),
   getRandomSong: vi.fn()
 }));
 
-import useSongRecommendation from '../../hooks/useSongRecommendation';
-import useSoundtrack from '../../hooks/useSoundtrack';
-import * as songService from '../../services/songService';
-
-describe('useSongRecommendation and useSoundtrack hooks', () => {
+describe('useSongRecommendation, useRandomSong, and useSoundtrack hooks', () => {
   beforeEach(() => {
-    rt.reset();
     vi.mocked(songService.getSongs).mockReset();
     vi.mocked(songService.getRandomSong).mockReset();
     vi.clearAllMocks();
   });
 
   describe('useSongRecommendation', () => {
-    it('returns empty list and null highlightedSong when moodId is falsy', async () => {
-      let state = rt.render(() => useSongRecommendation(null));
-      expect(state.songs).toEqual([]);
-      expect(state.highlightedSong).toBeNull();
-      await state.handlePickRandom();
-      expect(songService.getRandomSong).not.toHaveBeenCalled();
+    it('returns empty list when moodId is falsy', async () => {
+      const { result, rerender } = renderHook(({ id }) => useSongRecommendation(id), {
+        initialProps: { id: null }
+      });
+      expect(result.current.songs).toEqual([]);
+      expect(result.current.loading).toBe(false);
 
-      rt.reset();
-      state = rt.render(() => useSongRecommendation(''));
-      expect(state.songs).toEqual([]);
-      expect(state.highlightedSong).toBeNull();
+      rerender({ id: '' });
+      expect(result.current.songs).toEqual([]);
     });
 
-    it('loads songs and highlightedSong successfully when moodId is provided', async () => {
+    it('loads songs successfully when moodId is provided', async () => {
       vi.mocked(songService.getSongs).mockResolvedValueOnce({
         data: [
           { id: 1, title: 'Lagu 1' },
@@ -81,77 +37,101 @@ describe('useSongRecommendation and useSoundtrack hooks', () => {
         ]
       });
 
-      let state = rt.render(() => useSongRecommendation(1));
-      await Promise.resolve();
-      state = rt.read(() => useSongRecommendation(1));
+      const { result } = renderHook(() => useSongRecommendation(1));
 
-      expect(state.songs.length).toBe(2);
-      expect(state.highlightedSong).toEqual({ id: 1, title: 'Lagu 1' });
-      expect(state.message).toBeNull();
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+        expect(result.current.songs.length).toBe(2);
+      });
+      expect(result.current.songs[0].title).toBe('Lagu 1');
+      expect(result.current.message).toBeNull();
     });
 
-    it('sets empty state message when list is empty', async () => {
+    it('sets empty state message when list is empty or not an array', async () => {
       vi.mocked(songService.getSongs).mockResolvedValueOnce({ data: [] });
 
-      let state = rt.render(() => useSongRecommendation(1));
-      await Promise.resolve();
-      state = rt.read(() => useSongRecommendation(1));
+      const { result } = renderHook(() => useSongRecommendation(1));
 
-      expect(state.songs).toEqual([]);
-      expect(state.highlightedSong).toBeNull();
-      expect(state.message).toBe('Belum ada lagu untuk mood ini.');
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+      expect(result.current.songs).toEqual([]);
+      expect(result.current.message).toBe('Belum ada lagu untuk mood ini.');
     });
 
     it('handles getSongs errors with userMessage or fallback', async () => {
       vi.mocked(songService.getSongs).mockRejectedValueOnce({ userMessage: 'Error dari API' });
-      let state = rt.render(() => useSongRecommendation(1));
-      await Promise.resolve();
-      state = rt.read(() => useSongRecommendation(1));
-      expect(state.message).toBe('Error dari API');
+      const { result, rerender } = renderHook(({ id }) => useSongRecommendation(id), {
+        initialProps: { id: 1 }
+      });
 
-      rt.reset();
+      await waitFor(() => {
+        expect(result.current.message).toBe('Error dari API');
+      });
+
       vi.mocked(songService.getSongs).mockRejectedValueOnce({});
-      state = rt.render(() => useSongRecommendation(1));
-      await Promise.resolve();
-      state = rt.read(() => useSongRecommendation(1));
-      expect(state.message).toBe('Gagal memuat rekomendasi lagu.');
+      rerender({ id: 2 });
+
+      await waitFor(() => {
+        expect(result.current.message).toBe('Gagal memuat rekomendasi lagu.');
+      });
+    });
+  });
+
+  describe('useRandomSong', () => {
+    it('returns null and does not fetch when selectedMoodId is falsy', async () => {
+      const { result } = renderHook(() => useRandomSong(null));
+      let picked;
+      await act(async () => {
+        picked = await result.current.handlePickRandomSong();
+      });
+      expect(picked).toBeNull();
+      expect(songService.getRandomSong).not.toHaveBeenCalled();
     });
 
-    it('handles handlePickRandom success and errors (404 and general)', async () => {
-      vi.mocked(songService.getSongs).mockResolvedValue({ data: [{ id: 1 }] });
+    it('fetches random song successfully and updates randomSong state', async () => {
+      vi.mocked(songService.getRandomSong).mockResolvedValueOnce({
+        data: { id: 99, title: 'Lagu Acak' }
+      });
 
-      let state = rt.render(() => useSongRecommendation(1));
-      await Promise.resolve();
+      const { result } = renderHook(() => useRandomSong(1));
 
-      // Sukses update highlightedSong
-      vi.mocked(songService.getRandomSong).mockResolvedValueOnce({ data: { id: 99, title: 'Acak' } });
-      await state.handlePickRandom();
-      state = rt.read(() => useSongRecommendation(1));
-      expect(state.highlightedSong).toEqual({ id: 99, title: 'Acak' });
+      await act(async () => {
+        await result.current.handlePickRandomSong();
+      });
 
-      // Sukses tanpa res.data
-      vi.mocked(songService.getRandomSong).mockResolvedValueOnce({ data: null });
-      await state.handlePickRandom();
-      state = rt.read(() => useSongRecommendation(1));
-      expect(state.highlightedSong).toEqual({ id: 99, title: 'Acak' });
+      expect(result.current.randomSong).toEqual({ id: 99, title: 'Lagu Acak' });
+      expect(result.current.randomError).toBeNull();
+    });
 
-      // Error 404
+    it('handles 404 error when picking random song', async () => {
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({ statusCode: 404 });
-      await state.handlePickRandom();
-      state = rt.read(() => useSongRecommendation(1));
-      expect(state.message).toBe('Belum ada lagu untuk mood ini.');
 
-      // Error umum dengan userMessage
-      vi.mocked(songService.getRandomSong).mockRejectedValueOnce({ userMessage: 'Gagal acak custom' });
-      await state.handlePickRandom();
-      state = rt.read(() => useSongRecommendation(1));
-      expect(state.message).toBe('Gagal acak custom');
+      const { result } = renderHook(() => useRandomSong(1));
 
-      // Error umum tanpa userMessage
+      await act(async () => {
+        await result.current.handlePickRandomSong();
+      });
+
+      expect(result.current.randomSong).toBeNull();
+      expect(result.current.randomError).toBe('Belum ada lagu untuk mood ini.');
+    });
+
+    it('handles generic error with userMessage and fallback without userMessage', async () => {
+      vi.mocked(songService.getRandomSong).mockRejectedValueOnce({ userMessage: 'Koneksi terputus' });
+
+      const { result } = renderHook(() => useRandomSong(1));
+
+      await act(async () => {
+        await result.current.handlePickRandomSong();
+      });
+      expect(result.current.randomError).toBe('Koneksi terputus');
+
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({});
-      await state.handlePickRandom();
-      state = rt.read(() => useSongRecommendation(1));
-      expect(state.message).toBe('Gagal mengambil lagu acak.');
+      await act(async () => {
+        await result.current.handlePickRandomSong();
+      });
+      expect(result.current.randomError).toBe('Gagal mengambil lagu acak.');
     });
   });
 
@@ -161,48 +141,50 @@ describe('useSongRecommendation and useSoundtrack hooks', () => {
         data: { id: 10, title: 'Soundtrack Mood' }
       });
 
-      let state = rt.render(() => useSoundtrack(1));
-      await Promise.resolve();
-      state = rt.read(() => useSoundtrack(1));
+      const { result, rerender } = renderHook(({ id }) => useSoundtrack(id), {
+        initialProps: { id: 1 }
+      });
 
-      expect(state.song).toEqual({ id: 10, title: 'Soundtrack Mood' });
-      expect(state.loading).toBe(false);
-      expect(state.notFound).toBe(false);
-      expect(state.errorMsg).toBeNull();
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.song).toEqual({ id: 10, title: 'Soundtrack Mood' });
+      expect(result.current.notFound).toBe(false);
+      expect(result.current.errorMsg).toBeNull();
 
       // Refetch with null data
-      rt.reset();
       vi.mocked(songService.getRandomSong).mockResolvedValueOnce({ data: null });
-      state = rt.render(() => useSoundtrack(1));
-      await Promise.resolve();
-      state = rt.read(() => useSoundtrack(1));
-      expect(state.song).toBeNull();
+      rerender({ id: 2 });
+      await waitFor(() => {
+        expect(result.current.song).toBeNull();
+      });
     });
 
     it('handles 404 and general error with userMessage or fallback', async () => {
       // 404
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({ statusCode: 404 });
-      let state = rt.render(() => useSoundtrack(1));
-      await Promise.resolve();
-      state = rt.read(() => useSoundtrack(1));
-      expect(state.notFound).toBe(true);
-      expect(state.song).toBeNull();
+      const { result, rerender } = renderHook(({ id }) => useSoundtrack(id), {
+        initialProps: { id: 1 }
+      });
+      await waitFor(() => {
+        expect(result.current.notFound).toBe(true);
+      });
+      expect(result.current.song).toBeNull();
 
       // General error with userMessage
-      rt.reset();
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({ userMessage: 'Gagal spesifik' });
-      state = rt.render(() => useSoundtrack(1));
-      await Promise.resolve();
-      state = rt.read(() => useSoundtrack(1));
-      expect(state.errorMsg).toBe('Gagal spesifik');
+      rerender({ id: 2 });
+      await waitFor(() => {
+        expect(result.current.errorMsg).toBe('Gagal spesifik');
+      });
 
       // General error without userMessage
-      rt.reset();
       vi.mocked(songService.getRandomSong).mockRejectedValueOnce({});
-      state = rt.render(() => useSoundtrack(1));
-      await Promise.resolve();
-      state = rt.read(() => useSoundtrack(1));
-      expect(state.errorMsg).toBe('Gagal mengambil lagu acak');
+      rerender({ id: 3 });
+      await waitFor(() => {
+        expect(result.current.errorMsg).toBe('Gagal mengambil lagu acak');
+      });
     });
   });
 });

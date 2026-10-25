@@ -1,13 +1,40 @@
-// Komponen navigasi halaman (Pagination)
+// Komponen navigasi halaman (Pagination) dengan ellipsis (...) untuk daftar halaman panjang
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+export function getPaginationItems(page, totalPages) {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const items = [];
+  const startPage = Math.max(2, page - 1);
+  const endPage = Math.min(totalPages - 1, page + 1);
+
+  items.push(1);
+
+  if (startPage > 2) {
+    items.push('ellipsis-left');
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    items.push(i);
+  }
+
+  if (endPage < totalPages - 1) {
+    items.push('ellipsis-right');
+  }
+
+  items.push(totalPages);
+  return items;
+}
 
 export default function Pagination({ page = 1, limit = 10, total = 0, onPageChange }) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   if (totalPages <= 1) return null;
 
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const pageItems = getPaginationItems(page, totalPages);
 
   return (
     <nav
@@ -31,21 +58,34 @@ export default function Pagination({ page = 1, limit = 10, total = 0, onPageChan
           <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Sebelumnya</span>
         </button>
-        {pages.map((pageNum) => (
-          <button
-            key={pageNum}
-            type="button"
-            onClick={() => onPageChange?.(pageNum)}
-            aria-current={pageNum === page ? 'page' : undefined}
-            className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-colors ${
-              pageNum === page
-                ? 'bg-denim text-white shadow-xs'
-                : 'text-ink hover:bg-frost border border-transparent'
-            }`}
-          >
-            {pageNum}
-          </button>
-        ))}
+        {pageItems.map((item) => {
+          if (typeof item === 'string') {
+            return (
+              <span
+                key={item}
+                aria-hidden="true"
+                className="w-8 h-8 flex items-center justify-center text-xs font-bold text-ink-soft select-none"
+              >
+                ...
+              </span>
+            );
+          }
+          return (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onPageChange?.(item)}
+              aria-current={item === page ? 'page' : undefined}
+              className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-colors ${
+                item === page
+                  ? 'bg-denim text-white shadow-xs'
+                  : 'text-ink hover:bg-frost border border-transparent'
+              }`}
+            >
+              {item}
+            </button>
+          );
+        })}
         <button
           type="button"
           onClick={() => onPageChange?.(page + 1)}

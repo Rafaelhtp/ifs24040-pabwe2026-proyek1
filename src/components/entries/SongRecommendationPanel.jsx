@@ -1,20 +1,25 @@
 // Panel rekomendasi lagu otomatis berdasarkan mood yang dipilih di EntryForm
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Shuffle, ExternalLink, Disc3 } from 'lucide-react';
 import MoodBlob from '../mood/MoodBlob';
 import useSongRecommendation from '../../hooks/useSongRecommendation';
+import useRandomSong from '../../hooks/useRandomSong';
 import { getSongLinkLabel } from '../../utils/songUtils';
 
 export default function SongRecommendationPanel({ moodId, selectedMood }) {
+  const { songs, loading, message } = useSongRecommendation(moodId);
   const {
-    songs,
-    highlightedSong,
-    loading,
+    randomSong,
+    setRandomSong,
     randomLoading,
-    message,
-    handlePickRandom
-  } = useSongRecommendation(moodId);
+    randomError,
+    handlePickRandomSong
+  } = useRandomSong(moodId);
+
+  useEffect(() => {
+    setRandomSong(null);
+  }, [moodId, setRandomSong]);
 
   if (!moodId) {
     return (
@@ -25,6 +30,9 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) {
       </div>
     );
   }
+
+  const highlightedSong = randomSong || songs[0] || null;
+  const activeMessage = randomError || message;
 
   return (
     <div className="bg-frost/65 border-2 border-frost-border rounded-3xl p-5 transition-all">
@@ -44,7 +52,7 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) {
 
         <button
           type="button"
-          onClick={handlePickRandom}
+          onClick={handlePickRandomSong}
           disabled={randomLoading || loading || songs.length === 0}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-pistachio hover:bg-pistachio-dark text-ink text-xs font-extrabold shadow-2xs transition-colors disabled:opacity-50"
         >
@@ -54,8 +62,8 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) {
       </div>
 
       {loading && <p className="text-xs font-medium text-ink-soft py-3">Memuat daftar lagu...</p>}
-      {!loading && message && <p className="text-xs text-ink-soft font-bold py-2">{message}</p>}
-      {!loading && !message && (
+      {!loading && activeMessage && <p className="text-xs text-ink-soft font-bold py-2">{activeMessage}</p>}
+      {!loading && !activeMessage && (
         <>
           {highlightedSong && (
             <div className="bg-white rounded-2xl p-4 border border-frost-border shadow-2xs flex flex-wrap items-center justify-between gap-3 mb-3">

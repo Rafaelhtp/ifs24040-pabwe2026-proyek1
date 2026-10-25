@@ -1,4 +1,4 @@
-// Menggunakan localStorage untuk persistensi. Di lingkungan produksi tingkat lanjut, disarankan menggunakan HttpOnly Cookies.
+// Catatan: Di lingkungan produksi tingkat lanjut, token sebaiknya disimpan di HttpOnly Cookie oleh backend untuk mencegah XSS. Namun untuk keperluan aplikasi ini, localStorage digunakan agar sesi tetap aktif.
 import { TOKEN_STORAGE_KEY } from '../constants/config';
 
 /**

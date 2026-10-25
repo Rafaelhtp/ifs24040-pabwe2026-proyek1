@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Search, Calendar, RotateCcw } from 'lucide-react';
-import MoodBlob from '../mood/MoodBlob';
+import MoodFilter from '../common/MoodFilter';
 
 export default function EntryFilterBar({
   moods = [],
@@ -20,42 +20,12 @@ export default function EntryFilterBar({
       aria-label="Filter Jurnal"
       className="bg-white rounded-3xl border border-frost-border p-5 shadow-soft space-y-4"
     >
-      <div>
-        <span className="block text-xs font-extrabold text-ink mb-2">
-          Filter berdasarkan Mood:
-        </span>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onFilterChange('mood_id', '')}
-            className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold border transition-all ${
-              moodIdParam === ''
-                ? 'bg-denim text-white border-denim shadow-2xs'
-                : 'bg-frost/50 text-ink border-frost-border hover:bg-frost'
-            }`}
-          >
-            Semua Mood
-          </button>
-          {moods.map((mood) => {
-            const isActive = String(moodIdParam) === String(mood.id);
-            return (
-              <button
-                key={mood.id}
-                type="button"
-                onClick={() => onFilterChange('mood_id', isActive ? '' : String(mood.id))}
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl text-xs font-extrabold border transition-all ${
-                  isActive
-                    ? 'bg-frost border-denim ring-2 ring-denim/30 text-denim-dark shadow-2xs'
-                    : 'bg-white border-frost-border text-ink hover:bg-frost/50'
-                }`}
-              >
-                <MoodBlob moodName={mood.name} color={mood.color} size="xs" selected={isActive} />
-                <span>{mood.name}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <MoodFilter
+        moods={moods}
+        selectedMoodId={moodIdParam}
+        onSelectMood={(id) => onFilterChange('mood_id', id)}
+        label="Filter berdasarkan Mood:"
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-frost-border">
         <div>

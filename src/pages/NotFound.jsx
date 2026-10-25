@@ -5,13 +5,14 @@ import { Home } from 'lucide-react';
 import MoodBlob from '../components/mood/MoodBlob';
 import usePageTitle from '../hooks/usePageTitle';
 import { ROUTES } from '../constants/routes';
+import { COLORS } from '../constants/colors';
 
 export default function NotFound() {
   usePageTitle('Halaman Tidak Ditemukan');
 
   return (
     <div className="min-h-[65vh] flex flex-col items-center justify-center text-center px-4">
-      <MoodBlob moodName="cemas" color="#A78BFA" size="xl" className="mood-blob-float mb-4" />
+      <MoodBlob moodName="cemas" color={COLORS.PRESET.PURPLE} size="xl" className="mood-blob-float mb-4" />
       <span className="px-3 py-1 rounded-full bg-pistachio text-ink text-xs font-extrabold mb-2">
         404 Not Found
       </span>

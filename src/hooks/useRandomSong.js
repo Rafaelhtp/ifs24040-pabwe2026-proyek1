@@ -1,35 +1,39 @@
-// Custom hook untuk mengambil satu rekomendasi lagu secara acak berdasarkan mood
+// Custom hook untuk mengambil satu rekomendasi lagu secara acak berdasarkan mood (Single Responsibility)
 import { useState, useCallback } from 'react';
 import { getRandomSong } from '../services/songService';
-import { useToast } from '../components/common/Toast';
 
-/**
- * Mengelola state lagu acak yang sedang dipilih di halaman Koleksi Lagu.
- * @param {string|number} selectedMoodId - ID mood filter aktif
- * @returns {object} State lagu acak dan fungsi pengacak lagu
- */
 export default function useRandomSong(selectedMoodId) {
-  const { showToast } = useToast();
   const [randomSong, setRandomSong] = useState(null);
   const [randomLoading, setRandomLoading] = useState(false);
+  const [randomError, setRandomError] = useState(null);
 
   const handlePickRandomSong = useCallback(async () => {
+    if (!selectedMoodId) return null;
     setRandomLoading(true);
+    setRandomError(null);
     try {
       const res = await getRandomSong(selectedMoodId);
-      setRandomSong(res?.data || null);
+      const songData = res?.data || null;
+      setRandomSong(songData);
+      return songData;
     } catch (err) {
       setRandomSong(null);
-      showToast(err?.userMessage || 'Belum ada lagu untuk mood ini', 'error');
+      const errorMsg =
+        err?.statusCode === 404
+          ? 'Belum ada lagu untuk mood ini.'
+          : err?.userMessage || 'Gagal mengambil lagu acak.';
+      setRandomError(errorMsg);
+      return null;
     } finally {
       setRandomLoading(false);
     }
-  }, [selectedMoodId, showToast]);
+  }, [selectedMoodId]);
 
   return {
     randomSong,
     setRandomSong,
     randomLoading,
+    randomError,
     handlePickRandomSong
   };
 }

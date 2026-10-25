@@ -20,6 +20,7 @@ import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
 import { ROUTES } from '../constants/routes';
 import { DEBOUNCE_DELAY_MS } from '../constants/config';
+import { COLORS } from '../constants/colors';
 
 export default function Songs() {
   usePageTitle('Koleksi Lagu & Playlist');
@@ -61,7 +62,7 @@ export default function Songs() {
       return (
         <EmptyState
           moodName="sedih"
-          moodColor="#6366F1"
+          moodColor={COLORS.PRESET.INDIGO}
           title="Belum Ada Lagu Ditemukan"
           description="Coba pilih kategori mood lain atau tambahkan lagu favoritmu ke dalam koleksi."
           actionLabel={isAuthenticated ? 'Tambah Lagu Baru' : undefined}
