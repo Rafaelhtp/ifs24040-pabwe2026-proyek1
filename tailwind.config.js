@@ -30,6 +30,9 @@ export default {
         ink: {
           DEFAULT: 'var(--color-ink)',
           soft: 'var(--color-ink-soft)'
+        },
+        energy: {
+          4: '#A8BA42'
         }
       },
       fontFamily: {

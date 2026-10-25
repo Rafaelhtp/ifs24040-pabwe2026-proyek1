@@ -1,13 +1,14 @@
 // Komponen Kartu "Soundtrack Mood Kamu Hari Ini" (dipakai di Dashboard & Layar Sukses EntryForm)
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Disc3, Shuffle, ExternalLink, Music2 } from 'lucide-react';
-import { getRandomSong } from '../../services/songService';
 import MoodBlob from '../mood/MoodBlob';
 import { getImageUrl } from '../../utils/imageUrl';
 import { ROUTES } from '../../constants/routes';
 import { DEFAULT_ACCENT_COLOR } from '../../constants/config';
+import useSoundtrack from '../../hooks/useSoundtrack';
+import { hasValidSongLink, getSongLinkLabel } from '../../utils/songUtils';
 
 export default function SoundtrackCard({
   moodId,
@@ -15,37 +16,11 @@ export default function SoundtrackCard({
   moodColor = DEFAULT_ACCENT_COLOR,
   title = 'Soundtrack Mood Kamu Hari Ini'
 }) {
-  const [song, setSong] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [notFound, setNotFound] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
-
-  const fetchRandom = useCallback(async () => {
-    setLoading(true);
-    setNotFound(false);
-    setErrorMsg(null);
-    try {
-      const res = await getRandomSong(moodId);
-      setSong(res?.data || null);
-    } catch (err) {
-      setSong(null);
-      if (err?.statusCode === 404) {
-        setNotFound(true);
-      } else {
-        setErrorMsg(err?.userMessage || 'Gagal mengambil lagu acak');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [moodId]);
-
-  useEffect(() => {
-    fetchRandom().catch(() => {});
-  }, [fetchRandom]);
+  const { song, loading, notFound, errorMsg, fetchRandom } = useSoundtrack(moodId);
 
   const coverUrl = song?.cover_path ? getImageUrl(song.cover_path) : null;
-  const hasLink = Boolean(song?.link && String(song.link).trim());
-  const isYoutube = hasLink && String(song.link).toLowerCase().includes('youtube');
+  const hasLink = hasValidSongLink(song?.link);
+  const songLabel = getSongLinkLabel(song?.link);
 
   return (
     <section
@@ -152,7 +127,7 @@ export default function SoundtrackCard({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-denim hover:bg-denim-dark text-white text-xs font-extrabold shadow-xs transition-colors shrink-0"
             >
-              <span>{isYoutube ? 'Putar di YouTube' : 'Buka lagu'}</span>
+              <span>{songLabel}</span>
               <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
           )}

@@ -16,6 +16,7 @@ import {
 import MoodBlob from './MoodBlob';
 import { formatDateShort } from '../../utils/formatDate';
 import { DEFAULT_ACCENT_COLOR } from '../../constants/config';
+import { COLORS } from '../../constants/colors';
 
 export default function MoodChart({ byMood = [], daily = [] }) {
   const formattedDaily = daily.map((item) => ({
@@ -39,7 +40,7 @@ export default function MoodChart({ byMood = [], daily = [] }) {
           </div>
           <div className="flex items-center gap-3 text-xs font-bold">
             <span className="inline-flex items-center gap-1.5 text-ink">
-              <span className="w-3 h-3 rounded-sm bg-[#5798D7] inline-block" />
+              <span className="w-3 h-3 rounded-sm bg-denim inline-block" />
               <span>Entri</span>
             </span>
             <span className="inline-flex items-center gap-1.5 text-ink">
@@ -55,22 +56,22 @@ export default function MoodChart({ byMood = [], daily = [] }) {
               data={formattedDaily}
               margin={{ top: 10, right: 8, left: -18, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#E6F1FA" />
+              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.CHART_GRID} />
               <XAxis
                 dataKey="shortDate"
-                tick={{ fontSize: 12, fill: '#1E293B', fontWeight: 600 }}
+                tick={{ fontSize: 12, fill: COLORS.INK, fontWeight: 600 }}
               />
               <YAxis
                 yAxisId="left"
                 allowDecimals={false}
-                tick={{ fontSize: 12, fill: '#1F4E80', fontWeight: 700 }}
+                tick={{ fontSize: 12, fill: COLORS.INK_DEEP, fontWeight: 700 }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 domain={[0, 5]}
                 ticks={[0, 1, 2, 3, 4, 5]}
-                tick={{ fontSize: 12, fill: '#1E293B', fontWeight: 700 }}
+                tick={{ fontSize: 12, fill: COLORS.INK, fontWeight: 700 }}
               />
               <Tooltip
                 formatter={(value, name) => {
@@ -84,8 +85,8 @@ export default function MoodChart({ byMood = [], daily = [] }) {
                 }}
                 contentStyle={{
                   borderRadius: '16px',
-                  borderColor: '#C5DDF2',
-                  color: '#1E293B',
+                  borderColor: COLORS.TOOLTIP_BORDER,
+                  color: COLORS.INK,
                   fontSize: '12px',
                   fontWeight: 600
                 }}
@@ -101,9 +102,9 @@ export default function MoodChart({ byMood = [], daily = [] }) {
                 yAxisId="right"
                 type="monotone"
                 dataKey="avg_energy"
-                stroke="#B9C255"
+                stroke={COLORS.ENERGY_LINE}
                 strokeWidth={3.5}
-                dot={{ r: 5, fill: '#B9C255', stroke: '#1E293B', strokeWidth: 2 }}
+                dot={{ r: 5, fill: COLORS.ENERGY_LINE, stroke: COLORS.INK, strokeWidth: 2 }}
                 activeDot={{ r: 7 }}
               />
             </ComposedChart>
@@ -127,24 +128,24 @@ export default function MoodChart({ byMood = [], daily = [] }) {
                 layout="vertical"
                 margin={{ top: 4, right: 20, left: 10, bottom: 4 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#E6F1FA" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.CHART_GRID} horizontal={false} />
                 <XAxis
                   type="number"
                   allowDecimals={false}
-                  tick={{ fontSize: 12, fill: '#1E293B', fontWeight: 600 }}
+                  tick={{ fontSize: 12, fill: COLORS.INK, fontWeight: 600 }}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
                   width={80}
-                  tick={{ fontSize: 12, fill: '#1E293B', fontWeight: 700 }}
+                  tick={{ fontSize: 12, fill: COLORS.INK, fontWeight: 700 }}
                 />
                 <Tooltip
                   formatter={(value) => [`${value} kali`, 'Frekuensi']}
                   contentStyle={{
                     borderRadius: '16px',
-                    borderColor: '#C5DDF2',
-                    color: '#1E293B',
+                    borderColor: COLORS.TOOLTIP_BORDER,
+                    color: COLORS.INK,
                     fontSize: '12px',
                     fontWeight: 600
                   }}

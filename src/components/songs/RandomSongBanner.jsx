@@ -3,11 +3,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ExternalLink } from 'lucide-react';
 import MoodBlob from '../mood/MoodBlob';
+import { getSongLinkLabel } from '../../utils/songUtils';
 
 export default function RandomSongBanner({ song, onClose }) {
   if (!song) return null;
-
-  const isYoutube = Boolean(song.link?.toLowerCase().includes('youtube'));
 
   return (
     <div className="bg-white border-2 border-pistachio rounded-3xl p-5 shadow-soft flex flex-wrap items-center justify-between gap-4">
@@ -30,7 +29,7 @@ export default function RandomSongBanner({ song, onClose }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-denim hover:bg-denim-dark text-white text-xs font-bold shadow-xs"
           >
-            <span>{isYoutube ? 'Putar di YouTube' : 'Buka lagu'}</span>
+            <span>{getSongLinkLabel(song.link)}</span>
             <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
           </a>
         )}

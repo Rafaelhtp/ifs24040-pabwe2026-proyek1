@@ -8,11 +8,13 @@ describe('apiClient interceptors & handleApiError', () => {
 
   beforeEach(() => {
     const store = new Map();
-    globalThis.sessionStorage = {
+    const mockStorage = {
       getItem: (key) => (store.has(key) ? store.get(key) : null),
       setItem: (key, value) => store.set(key, String(value)),
       removeItem: (key) => store.delete(key)
     };
+    globalThis.localStorage = mockStorage;
+    globalThis.sessionStorage = mockStorage;
     dispatchedEvents = [];
     globalThis.dispatchEvent = vi.fn((evt) => dispatchedEvents.push(evt));
   });

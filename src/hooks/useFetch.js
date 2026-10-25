@@ -37,7 +37,7 @@ export default function useFetch(fetcher, deps = [], options = {}) {
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps); // NOSONAR
+  }, deps);
 
   useEffect(() => {
     if (fetchOptions.immediate) {

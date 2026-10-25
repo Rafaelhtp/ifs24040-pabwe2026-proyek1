@@ -57,11 +57,13 @@ const wrap = (node, initialPath = '/dashboard') =>
 describe('UI components and pages SSR coverage', () => {
   beforeEach(() => {
     const store = new Map();
-    globalThis.sessionStorage = {
+    const mockStorage = {
       getItem: (key) => (store.has(key) ? store.get(key) : null),
       setItem: (key, value) => store.set(key, String(value)),
       removeItem: (key) => store.delete(key)
     };
+    globalThis.localStorage = mockStorage;
+    globalThis.sessionStorage = mockStorage;
   });
 
   it('renders all 7 MoodBlob presets plus custom fallback and MoodPicker/MoodChart', () => {

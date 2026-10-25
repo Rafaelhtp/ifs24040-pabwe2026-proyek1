@@ -6,6 +6,28 @@ import { X } from 'lucide-react';
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+function trapFocus(event, container) {
+  if (!container) return;
+  const focusables = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR));
+  if (focusables.length === 0) {
+    event.preventDefault();
+    return;
+  }
+  const firstEl = focusables[0];
+  const lastEl = focusables.at(-1);
+  const activeEl = globalThis.document?.activeElement;
+
+  if (event.shiftKey) {
+    if (activeEl === firstEl || !container.contains(activeEl)) {
+      event.preventDefault();
+      lastEl?.focus();
+    }
+  } else if (activeEl === lastEl || !container.contains(activeEl)) {
+    event.preventDefault();
+    firstEl?.focus();
+  }
+}
+
 export default function Modal({ isOpen, onClose, title, children }) {
   const titleId = useId();
   const dialogRef = useRef(null);
@@ -26,32 +48,12 @@ export default function Modal({ isOpen, onClose, title, children }) {
       }
     }, 10);
 
-    const handleKeyDown = (event) => { // NOSONAR
+    const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault();
         onClose?.();
-        return;
-      }
-
-      if (event.key === 'Tab' && dialogRef.current) {
-        const focusables = Array.from(dialogRef.current.querySelectorAll(FOCUSABLE_SELECTOR));
-        if (focusables.length === 0) {
-          event.preventDefault();
-          return;
-        }
-        const firstEl = focusables[0];
-        const lastEl = focusables.at(-1);
-        const activeEl = globalThis.document?.activeElement;
-
-        if (event.shiftKey) {
-          if (activeEl === firstEl || !dialogRef.current.contains(activeEl)) {
-            event.preventDefault();
-            lastEl?.focus();
-          }
-        } else if (activeEl === lastEl || !dialogRef.current.contains(activeEl)) {
-          event.preventDefault();
-          firstEl?.focus();
-        }
+      } else if (event.key === 'Tab') {
+        trapFocus(event, dialogRef.current);
       }
     };
 

@@ -1,5 +1,7 @@
 // Konstanta konfigurasi global aplikasi frontend Moodify
 
+import { COLORS } from './colors';
+
 export const TOKEN_STORAGE_KEY = 'moodify_token';
 export const UNAUTHORIZED_EVENT = 'moodify:unauthorized';
 export const API_TIMEOUT_MS = 15000;
@@ -9,7 +11,7 @@ export const DASHBOARD_RECENT_LIMIT = 3;
 export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;
 export const MIN_PASSWORD_LENGTH = 8;
 
-export const DEFAULT_ACCENT_COLOR = '#5798D7';
+export const DEFAULT_ACCENT_COLOR = COLORS.DENIM_DEFAULT;
 export const DEFAULT_MOOD_EMOJI = '😊';
 export const BASE_APP_TITLE = 'Moodify — Jurnal Mood Harian & Rekomendasi Playlist';
 
@@ -55,7 +57,7 @@ export const ENERGY_LEVELS = [
   {
     level: 4,
     label: 'Berenergi',
-    barColor: 'bg-[#A8BA42] text-ink',
+    barColor: 'bg-energy-4 text-ink',
     badgeClass: 'bg-pistachio/40 text-ink border-pistachio-dark'
   },
   {

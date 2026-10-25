@@ -21,7 +21,7 @@ export default function TextField({
   return (
     <div>
       {label && (
-        <label htmlFor={id} className="block text-xs font-extrabold text-ink mb-1"> {/* NOSONAR */}
+        <label htmlFor={id} className="block text-xs font-extrabold text-ink mb-1">
           <span>{label}</span>
           {required && <span className="text-rose-500"> *</span>}
         </label>

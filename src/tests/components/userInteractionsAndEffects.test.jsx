@@ -58,7 +58,7 @@ vi.mock('react', async (importOriginal) => {
     createContext: (defaultValue) => {
       const ctx = {
         _currentValue: defaultValue,
-        Provider: ({ value, children }) => { // NOSONAR
+        Provider: ({ value, children }) => {
           ctx._currentValue = value;
           return children;
         }
@@ -145,7 +145,7 @@ import { setToken, clearToken } from '../../services/tokenStorage';
 import { UNAUTHORIZED_EVENT } from '../../constants/config';
 
 // Helper untuk menelusuri pohon elemen React dan mengumpulkan semua node yang cocok
-function collectNodes(node, predicate, results = []) { // NOSONAR
+function collectNodes(node, predicate, results = []) {
   if (!node || typeof node !== 'object') return results;
   if (Array.isArray(node)) {
     for (const child of node) {
@@ -170,11 +170,13 @@ describe('Interactive branches & lifecycle effects for AuthContext, Modal, Toast
     vi.restoreAllMocks();
 
     const store = new Map();
-    globalThis.sessionStorage = {
+    const mockStorage = {
       getItem: (key) => (store.has(key) ? store.get(key) : null),
       setItem: (key, value) => store.set(key, String(value)),
       removeItem: (key) => store.delete(key)
     };
+    globalThis.localStorage = mockStorage;
+    globalThis.sessionStorage = mockStorage;
     globalThis.addEventListener = vi.fn();
     globalThis.removeEventListener = vi.fn();
   });

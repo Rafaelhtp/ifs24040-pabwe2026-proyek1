@@ -1,64 +1,20 @@
 // Panel rekomendasi lagu otomatis berdasarkan mood yang dipilih di EntryForm
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Shuffle, ExternalLink, Disc3 } from 'lucide-react';
-import { getSongs, getRandomSong } from '../../services/songService';
 import MoodBlob from '../mood/MoodBlob';
+import useSongRecommendation from '../../hooks/useSongRecommendation';
+import { getSongLinkLabel } from '../../utils/songUtils';
 
-export default function SongRecommendationPanel({ moodId, selectedMood }) { // NOSONAR
-  const [songs, setSongs] = useState([]);
-  const [highlightedSong, setHighlightedSong] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [randomLoading, setRandomLoading] = useState(false);
-  const [message, setMessage] = useState(null);
-
-  const loadMoodSongs = useCallback(async () => {
-    if (!moodId) {
-      setSongs([]);
-      setHighlightedSong(null);
-      return;
-    }
-
-    setLoading(true);
-    setMessage(null);
-    try {
-      const res = await getSongs({ mood_id: moodId });
-      const list = Array.isArray(res?.data) ? res.data : [];
-      setSongs(list);
-      setHighlightedSong(list[0] || null);
-      if (list.length === 0) {
-        setMessage('Belum ada lagu untuk mood ini.');
-      }
-    } catch (err) {
-      setMessage(err?.userMessage || 'Gagal memuat rekomendasi lagu.');
-    } finally {
-      setLoading(false);
-    }
-  }, [moodId]);
-
-  useEffect(() => {
-    loadMoodSongs().catch(() => {});
-  }, [loadMoodSongs]);
-
-  const handlePickRandom = async () => {
-    if (!moodId) return;
-    setRandomLoading(true);
-    setMessage(null);
-    try {
-      const res = await getRandomSong(moodId);
-      if (res?.data) {
-        setHighlightedSong(res.data);
-      }
-    } catch (err) {
-      if (err?.statusCode === 404) {
-        setMessage('Belum ada lagu untuk mood ini.');
-      } else {
-        setMessage(err?.userMessage || 'Gagal mengambil lagu acak.');
-      }
-    } finally {
-      setRandomLoading(false);
-    }
-  };
+export default function SongRecommendationPanel({ moodId, selectedMood }) {
+  const {
+    songs,
+    highlightedSong,
+    loading,
+    randomLoading,
+    message,
+    handlePickRandom
+  } = useSongRecommendation(moodId);
 
   if (!moodId) {
     return (
@@ -117,11 +73,7 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) { // N
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-denim hover:bg-denim-dark text-white text-xs font-bold shadow-2xs transition-colors"
                 >
-                  <span>
-                    {highlightedSong.link.toLowerCase().includes('youtube')
-                      ? 'Putar di YouTube'
-                      : 'Buka lagu'}
-                  </span>
+                  <span>{getSongLinkLabel(highlightedSong.link)}</span>
                   <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                 </a>
               )}
@@ -150,11 +102,7 @@ export default function SongRecommendationPanel({ moodId, selectedMood }) { // N
                         rel="noopener noreferrer"
                         className="shrink-0 inline-flex items-center gap-1 text-xs font-extrabold text-denim-dark hover:underline"
                       >
-                        <span>
-                          {song.link.toLowerCase().includes('youtube')
-                            ? 'Putar di YouTube'
-                            : 'Buka lagu'}
-                        </span>
+                        <span>{getSongLinkLabel(song.link)}</span>
                         <ExternalLink className="w-3 h-3" aria-hidden="true" />
                       </a>
                     )}

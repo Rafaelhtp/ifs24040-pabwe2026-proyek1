@@ -5,7 +5,7 @@ import Modal from '../common/Modal';
 import FormAlert from '../form/FormAlert';
 import TextField from '../form/TextField';
 import MoodBlob from '../mood/MoodBlob';
-import { EMOJI_PRESETS } from '../../constants/config';
+import { EMOJI_PRESETS, DEFAULT_ACCENT_COLOR } from '../../constants/config';
 
 export default function MoodFormModal({
   isOpen,
@@ -107,7 +107,7 @@ export default function MoodFormModal({
               value={form?.color}
               onChange={(event) => onFieldChange('color', event.target.value)}
               aria-label="Kode hex warna mood"
-              placeholder="#5798D7"
+              placeholder={DEFAULT_ACCENT_COLOR}
               className="w-36 px-3.5 py-2 rounded-2xl border border-frost-border text-sm font-mono uppercase text-ink"
             />
           </div>

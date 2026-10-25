@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
-    async function verifySession() { // NOSONAR
+    async function verifySession() {
       const storedToken = getToken();
       if (!storedToken) {
         if (isMounted) {

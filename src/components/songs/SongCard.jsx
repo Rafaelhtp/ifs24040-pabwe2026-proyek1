@@ -4,13 +4,14 @@ import PropTypes from 'prop-types';
 import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import MoodBlob from '../mood/MoodBlob';
 import { getImageUrl } from '../../utils/imageUrl';
+import { hasValidSongLink, getSongLinkLabel } from '../../utils/songUtils';
 import { DEFAULT_ACCENT_COLOR } from '../../constants/config';
 
 export default function SongCard({ song, canManage = false, onEdit, onDelete }) {
   const moodColor = song?.color || DEFAULT_ACCENT_COLOR;
   const coverUrl = song?.cover_path ? getImageUrl(song.cover_path) : null;
-  const hasLink = Boolean(song?.link && String(song.link).trim());
-  const isYoutube = hasLink && String(song?.link).toLowerCase().includes('youtube');
+  const hasLink = hasValidSongLink(song?.link);
+  const songLabel = getSongLinkLabel(song?.link);
 
   return (
     <div
@@ -61,7 +62,7 @@ export default function SongCard({ song, canManage = false, onEdit, onDelete }) 
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-denim hover:bg-denim-dark text-white text-xs font-bold shadow-2xs transition-colors"
           >
-            <span>{isYoutube ? 'Putar di YouTube' : 'Buka lagu'}</span>
+            <span>{songLabel}</span>
             <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
           </a>
         ) : (
