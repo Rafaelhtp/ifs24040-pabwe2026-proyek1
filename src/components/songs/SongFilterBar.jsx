@@ -52,7 +52,7 @@ SongFilterBar.propTypes = {
     })
   ),
   selectedMoodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  onSelectMood: PropTypes.func,
+  onSelectMood: PropTypes.func.isRequired,
   searchQuery: PropTypes.string,
-  onSearchChange: PropTypes.func
+  onSearchChange: PropTypes.func.isRequired
 };

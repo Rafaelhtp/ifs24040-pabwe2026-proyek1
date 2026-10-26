@@ -39,12 +39,12 @@ export default function ConfirmDialog({
 }
 
 ConfirmDialog.propTypes = {
-  isOpen: PropTypes.bool,
+  isOpen: PropTypes.bool.isRequired,
   title: PropTypes.string,
   message: PropTypes.string,
   confirmLabel: PropTypes.string,
   cancelLabel: PropTypes.string,
   loading: PropTypes.bool,
-  onConfirm: PropTypes.func,
-  onCancel: PropTypes.func
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired
 };

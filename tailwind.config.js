@@ -48,8 +48,21 @@ export default {
         ]
       },
       boxShadow: {
+        '2xs': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
         soft: '0 10px 25px -5px rgba(87, 152, 215, 0.12)',
         'soft-lg': '0 18px 35px -8px rgba(87, 152, 215, 0.18)'
+      },
+      spacing: {
+        '18': '4.5rem'
+      },
+      borderWidth: {
+        '3': '3px'
+      },
+      scale: {
+        '102': '1.02'
+      },
+      backdropBlur: {
+        xs: '2px'
       }
     }
   },

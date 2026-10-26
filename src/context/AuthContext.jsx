@@ -104,7 +104,7 @@ export function AuthProvider({ children }) {
 }
 
 AuthProvider.propTypes = {
-  children: PropTypes.node
+  children: PropTypes.node.isRequired
 };
 
 /**

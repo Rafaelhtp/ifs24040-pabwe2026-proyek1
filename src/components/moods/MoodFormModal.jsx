@@ -136,8 +136,8 @@ export default function MoodFormModal({
 }
 
 MoodFormModal.propTypes = {
-  isOpen: PropTypes.bool,
-  onClose: PropTypes.func,
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
   editingMood: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     name: PropTypes.string
@@ -146,9 +146,9 @@ MoodFormModal.propTypes = {
     name: PropTypes.string,
     emoji: PropTypes.string,
     color: PropTypes.string
-  }),
-  onFieldChange: PropTypes.func,
+  }).isRequired,
+  onFieldChange: PropTypes.func.isRequired,
   formError: PropTypes.string,
   isSubmitting: PropTypes.bool,
-  onSubmit: PropTypes.func
+  onSubmit: PropTypes.func.isRequired
 };

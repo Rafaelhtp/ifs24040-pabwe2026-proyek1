@@ -34,5 +34,5 @@ export default function MoodConflictAlert({ message, onClose }) {
 
 MoodConflictAlert.propTypes = {
   message: PropTypes.string,
-  onClose: PropTypes.func
+  onClose: PropTypes.func.isRequired
 };

@@ -170,6 +170,6 @@ export default function ImageUpload({
 ImageUpload.propTypes = {
   label: PropTypes.string,
   existingImagePath: PropTypes.string,
-  onFileSelect: PropTypes.func,
+  onFileSelect: PropTypes.func.isRequired,
   errorText: PropTypes.string
 };

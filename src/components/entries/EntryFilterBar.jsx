@@ -113,8 +113,8 @@ EntryFilterBar.propTypes = {
   fromParam: PropTypes.string,
   toParam: PropTypes.string,
   searchInput: PropTypes.string,
-  onSearchChange: PropTypes.func,
-  onFilterChange: PropTypes.func,
-  onReset: PropTypes.func,
+  onSearchChange: PropTypes.func.isRequired,
+  onFilterChange: PropTypes.func.isRequired,
+  onReset: PropTypes.func.isRequired,
   hasActiveFilter: PropTypes.bool
 };

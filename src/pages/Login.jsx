@@ -9,6 +9,7 @@ import usePageTitle from '../hooks/usePageTitle';
 import { isValidEmail, isValidPassword } from '../utils/validators';
 import { ROUTES } from '../constants/routes';
 import { COLORS } from '../constants/colors';
+import { DEMO_ACCOUNT } from '../constants/config';
 
 export default function Login() {
   usePageTitle('Masuk Akun');
@@ -32,11 +33,11 @@ export default function Login() {
   // Login langsung dalam 1 klik menggunakan akun demo
   const handleInstantDemoLogin = async () => {
     setFormError('');
-    setEmail('demo@moodify.com');
-    setPassword('demo12345');
+    setEmail(DEMO_ACCOUNT.EMAIL);
+    setPassword(DEMO_ACCOUNT.CREDENTIAL);
     setDemoLoading(true);
     try {
-      const user = await login('demo@moodify.com', 'demo12345');
+      const user = await login(DEMO_ACCOUNT.EMAIL, DEMO_ACCOUNT.CREDENTIAL);
       showToast(`Selamat datang kembali, ${user?.name || 'Pengguna'}!`, 'success');
       navigate(destination, { replace: true });
     } catch (err) {
@@ -103,11 +104,8 @@ export default function Login() {
             <MoodBlob moodName="semangat" color={COLORS.PRESET.ORANGE} size="sm" className="mood-blob-float" />
           </div>
 
-          <p className="text-xs text-white font-medium relative z-10">
-            <span>Akun Demo: </span>
-            <strong className="text-white">demo@moodify.com</strong>
-            <span> / </span>
-            <strong className="text-white">demo12345</strong>
+          <p className="text-xs text-white/90 font-medium relative z-10 text-center max-w-xs">
+            Gunakan akun demo yang tersedia untuk mencoba fitur Moodify dengan cepat.
           </p>
         </div>
 
@@ -166,7 +164,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@email.com"
+                  placeholder="Masukkan email"
                   autoComplete="username"
                   aria-invalid={Boolean(formError)}
                   aria-describedby={errorId}

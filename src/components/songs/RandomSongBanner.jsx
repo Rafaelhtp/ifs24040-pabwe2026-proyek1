@@ -54,5 +54,5 @@ RandomSongBanner.propTypes = {
     color: PropTypes.string,
     link: PropTypes.string
   }),
-  onClose: PropTypes.func
+  onClose: PropTypes.func.isRequired
 };

@@ -70,6 +70,6 @@ EntrySuccessView.propTypes = {
     mood_name: PropTypes.string,
     color: PropTypes.string,
     entry_date: PropTypes.string
-  }),
-  onWriteAnother: PropTypes.func
+  }).isRequired,
+  onWriteAnother: PropTypes.func.isRequired
 };

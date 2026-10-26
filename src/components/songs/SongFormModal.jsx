@@ -114,8 +114,8 @@ export default function SongFormModal({
 }
 
 SongFormModal.propTypes = {
-  isOpen: PropTypes.bool,
-  onClose: PropTypes.func,
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
   editingSong: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     cover_path: PropTypes.string
@@ -125,8 +125,8 @@ SongFormModal.propTypes = {
     artist: PropTypes.string,
     moodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     link: PropTypes.string
-  }),
-  onFieldChange: PropTypes.func,
+  }).isRequired,
+  onFieldChange: PropTypes.func.isRequired,
   formError: PropTypes.string,
   isSubmitting: PropTypes.bool,
   moods: PropTypes.arrayOf(
@@ -136,5 +136,5 @@ SongFormModal.propTypes = {
       emoji: PropTypes.string
     })
   ),
-  onSubmit: PropTypes.func
+  onSubmit: PropTypes.func.isRequired
 };

@@ -56,7 +56,7 @@ export default class ErrorBoundary extends Component {
 }
 
 ErrorBoundary.propTypes = {
-  children: PropTypes.node,
+  children: PropTypes.node.isRequired,
   fallback: PropTypes.node,
   onError: PropTypes.func
 };

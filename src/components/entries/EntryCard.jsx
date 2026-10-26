@@ -97,14 +97,14 @@ export default function EntryCard({ entry, onDelete, compact = false }) {
 
 EntryCard.propTypes = {
   entry: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     entry_date: PropTypes.string,
     mood_name: PropTypes.string,
     color: PropTypes.string,
     energy_level: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     note: PropTypes.string,
     image_path: PropTypes.string
-  }),
+  }).isRequired,
   onDelete: PropTypes.func,
   compact: PropTypes.bool
 };

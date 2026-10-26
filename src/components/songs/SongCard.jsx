@@ -98,14 +98,14 @@ export default function SongCard({ song, canManage = false, onEdit, onDelete }) 
 
 SongCard.propTypes = {
   song: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    title: PropTypes.string,
-    artist: PropTypes.string,
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    title: PropTypes.string.isRequired,
+    artist: PropTypes.string.isRequired,
     mood_name: PropTypes.string,
     color: PropTypes.string,
     cover_path: PropTypes.string,
     link: PropTypes.string
-  }),
+  }).isRequired,
   canManage: PropTypes.bool,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func

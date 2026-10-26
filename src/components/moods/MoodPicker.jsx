@@ -71,11 +71,11 @@ export default function MoodPicker({ moods = [], selectedMoodId, onSelect }) {
 MoodPicker.propTypes = {
   moods: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      name: PropTypes.string,
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+      name: PropTypes.string.isRequired,
       color: PropTypes.string
     })
   ),
   selectedMoodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  onSelect: PropTypes.func
+  onSelect: PropTypes.func.isRequired
 };

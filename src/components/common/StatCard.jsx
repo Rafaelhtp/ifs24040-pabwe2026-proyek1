@@ -40,8 +40,8 @@ export default function StatCard({
 
 StatCard.propTypes = {
   icon: PropTypes.node,
-  label: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   subtitle: PropTypes.string,
   accentColor: PropTypes.string,
   children: PropTypes.node

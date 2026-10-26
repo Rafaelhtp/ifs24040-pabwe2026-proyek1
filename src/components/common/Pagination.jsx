@@ -101,8 +101,8 @@ export default function Pagination({ page = 1, limit = 10, total = 0, onPageChan
 }
 
 Pagination.propTypes = {
-  page: PropTypes.number,
-  limit: PropTypes.number,
-  total: PropTypes.number,
-  onPageChange: PropTypes.func
+  page: PropTypes.number.isRequired,
+  limit: PropTypes.number.isRequired,
+  total: PropTypes.number.isRequired,
+  onPageChange: PropTypes.func.isRequired
 };

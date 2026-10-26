@@ -1,4 +1,4 @@
-// CATATAN: localStorage digunakan karena backend berada di domain terpisah (cross-origin). Di produksi, HttpOnly Cookie lebih disarankan.
+// CATATAN: localStorage digunakan karena backend di domain terpisah. Di produksi, HttpOnly Cookie lebih aman.
 import { TOKEN_STORAGE_KEY } from '../constants/config';
 
 /**

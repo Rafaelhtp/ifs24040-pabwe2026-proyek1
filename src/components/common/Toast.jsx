@@ -101,7 +101,7 @@ export function ToastProvider({ children }) {
 }
 
 ToastProvider.propTypes = {
-  children: PropTypes.node
+  children: PropTypes.node.isRequired
 };
 
 /**

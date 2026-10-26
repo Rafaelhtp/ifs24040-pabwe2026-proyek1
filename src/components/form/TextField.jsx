@@ -49,12 +49,12 @@ export default function TextField({
 }
 
 TextField.propTypes = {
-  id: PropTypes.string,
+  id: PropTypes.string.isRequired,
   name: PropTypes.string,
   label: PropTypes.string,
   type: PropTypes.string,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onChange: PropTypes.func,
+  onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   required: PropTypes.bool,
   autoComplete: PropTypes.string,

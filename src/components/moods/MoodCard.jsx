@@ -54,11 +54,11 @@ export default function MoodCard({ mood, onEdit, onDelete }) {
 
 MoodCard.propTypes = {
   mood: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    name: PropTypes.string,
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    name: PropTypes.string.isRequired,
     emoji: PropTypes.string,
     color: PropTypes.string
-  }),
-  onEdit: PropTypes.func,
-  onDelete: PropTypes.func
+  }).isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired
 };

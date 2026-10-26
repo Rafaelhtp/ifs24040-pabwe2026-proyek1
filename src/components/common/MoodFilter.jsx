@@ -55,13 +55,13 @@ export default function MoodFilter({
 MoodFilter.propTypes = {
   moods: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      name: PropTypes.string,
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+      name: PropTypes.string.isRequired,
       color: PropTypes.string
     })
   ),
   selectedMoodId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  onSelectMood: PropTypes.func,
+  onSelectMood: PropTypes.func.isRequired,
   label: PropTypes.string,
   className: PropTypes.string
 };
